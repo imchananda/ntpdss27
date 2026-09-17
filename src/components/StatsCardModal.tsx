@@ -126,20 +126,20 @@ export default function StatsCardModal({ isOpen, onClose, completed, allTasks, t
 
     const shareText = stats
         ? language === 'th'
-            ? `NamtanFilm × Levi’s 👖✨\n\n` +
+            ? `Namtan × Prada’s 👖✨\n\n` +
             `สถิติของฉัน\n` +
             `✅ ทำแล้ว ${stats.completedCount}/${stats.totalCount} ภารกิจ (${stats.pct}%)\n` +
             `📸 Platform หลัก: ${PLATFORM_NAME[stats.topPlatform || ''] || stats.topPlatform}\n` +
             `⚡ เฉลี่ย ${stats.tasksPerDay} ภารกิจ/วัน\n` +
             `📅 เริ่มตั้งแต่: ${formatDate(stats.firstDate, 'th')} (${stats.duration})\n\n` +
-            `#NamtanFilmxLevis #LiveInLevis #LevisThailand\n#น้ำตาลฟิล์ม #NamtanFilm`
-            : `NamtanFilm × Levi’s 👖✨\n\n` +
+            `#NamtanxPrada #PradaSS27 #PradaThailand\n#น้ำตาลฟิล์ม #Namtan`
+            : `Namtan × Prada’s 👖✨\n\n` +
             `My Stats\n` +
             `✅ Completed ${stats.completedCount}/${stats.totalCount} missions (${stats.pct}%)\n` +
             `📸 Top Platform: ${PLATFORM_NAME[stats.topPlatform || ''] || stats.topPlatform}\n` +
             `⚡ Avg ${stats.tasksPerDay} tasks/day\n` +
             `📅 Started: ${formatDate(stats.firstDate, 'en')} (${stats.duration})\n\n` +
-            `#NamtanFilmxLevis #LiveInLevis #LevisThailand\n#NamtanFilm`
+            `#NamtanxPrada #PradaSS27 #PradaThailand\n#Namtan`
         : '';
 
     const handleShareX = () => {
@@ -185,7 +185,7 @@ export default function StatsCardModal({ isOpen, onClose, completed, allTasks, t
                                 {language === 'th' ? 'สถิติของฉัน' : 'My Stats'}
                             </h2>
                             <p className="text-prada-charcoal/40 text-xs mt-1 uppercase tracking-widest">
-                                NamtanFilm × Levi’s Mission
+                                Namtan × Prada’s Mission
                             </p>
                         </div>
 

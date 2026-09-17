@@ -8,7 +8,7 @@ import EndCreditsModal from './components/EndCreditsModal';
 // Types
 interface Task {
   id: string;
-  phase: 'pre' | 'airport' | 'show' | 'aftermath' | 'aftermath2';
+  phase: 'all' | 'pre' | 'airport' | 'show' | 'afterglow' | 'aftermath' | 'aftermath2' | string;
   platform: 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'threads';
   url: string;
   hashtags: string;
@@ -119,7 +119,7 @@ const platformConfig = {
 // ⚙️ SETTINGS - แก้ไขตรงนี้
 // ===========================================
 const SHEETS_CONFIG = [
-  { phase: 'all', label: 'Levi\'s Campaign', gid: '0' },
+  { phase: 'all', label: 'Prada SS 2027', gid: '0' },
   { phase: 'settings', label: 'Toggle Setting', gid: '755512629' },
 ];
 
@@ -218,7 +218,15 @@ function App() {
   const mainRef = useRef<HTMLElement>(null);
 
   // Phase and Stats State
-  const [activePhase, setActivePhase] = useState<'all' | 'pre' | 'airport' | 'show' | 'aftermath'>('all');
+  const [activePhase, setActivePhase] = useState<'all' | 'pre' | 'airport' | 'show' | 'afterglow' | 'aftermath'>(() => {
+    try {
+      const saved = localStorage.getItem('ntf_default_active_phase');
+      if (saved && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(saved)) {
+        return saved as any;
+      }
+    } catch { /* ignore */ }
+    return 'all';
+  });
   const [showPhaseFilter, setShowPhaseFilter] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem('ntf_show_phase_filter');
@@ -235,9 +243,21 @@ function App() {
           setActivePhase('all');
         }
       }
+      if (e.detail?.defaultActivePhase) {
+        setActivePhase(e.detail.defaultActivePhase);
+      }
+    };
+    const handleDefaultPhaseChange = (e: any) => {
+      if (e.detail?.defaultActivePhase) {
+        setActivePhase(e.detail.defaultActivePhase);
+      }
     };
     window.addEventListener('ntf_phase_filter_changed', handlePhaseFilterChange);
-    return () => window.removeEventListener('ntf_phase_filter_changed', handlePhaseFilterChange);
+    window.addEventListener('ntf_default_phase_changed', handleDefaultPhaseChange);
+    return () => {
+      window.removeEventListener('ntf_phase_filter_changed', handlePhaseFilterChange);
+      window.removeEventListener('ntf_default_phase_changed', handleDefaultPhaseChange);
+    };
   }, []);
 
   const [globalHashtags, setGlobalHashtags] = useState<string>(() => {
@@ -245,7 +265,7 @@ function App() {
       const saved = localStorage.getItem('ntf_global_hashtags');
       if (saved) return saved;
     } catch { /* ignore */ }
-    return '#Levisxnamtanfilm\n#LevisTH\n#NamtanFilm';
+    return '#NamtanxPrada\n#PradaSS27\n#PradaThailand';
   });
 
   useEffect(() => {
@@ -341,9 +361,15 @@ function App() {
     const filtered = all.filter(t => {
       const p = (t.phase || '').toLowerCase();
       const a = ((t as any).artist || '').toLowerCase();
+      if (activePhase === 'afterglow' || activePhase === 'aftermath') {
+        return (
+          p === 'afterglow' || p === 'aftermath' || p === 'aftermath2' ||
+          a === 'afterglow' || a === 'aftermath' || a === 'aftermath2'
+        );
+      }
       return p === activePhase || a === activePhase;
     });
-    return filtered.length > 0 ? filtered : all;
+    return filtered;
   }, [allTasks, activePhase]);
 
   const isTaskCompleted = useCallback((task?: Task) => {
@@ -596,9 +622,12 @@ function App() {
               else if (['threads', 'thread', 'th'].includes(rawPlatform)) rawPlatform = 'threads';
               else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube', 'threads'].includes(rawPlatform)) rawPlatform = 'x';
 
+              const rawTaskPhase = (getVal('phase') || '').toLowerCase().trim();
+              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all') ? rawTaskPhase : (sheet.phase !== 'all' ? sheet.phase : 'pre');
+
               const task: Task = {
                 id: getVal('id') || getVal('url') || String(i),
-                phase: sheet.phase as Task['phase'],
+                phase: taskPhase as Task['phase'],
                 platform: rawPlatform as Task['platform'],
                 url: getVal('url') || '',
                 hashtags: getVal('hashtags') || '',
@@ -667,36 +696,53 @@ function App() {
         }
       }));
 
-      // Fetch dedicated Toggle Setting sheet tab (GID 755512629 / sheetName "Toggle Setting")
+      // Fetch dedicated global_setting sheet tab (GID 543974967 / sheetName "global_setting")
       try {
-        const toggleRes = await fetch('/api/sheet?sheetName=Toggle%20Setting&gid=755512629');
-        if (toggleRes.ok) {
-          const toggleCsv = await toggleRes.text();
-          const toggleRows = parseCSV(toggleCsv.replace(/^\uFEFF/, ''));
-          if (toggleRows.length > 0) {
-            const toggleHeaders = toggleRows[0].map(h => h.toLowerCase().trim());
-            for (let i = 1; i < toggleRows.length; i++) {
-              const r = toggleRows[i];
-              const getTVal = (hName: string) => {
-                const idx = toggleHeaders.indexOf(hName.toLowerCase().trim());
+        const globalRes = await fetch('/api/sheet?gid=543974967&sheetName=global_setting');
+        if (globalRes.ok) {
+          const globalCsv = await globalRes.text();
+          const globalRows = parseCSV(globalCsv.replace(/^\uFEFF/, ''));
+          if (globalRows.length > 0) {
+            const globalHeaders = globalRows[0].map(h => h.toLowerCase().trim());
+            for (let i = 1; i < globalRows.length; i++) {
+              const r = globalRows[i];
+              const getGVal = (hName: string) => {
+                const idx = globalHeaders.indexOf(hName.toLowerCase().trim());
                 return idx !== -1 ? (r[idx] || '') : '';
               };
-              const defSec = (getTVal('default_section') || getTVal('active_section')).toLowerCase().trim();
+              const tags = getGVal('hashtags') || getGVal('hashtag');
+              if (tags) {
+                setGlobalHashtags(tags);
+                localStorage.setItem('ntf_global_hashtags', tags);
+              }
+              const defSec = (getGVal('default_section') || getGVal('active_section')).toLowerCase().trim();
               if (defSec && ['boost', 'tasks', 'important', 'none'].includes(defSec)) {
                 localStorage.setItem('ntf_default_start_section', defSec);
                 setActiveSection(defSec === 'none' ? null : (defSec as any));
               }
-              const phaseVal = (getTVal('show_phase_filter') || getTVal('phase_filter')).toLowerCase().trim();
+              const phaseVal = (getGVal('show_phase_filter') || getGVal('phase_filter')).toLowerCase().trim();
               if (phaseVal) {
                 const isPhaseOn = phaseVal === '1' || phaseVal === 'true' || phaseVal === 'yes';
                 setShowPhaseFilter(isPhaseOn);
                 localStorage.setItem('ntf_show_phase_filter', isPhaseOn ? 'true' : 'false');
               }
+              const defaultPhaseVal = (getGVal('default_active_phase') || getGVal('default_phase') || getGVal('initial_phase')).toLowerCase().trim();
+              if (defaultPhaseVal && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(defaultPhaseVal)) {
+                const normPhase = defaultPhaseVal === 'aftermath' ? 'afterglow' : defaultPhaseVal;
+                localStorage.setItem('ntf_default_active_phase', normPhase);
+                setActivePhase(normPhase as any);
+              }
+              const endCreditsVal = (getGVal('show_end_credits') || getGVal('enable_end_credits') || getGVal('end_credits')).toLowerCase().trim();
+              if (endCreditsVal) {
+                const isCreditsOn = endCreditsVal === '1' || endCreditsVal === 'true' || endCreditsVal === 'yes';
+                setShowEndCreditsFeature(isCreditsOn);
+                localStorage.setItem('ntf_show_end_credits', isCreditsOn ? 'true' : 'false');
+              }
             }
           }
         }
-      } catch (toggleErr) {
-        console.warn('Failed to fetch Toggle Setting sheet:', toggleErr);
+      } catch (globalErr) {
+        console.warn('Failed to fetch global_setting sheet:', globalErr);
       }
 
       setAllTasks(results);
@@ -759,11 +805,17 @@ function App() {
               const row = rows[i];
               if (!row || row.length === 0) continue;
 
-              // Read "Completed Text" → put into both en and th complete pools
-              if (idxComplete !== -1 && row[idxComplete]?.trim()) {
-                const txt = row[idxComplete].trim();
+              // Column A (index 0) starting from Row 2 (index i = 1)
+              let txt = row[0]?.trim();
+
+              // Fallback to "Completed Text" (Column E) if Column A is empty
+              if (!txt && idxComplete !== -1 && row[idxComplete]?.trim()) {
+                txt = row[idxComplete].trim();
+              }
+
+              if (txt) {
                 pools.en.complete.push(txt);
-                pools.th.complete.push(txt); // Use same text for both languages
+                pools.th.complete.push(txt);
               }
 
               // Support language-specific columns if available
@@ -835,11 +887,16 @@ function App() {
 
   // Helper to check if a task is pinned (ปักหมุด)
   const isTaskPinned = useCallback((t: Task) => {
-    return Boolean(
-      (t.boost && (t.boost.includes(3) || (t.boost as any) === '3' || (t.boost as any) === 'pin')) ||
-      (t as any).pinned ||
-      (t as any).isPinned
-    );
+    if (!t) return false;
+    if ((t as any).pinned || (t as any).isPinned || (t as any).pin) return true;
+    if (Array.isArray(t.boost)) {
+      return t.boost.some(b => b === 3 || String(b) === '3' || String(b).toLowerCase().includes('pin'));
+    }
+    if (t.boost !== undefined && t.boost !== null) {
+      const s = String(t.boost).toLowerCase();
+      return s.includes('3') || s.includes('pin');
+    }
+    return false;
   }, []);
 
   // Filter and sort tasks (Pinned first at very top, then Focus/HOT, maintaining order)
@@ -851,12 +908,22 @@ function App() {
     const pending = result.filter(t => !isTaskCompleted(t));
     const done = result.filter(t => isTaskCompleted(t));
 
-    // Sort: Pinned (3) first (at top), then HOT (2), then Focus (1), then normal (0)
+    const getFocusWeight = (t: Task) => {
+      if (t.focus === 2 || (t.boost && t.boost.includes(2))) return 2;
+      if (t.focus === 1) return 1;
+      return 0;
+    };
+
+    // Sort: Pinned (3) first (at top), then HOT/Focus (2), then Focus (1), then normal (0)
     const sortTasks = (a: Task, b: Task) => {
       const pinA = isTaskPinned(a) ? 1 : 0;
       const pinB = isTaskPinned(b) ? 1 : 0;
       if (pinB !== pinA) return pinB - pinA;
-      if (b.focus !== a.focus) return b.focus - a.focus;
+
+      const focusA = getFocusWeight(a);
+      const focusB = getFocusWeight(b);
+      if (focusB !== focusA) return focusB - focusA;
+
       return 0;
     };
 
@@ -870,14 +937,16 @@ function App() {
     return filteredTasks.slice(0, visibleCount);
   }, [filteredTasks, visibleCount]);
 
-  const pendingCount = tasks.filter(t => !isTaskCompleted(t)).length;
+  const pendingCount = useMemo(() => {
+    return tasks.reduce((acc, t) => acc + (isTaskCompleted(t) ? 0 : 1), 0);
+  }, [tasks, isTaskCompleted]);
 
 
   // Helper to detect old/corrupted default hashtags
   const isOldDefaultHashtags = useCallback((text?: string): boolean => {
     if (!text) return true;
     const clean = text.trim();
-    return clean.includes('???????????') || (clean.includes('#NamtanFilmxLevis') && clean.includes('#LiveInLevis') && clean.includes('#LevisThailand'));
+    return clean.includes('???????????') || (clean.includes('#NamtanxPrada') && (clean.includes('#PradaFW27') || clean.includes('#PradaSS27')) && clean.includes('#PradaThailand'));
   }, []);
 
   // Get hashtags for platform (falls back to Official Hashtags if empty or old default)
@@ -998,7 +1067,7 @@ function App() {
           <div className="w-52 h-64 sm:w-64 sm:h-80 mb-6 relative group animate-in fade-in zoom-in duration-700">
             <div className="absolute inset-0 bg-white/30 rounded-2xl blur-xl group-hover:bg-white/40 transition-all duration-500 animate-pulse"></div>
             <img
-              src="/ntf_header.png"
+              src="/header.png"
               alt="Namtan Tipnaree"
               className="w-full h-full object-contain relative z-10 drop-shadow-2xl animate-bounce [animation-duration:3s]"
             />
@@ -1053,12 +1122,12 @@ function App() {
           {/* Hero Editorial Banner Layout (Top Banner - Normal Scroll) */}
           <div className="relative w-full overflow-hidden bg-transparent mb-1 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[200px] sm:min-h-[240px]">
             {/* Language Switcher (Top Right Absolute) */}
-            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#011949]/30 bg-white/40 backdrop-blur-md shadow-sm">
+            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#2a2121]/30 bg-white/40 backdrop-blur-md shadow-sm">
               <button
                 onClick={() => setLanguage('th')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'th'
-                  ? 'bg-[#011949] text-white'
-                  : 'text-[#011949]/70 hover:text-[#011949]'
+                  ? 'bg-[#2a2121] text-white'
+                  : 'text-[#2a2121]/70 hover:text-[#2a2121]'
                   }`}
               >
                 TH
@@ -1066,8 +1135,8 @@ function App() {
               <button
                 onClick={() => setLanguage('en')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'en'
-                  ? 'bg-[#011949] text-white'
-                  : 'text-[#011949]/70 hover:text-[#011949]'
+                  ? 'bg-[#2a2121] text-white'
+                  : 'text-[#2a2121]/70 hover:text-[#2a2121]'
                   }`}
               >
                 EN
@@ -1077,7 +1146,7 @@ function App() {
             {/* Center Portrait */}
             <div className="relative z-10 w-48 h-60 sm:w-60 sm:h-72 mb-3 drop-shadow-md transition-transform hover:scale-105 duration-300">
               <img
-                src="/ntf_header.png"
+                src="/header.png"
                 alt="Namtan Tipnaree"
                 className="w-full h-full object-contain"
               />
@@ -1086,22 +1155,22 @@ function App() {
             {/* Typography Title & Subtitle - Archivo Black Uniform Style */}
             <div className="relative z-10 text-center flex flex-col items-center">
               <h1 className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap drop-shadow-sm font-archivo text-2xl sm:text-4xl leading-none uppercase tracking-tight">
-                <span className="text-[#C21734]">
-                  LEVI'S ×
+                <span className="text-[#2f2625]">
+                  PRADA ×
                 </span>
-                <span className="text-[#011949]">
-                  namtanfilm
+                <span className="text-[#c4d2b1]">
+                  namtan
                 </span>
               </h1>
-              <p className="text-[11px] sm:text-[14px] font-bold tracking-wider text-[#C21734] mt-2 font-google">
-                Levi’s® Women’s Experience for Every Original
+              <p className="text-[11px] sm:text-[14px] font-light tracking-wider text-[#2f2625] mt-2 font-google">
+                Womenswear Spring/Summer 2027
               </p>
-              {/* Levi's Logo */}
-              <div className="mt-2.5 h-6 sm:h-8 flex items-center justify-center">
+              {/* Brand Logo */}
+              <div className="mt-2 h-4 sm:h-5 flex items-center justify-center">
                 <img
-                  src="/logo levis.png"
-                  alt="Levi's Logo"
-                  className="h-full w-auto object-contain drop-shadow-sm"
+                  src="/prada-logo.png"
+                  alt="Brand Logo"
+                  className="h-full w-auto object-contain drop-shadow-sm opacity-90"
                 />
               </div>
             </div>
@@ -1112,13 +1181,13 @@ function App() {
             <div className="bg-transparent mb-2">
               <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto px-1 pt-1 pb-1 grid grid-cols-5 gap-1.5">
                 {[
-                  { id: 'all', icon: '✦', label: t('allLabel'), desc: t('sixteenDaysShort'), days: [] },
-                  { id: 'pre', icon: '👖', label: t('preLabel'), desc: t('phasePreShort'), days: ['Teaser'] },
-                  { id: 'airport', icon: '🎉', label: t('airportLabel'), desc: t('phaseAirportShort'), days: ['Event'] },
-                  { id: 'show', icon: '✨', label: t('showLabel'), desc: t('phaseShowShort'), days: ['Campaign'] },
-                  { id: 'aftermath', icon: '📸', label: t('aftermathLabel'), desc: t('phaseAftermathShort'), days: ['After'] },
+                  { id: 'all', icon: '✦', label: t('allLabel'), desc: t('sixteenDaysShort') },
+                  { id: 'pre', icon: '🎬', label: t('preLabel'), desc: t('phasePreShort') },
+                  { id: 'airport', icon: '✈️', label: t('airportLabel'), desc: t('phaseAirportShort') },
+                  { id: 'show', icon: '👠', label: t('showLabel'), desc: t('phaseShowShort') },
+                  { id: 'afterglow', icon: '🥂', label: t('aftermathLabel'), desc: t('phaseAftermathShort') },
                 ].map(phase => {
-                  const isActive = activePhase === phase.id;
+                  const isActive = activePhase === phase.id || (phase.id === 'afterglow' && activePhase === 'aftermath');
                   return (
                     <button
                       key={phase.id}
@@ -1127,13 +1196,13 @@ function App() {
                         setVisibleCount(30);
                       }}
                       className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all ${isActive
-                        ? 'bg-[#011949] text-white border-[#011949] shadow-sm scale-105 z-10'
-                        : 'bg-white/60 text-[#011949] border-[#011949]/20 hover:bg-white/80'
+                        ? 'bg-[#c4d2b1] text-[#2a2121] border-[#c4d2b1] shadow-md scale-105 z-10 font-bold'
+                        : 'bg-white/80 text-[#2a2121] border-[#c4d2b1]/60 hover:bg-[#c4d2b1]/20'
                         }`}
                     >
                       <div className="text-[12px] sm:text-[14px] leading-none mb-1">{phase.icon}</div>
                       <div className="text-[9px] sm:text-[10px] font-bold leading-none mb-0.5 whitespace-nowrap">{phase.label}</div>
-                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-white/90' : 'text-[#011949]/70'}`}>{phase.desc}</div>
+                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-[#2a2121]/90 font-semibold' : 'text-[#2a2121]/70'}`}>{phase.desc}</div>
                     </button>
                   )
                 })}
@@ -1154,8 +1223,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
-                      ? 'bg-[#C21734] text-white border-transparent shadow-[#C21734]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#C21734] border-[#C21734]/40 shadow-sm hover:bg-white shadow-[#C21734]/10'
+                      ? 'bg-[#c4d2b1] text-[#2a2121] border-transparent shadow-[#c4d2b1]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#2a2121] border-[#c4d2b1] shadow-sm hover:bg-white shadow-[#c4d2b1]/10'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'tasks' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1172,8 +1241,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
-                      ? 'bg-[#C21734] text-white border-transparent shadow-[#C21734]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#C21734] border-[#C21734]/40 shadow-sm hover:bg-white shadow-[#C21734]/10'
+                      ? 'bg-[#c4d2b1] text-[#2a2121] border-transparent shadow-[#c4d2b1]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#2a2121] border-[#c4d2b1] shadow-sm hover:bg-white shadow-[#c4d2b1]/10'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'boost' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1190,8 +1259,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
-                      ? 'bg-[#C21734] text-white border-transparent shadow-[#C21734]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#C21734] border-[#C21734]/40 shadow-sm hover:bg-white shadow-[#C21734]/10'
+                      ? 'bg-[#c4d2b1] text-[#2a2121] border-transparent shadow-[#c4d2b1]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#2a2121] border-[#c4d2b1] shadow-sm hover:bg-white shadow-[#c4d2b1]/10'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'important' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1219,21 +1288,21 @@ function App() {
                     {/* Title Row */}
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-[#C21734] text-sm sm:text-base leading-none">✦</span>
-                        <h3 className="text-[10px] sm:text-xs font-bold text-[#C21734] uppercase tracking-[0.15em] whitespace-nowrap">{t('featuredEngagementTitle') || 'Featured Engagement'}</h3>
+                        <span className="text-[#c4d2b1] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#c4d2b1] uppercase tracking-[0.15em] whitespace-nowrap">{t('featuredEngagementTitle') || 'Featured Engagement'}</h3>
                       </div>
                       {/* Minimize button — always visible top-right */}
                       <div className="flex flex-col items-center shrink-0">
                         <button
                           onClick={() => setActiveSection(null)}
-                          className="w-7 h-7 rounded-full bg-[#C21734]/10 text-[#C21734] border border-[#C21734]/20 shadow-sm hover:bg-[#C21734]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-full bg-[#c4d2b1]/10 text-[#2a2121] border border-[#c4d2b1]/30 shadow-sm hover:bg-[#c4d2b1]/20 active:scale-95 flex items-center justify-center transition-colors"
                           title={t('minimize')}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
-                        <span className="text-[6px] font-bold text-[#C21734]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                        <span className="text-[6px] font-bold text-[#2a2121]/60 tracking-wider mt-0.5 whitespace-nowrap">
                           {t('tapToHide')}
                         </span>
                       </div>
@@ -1244,8 +1313,8 @@ function App() {
                       <button
                         onClick={() => setFeaturedFilterPlatform(null)}
                         className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
-                          ? 'bg-[#C21734] border-transparent text-white'
-                          : 'bg-white border-[#C21734]/30 text-[#C21734]/70 hover:bg-[#C21734]/10'
+                          ? 'bg-[#c4d2b1] border-transparent text-[#2a2121]'
+                          : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:bg-[#c4d2b1]/10'
                           }`}
                       >
                         {t('allLabel') || 'All'}
@@ -1257,8 +1326,8 @@ function App() {
                             key={p}
                             onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
                             className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                              ? 'bg-[#C21734] border-[#C21734] text-white'
-                              : 'bg-white border-[#C21734]/30 text-[#C21734]/70 hover:border-[#C21734]/60 hover:text-[#C21734]'
+                              ? 'bg-[#c4d2b1] border-[#c4d2b1] text-[#2a2121]'
+                              : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:border-[#c4d2b1] hover:text-[#2a2121]'
                               }`}
                           >
                             <div className="w-4 h-4 text-current flex items-center justify-center">
@@ -1277,7 +1346,7 @@ function App() {
                       const featuredPosts = totalTasksList.filter(t =>
                         t.boost?.includes(1) &&
                         (!featuredFilterPlatform || t.platform === featuredFilterPlatform) &&
-                        (activePhase === 'all' || t.phase === activePhase || (activePhase === 'aftermath' && t.phase === 'aftermath2'))
+                        (activePhase === 'all' || t.phase === activePhase || ((activePhase === 'afterglow' || activePhase === 'aftermath') && (t.phase === 'afterglow' || t.phase === 'aftermath' || t.phase === 'aftermath2')))
                       ).sort((a, b) => {
                         const getSum = (t: typeof a) => t.likes + t.comments + t.shares + t.reposts + (t.saves || 0) + (t.views || 0);
                         const getTargetSum = (t: typeof a) => (t.targetLikes || 0) + (t.targetComments || 0) + (t.targetShares || 0) + (t.targetReposts || 0) + (t.targetSaves || 0) + (t.targetViews || 0);
@@ -1298,11 +1367,11 @@ function App() {
                       return (
                         <>
                           {/* Summary Bar */}
-                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#C21734]/10 mb-1">
+                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#c4d2b1]/10 mb-1">
                             <span className="text-[10px] text-prada-taupe/60">
                               {t('missionCount')}
                             </span>
-                            <span className="text-[11px] font-bold text-[#C21734]">
+                            <span className="text-[11px] font-bold text-[#c4d2b1]">
                               {featuredPosts.length} {t('missionCountUnit')}
                             </span>
                           </div>
@@ -1324,6 +1393,8 @@ function App() {
                                     <img
                                       src={post.image}
                                       alt={post.title || post.platform}
+                                      loading="lazy"
+                                      decoding="async"
                                       className="absolute inset-0 w-full h-full object-cover object-top"
                                       style={{ objectPosition: 'top center' }}
                                       referrerPolicy="no-referrer"
@@ -1412,7 +1483,7 @@ function App() {
                                   <div className="pt-1.5 border-t border-prada-warm/30 flex items-center justify-between">
                                     <span className="text-[9px] font-bold text-prada-charcoal/50 uppercase tracking-wider">{t('totalEngagementLabel')}</span>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-sm font-bold text-[#C21734] tabular-nums">{totalEngagement.toLocaleString()}</span>
+                                      <span className="text-sm font-bold text-[#c4d2b1] tabular-nums">{totalEngagement.toLocaleString()}</span>
                                       {(post.target ?? 0) > 0 && (
                                         <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/50'}`}>
                                           ({pct.toFixed(1)}%)
@@ -1449,21 +1520,21 @@ function App() {
                     {/* Title Row */}
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-[#C21734] text-sm sm:text-base leading-none">✦</span>
-                        <h3 className="text-[10px] sm:text-xs font-bold text-[#C21734] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
+                        <span className="text-[#c4d2b1] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#c4d2b1] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
                       </div>
                       {/* Minimize button — always visible top-right */}
                       <div className="flex flex-col items-center shrink-0">
                         <button
                           onClick={() => setActiveSection(null)}
-                          className="w-7 h-7 rounded-full bg-[#C21734]/10 text-[#C21734] border border-[#C21734]/20 shadow-sm hover:bg-[#C21734]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-full bg-[#c4d2b1]/10 text-[#c4d2b1] border border-[#c4d2b1]/20 shadow-sm hover:bg-[#c4d2b1]/20 active:scale-95 flex items-center justify-center transition-colors"
                           title={t('minimize')}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
-                        <span className="text-[6px] font-bold text-[#C21734]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                        <span className="text-[6px] font-bold text-[#c4d2b1]/60 tracking-wider mt-0.5 whitespace-nowrap">
                           {t('tapToHide')}
                         </span>
                       </div>
@@ -1474,8 +1545,8 @@ function App() {
                       <button
                         onClick={() => setFeaturedFilterPlatform(null)}
                         className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
-                          ? 'bg-[#C21734] border-transparent text-white'
-                          : 'bg-white border-[#C21734]/30 text-[#C21734]/70 hover:bg-[#C21734]/10'
+                          ? 'bg-[#c4d2b1] border-transparent text-[#2a2121]'
+                          : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:bg-[#c4d2b1]/10'
                           }`}
                       >
                         {t('allLabel') || 'All'}
@@ -1486,9 +1557,9 @@ function App() {
                           <button
                             key={p}
                             onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
-                            className={`w-7 h-7 rounded-full flex-shrink-0 text-[12px] border transition-colors flex items-center justify-center shadow-sm ${isActive
-                              ? 'bg-[#C21734] border-[#C21734] text-white'
-                              : 'bg-white border-[#C21734]/30 text-[#C21734]/70 hover:border-[#C21734]/60 hover:text-[#C21734]'
+                            className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
+                              ? 'bg-[#c4d2b1] border-[#c4d2b1] text-[#2a2121]'
+                              : 'bg-white border-[#c4d2b1] text-[#2a2121]/80 hover:border-[#c4d2b1] hover:text-[#2a2121]'
                               }`}
                           >
                             <div className="w-4 h-4 text-current flex items-center justify-center">
@@ -1639,27 +1710,27 @@ function App() {
 
           {/* Tasks List Header & Wrap */}
           {totalTasksList.length > 0 && !loading && !error && activeSection === 'tasks' && (
-            <div className="mb-4 bg-white/80 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#C21734]/20 shadow-2xl shadow-black/5 mt-2 animate-in fade-in zoom-in-95 duration-500">
+            <div className="mb-4 bg-white/80 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#c4d2b1]/20 shadow-2xl shadow-black/5 mt-2 animate-in fade-in zoom-in-95 duration-500">
               {/* Header with Title and Minimize */}
               <div className="flex flex-col gap-2 w-full mb-3">
                 {/* Title Row */}
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-1 sm:gap-1.5">
-                    <span className="text-[#C21734] text-sm sm:text-base leading-none">✦</span>
-                    <h3 className="text-[10px] sm:text-xs font-bold text-[#C21734] uppercase tracking-[0.15em] whitespace-nowrap">{t('tasks') || 'ALL MISSIONS'}</h3>
+                    <span className="text-[#c4d2b1] text-sm sm:text-base leading-none">✦</span>
+                    <h3 className="text-[10px] sm:text-xs font-bold text-[#c4d2b1] uppercase tracking-[0.15em] whitespace-nowrap">{t('tasks') || 'ALL MISSIONS'}</h3>
                   </div>
                   {/* Minimize button */}
                   <div className="flex flex-col items-center shrink-0">
                     <button
                       onClick={() => setActiveSection(null)}
-                      className="w-7 h-7 rounded-full bg-[#C21734]/10 text-[#C21734] border border-[#C21734]/20 shadow-sm hover:bg-[#C21734]/20 active:scale-95 flex items-center justify-center transition-colors"
+                      className="w-7 h-7 rounded-full bg-[#c4d2b1]/10 text-[#c4d2b1] border border-[#c4d2b1]/20 shadow-sm hover:bg-[#c4d2b1]/20 active:scale-95 flex items-center justify-center transition-colors"
                       title={t('minimize')}
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                       </svg>
                     </button>
-                    <span className="text-[6px] font-bold text-[#C21734]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                    <span className="text-[6px] font-bold text-[#c4d2b1]/60 tracking-wider mt-0.5 whitespace-nowrap">
                       {t('tapToHide')}
                     </span>
                   </div>
@@ -1670,8 +1741,8 @@ function App() {
                   <button
                     onClick={() => setTaskFilterPlatform(null)}
                     className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!taskFilterPlatform
-                      ? 'bg-[#C21734] border-transparent text-white'
-                      : 'bg-white border-[#C21734]/30 text-[#C21734]/70 hover:bg-[#C21734]/10'
+                      ? 'bg-[#c4d2b1] border-transparent text-[#2a2121]'
+                      : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:bg-[#c4d2b1]/10'
                       }`}
                   >
                     {t('allLabel') || 'All'}
@@ -1683,8 +1754,8 @@ function App() {
                         key={p}
                         onClick={() => setTaskFilterPlatform(isActive ? null : p)}
                         className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                          ? 'bg-[#C21734] border-[#C21734] text-white'
-                          : 'bg-white border-[#C21734]/30 text-[#C21734]/70 hover:border-[#C21734]/60 hover:text-[#C21734]'
+                          ? 'bg-[#c4d2b1] border-[#c4d2b1] text-[#2a2121]'
+                          : 'bg-white border-[#c4d2b1] text-[#2a2121]/80 hover:border-[#c4d2b1] hover:text-[#2a2121]'
                           }`}
                       >
                         <div className="w-4 h-4 text-current flex items-center justify-center">
@@ -1704,24 +1775,24 @@ function App() {
                     <div key={`${task.id}-${index}`}>
                       {(index === 0 || isTaskCompleted(task) !== isTaskCompleted(visibleTasks[index - 1])) && (
                         <div className="flex items-center gap-3 mb-2 mt-6 first:mt-2">
-                          <h3 className="text-sm font-bold text-[#011949] uppercase tracking-widest pl-2">
+                          <h3 className="text-sm font-bold text-[#2a2121] uppercase tracking-widest pl-2">
                             {isTaskCompleted(task) ? t('done') : t('pending')}
                           </h3>
-                          <div className="flex-1 h-px bg-[#011949]/20" />
+                          <div className="flex-1 h-px bg-[#2a2121]/20" />
                         </div>
                       )}
 
                       <div
                         onClick={() => { setSelectedTask(task); setShowMarkDone(true); setGeneratedMessage(''); }}
                         className={`flex items-center shrink-0 gap-2 rounded-2xl py-2.5 px-3 mb-1.5 border cursor-pointer hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-4 duration-300 ${isTaskCompleted(task)
-                          ? 'bg-slate-100 border-[#011949]/20 opacity-60 grayscale-[0.3]'
+                          ? 'bg-slate-100 border-[#2a2121]/20 opacity-60 grayscale-[0.3]'
                           : isTaskPinned(task)
-                            ? 'bg-amber-50/80 border-amber-400 shadow-md shadow-amber-500/10 relative overflow-hidden ring-1 ring-amber-300/60'
+                            ? 'bg-[#f6db6a]/20 border-[#f6db6a] shadow-md shadow-[#f6db6a]/20 relative overflow-hidden ring-1 ring-[#f6db6a]/80'
                             : task.focus === 2
-                              ? 'bg-gradient-to-r from-red-50 to-rose-50 border-[#C21734] shadow-md shadow-[#C21734]/10 relative overflow-hidden'
+                              ? 'bg-gradient-to-r from-red-50 to-rose-50 border-[#c4d2b1] shadow-md shadow-[#c4d2b1]/10 relative overflow-hidden'
                               : task.focus === 1
-                                ? 'bg-blue-50/50 border-[#011949]/30 shadow-sm relative overflow-hidden'
-                                : 'bg-white border-[#011949]/15'
+                                ? 'bg-blue-50/50 border-[#2a2121]/30 shadow-sm relative overflow-hidden'
+                                : 'bg-white border-[#2a2121]/15'
                           }`}
                         style={{ animationDelay: `${(index % 10) * 50}ms` }}
                       >
@@ -1733,21 +1804,21 @@ function App() {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[13px] font-medium text-[#011949] truncate">
+                            <span className="text-[13px] font-medium text-[#2a2121] truncate">
                               {task.title || t('noTitle')}
                             </span>
                             {isTaskPinned(task) && !isTaskCompleted(task) && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500 text-white rounded-full flex-shrink-0 flex items-center gap-0.5 shadow-sm">
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#f6db6a] text-[#2a2121] rounded-full flex-shrink-0 flex items-center gap-0.5 shadow-sm">
                                 {t('pinnedBadge') || '📌 ปักหมุด'}
                               </span>
                             )}
                             {task.focus === 2 && !isTaskCompleted(task) && !isTaskPinned(task) && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#C21734] text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-[#C21734]/30">
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#c4d2b1] text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-[#c4d2b1]/30">
                                 {t('hotBadge')}
                               </span>
                             )}
                             {task.focus === 1 && !isTaskCompleted(task) && !isTaskPinned(task) && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#011949] text-white rounded-full flex-shrink-0">
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#2a2121] text-white rounded-full flex-shrink-0">
                                 {t('focusBadge')}
                               </span>
                             )}
@@ -1756,14 +1827,14 @@ function App() {
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                             {(task.likes > 0 || (task.targetLikes ?? 0) > 0) && (
                               <span className="flex items-center gap-0.5 text-[10px] text-slate-600 font-medium">
-                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#C21734]"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#c4d2b1]"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
                                 <span>{task.likes.toLocaleString()}</span>
                                 {(task.targetLikes ?? 0) > 0 && <span className="opacity-60 text-[9px]">/ {(task.targetLikes ?? 0).toLocaleString()}</span>}
                               </span>
                             )}
                             {(task.comments > 0 || (task.targetComments ?? 0) > 0) && (
                               <span className="flex items-center gap-0.5 text-[10px] text-slate-600 font-medium">
-                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#011949]"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#2a2121]"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
                                 <span>{task.comments.toLocaleString()}</span>
                                 {(task.targetComments ?? 0) > 0 && <span className="opacity-60 text-[9px]">/ {(task.targetComments ?? 0).toLocaleString()}</span>}
                               </span>
@@ -1777,7 +1848,7 @@ function App() {
                             )}
                             {(task.reposts > 0 || (task.targetReposts ?? 0) > 0) && (
                               <span className="flex items-center gap-0.5 text-[10px] text-slate-600 font-medium">
-                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#011949]"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" /></svg>
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#2a2121]"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" /></svg>
                                 <span>{task.reposts.toLocaleString()}</span>
                                 {(task.targetReposts ?? 0) > 0 && <span className="opacity-60 text-[9px]">/ {(task.targetReposts ?? 0).toLocaleString()}</span>}
                               </span>
@@ -1809,14 +1880,14 @@ function App() {
                               e.stopPropagation();
                               handleUnmarkComplete(task);
                             }}
-                            className="text-slate-400 text-[11px] hover:text-[#011949] px-2 py-1 transition-colors"
+                            className="text-slate-400 text-[11px] hover:text-[#2a2121] px-2 py-1 transition-colors"
                           >
                             ↩
                           </button>
                         ) : (
                           <button
                             onClick={(e) => handleQuickComplete(task, e)}
-                            className="bg-[#C21734]/10 border border-[#C21734]/30 text-[#C21734] text-xs px-2.5 py-1 rounded-lg font-bold hover:bg-[#C21734] hover:text-white transition-colors"
+                            className="bg-[#c4d2b1]/10 border border-[#c4d2b1]/30 text-[#c4d2b1] text-xs px-2.5 py-1 rounded-lg font-bold hover:bg-[#c4d2b1] hover:text-white transition-colors"
                           >
                             ✓
                           </button>
@@ -1828,7 +1899,7 @@ function App() {
 
                 {/* Load more indicator */}
                 {visibleCount < filteredTasks.length && (
-                  <div className="text-center py-4 text-[#011949]/60 text-xs font-medium">
+                  <div className="text-center py-4 text-[#2a2121]/60 text-xs font-medium">
                     {t('scrollToLoad')} ({visibleCount}/{filteredTasks.length})
                   </div>
                 )}
@@ -1857,7 +1928,7 @@ function App() {
       < footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2" >
         <div className="max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto relative px-4">
           {/* Stats Bar - Deep Indigo Theme */}
-          <div className="bg-[#011949]/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-2xl border border-[#011949]/40 w-full shadow-[#011949]/30">
+          <div className="bg-[#2a2121]/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-2xl border border-[#2a2121]/40 w-full shadow-[#2a2121]/30">
             <button
               onClick={() => setShowPlatformSummaryModal(true)}
               className="flex items-center gap-1.5 hover:opacity-70 transition-opacity flex-shrink-0"
@@ -2293,7 +2364,7 @@ function App() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                     {selectedTask.boost && selectedTask.boost.includes(1) && (
-                      <span className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E00034] text-white shadow-sm flex items-center gap-1">
+                      <span className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#c4d2b1] text-white shadow-sm flex items-center gap-1">
                         🚀 Featured Boost
                       </span>
                     )}

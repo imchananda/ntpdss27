@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     const { gid, sheetName } = req.query;
-    const sheetId = process.env.SHEET_ID;
+    const sheetId = process.env.SHEET_ID || '1Z7GutAP-m5wWckVbngZaBed2cMNMThyBu2AY7D-Dn3I';
 
     if (!sheetId) {
         return res.status(400).json({ error: 'Missing sheet ID' });
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
     try {
         let url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid || '0'}`;
-        if (sheetName) {
+        if (sheetName && !gid) {
             url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
         }
 

@@ -1,32 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Archivo+Black&family=Ephesis&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Poiret+One&family=Ephesis&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 .font-archivo {
-  font-family: 'Archivo Black', sans-serif;
+  font-family: 'Cormorant Garamond', 'Poiret One', serif;
+  font-weight: 700;
 }
 
 .font-ephesis {
   font-family: 'Ephesis', cursive;
 }
 
-/* ===== Theme: NamtanFilm x Levi's (Denim Indigo & Iconic Red Tab) ===== */
+/* ===== Theme: Namtan × Prada SS 2027 (#c4d2b1 & #2a2121) ===== */
 :root {
-  --prada-offwhite: 248 249 252;   /* Crisp denim canvas off-white */
-  --prada-cream: 232 240 248;      /* Soft chambray wash ice blue */
-  --prada-parchment: 215 228 242;  /* Light vintage denim */
-  --prada-stone: 186 205 224;      /* Mid chambray accent */
-  --prada-warm: 155 182 214;       /* Indigo stitch border */
-  --prada-taupe: 75 105 145;       /* Faded indigo secondary text */
-  --prada-charcoal: 18 45 85;      /* Deep raw indigo navy */
-  --prada-black: 11 25 44;         /* Darkest denim navy */
-  --prada-gold: 224 0 52;          /* Iconic Levi's Red Tab #E00034 */
-  --prada-darkgold: 180 15 40;     /* Deep Red Tab Crimson */
+  --prada-offwhite: 247 249 245;   /* Soft sage ivory tint */
+  --prada-cream: 228 236 218;      /* Soft sage cream */
+  --prada-sage: 196 210 177;       /* #c4d2b1 Sage Green */
+  --prada-parchment: 196 210 177;  /* #c4d2b1 */
+  --prada-stone: 165 180 145;      /* Muted sage stone */
+  --prada-warm: 196 210 177;       /* Sage border accent */
+  --prada-taupe: 105 92 88;        /* Muted taupe text */
+  --prada-charcoal: 42 33 33;      /* #2a2121 Dark Espresso */
+  --prada-black: 25 18 18;         /* Luxury espresso black */
+  --prada-gold: 196 210 177;       /* #c4d2b1 Prada Sage Accent */
+  --prada-darkgold: 165 180 145;    /* Deep sage accent */
 
-  /* Contrast Stitching Accents */
-  --prada-red-light: 254 243 199;  /* Light amber stitch */
-  --prada-red: 229 169 60;         /* Levi's Arcuate Gold Stitching #E5A93C */
+  /* Luxury Accents */
+  --prada-red-light: 238 243 232;  /* Light sage tint */
+  --prada-red: 196 210 177;        /* Sage accent */
+}
+
+/* Performance & smooth rendering optimizations */
+html {
+  font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: rgb(var(--prada-offwhite));
+  overflow-x: hidden;
+}
+
+/* GPU hardware acceleration helper classes */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Optimize long task list rendering */
+.contain-render {
+  content-visibility: auto;
+  contain-intrinsic-size: 100px 300px;
 }
 
 /* Luxury Organic Fluid Mesh Gradient Animation */
@@ -45,35 +77,24 @@
 .animate-fluid-gradient {
   background-size: 300% 300%;
   animation: fluidMeshMove 18s ease-in-out infinite;
+  will-change: background-position;
 }
 
-/* Levi's Red Tab Badge Utility */
-.levis-red-tab {
-  background-color: #E00034;
-  color: #FFFFFF;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  box-shadow: 0 2px 8px rgba(224, 0, 52, 0.35);
+/* Prada Gold Accent Badge Utility */
+.prada-gold-accent {
+  background-color: #c4d2b1;
+  color: #2a2121;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  box-shadow: 0 2px 8px rgba(196, 210, 177, 0.35);
 }
 
-/* Denim Subtle Stitch Border */
-.denim-stitch {
-  border: 1px dashed rgba(155, 182, 214, 0.6);
+/* Luxury Subtle Border */
+.luxury-border {
+  border: 1px solid rgba(175, 165, 150, 0.4);
 }
 
-html {
-  font-family: 'Noto Sans Thai', 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  background-color: rgb(var(--prada-offwhite));
-}
-
-/* Custom scrollbar — warm neutral */
+/* Custom scrollbar — luxury taupe/gold */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -83,12 +104,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(184, 152, 110, 0.3);
+  background: rgba(175, 165, 150, 0.35);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(184, 152, 110, 0.5);
+  background: rgba(201, 169, 110, 0.5);
 }
 
 /* Safe area padding for mobile */
@@ -104,7 +125,6 @@ body {
     transform: translateY(-10px) rotate(0deg);
     opacity: 1;
   }
-
   100% {
     transform: translateY(100vh) rotate(720deg);
     opacity: 0;
@@ -116,19 +136,15 @@ body {
     transform: translateY(-20px) translateX(0) rotate(0deg);
     opacity: 1;
   }
-
   25% {
     transform: translateY(25vh) translateX(var(--swing, 30px)) rotate(180deg);
   }
-
   50% {
     transform: translateY(50vh) translateX(calc(var(--swing, 30px) * -1)) rotate(360deg);
   }
-
   75% {
     transform: translateY(75vh) translateX(var(--swing, 30px)) rotate(540deg);
   }
-
   100% {
     transform: translateY(100vh) translateX(0) rotate(720deg);
     opacity: 0;
@@ -136,13 +152,10 @@ body {
 }
 
 @keyframes sparkle {
-
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(0);
     opacity: 0;
   }
-
   50% {
     transform: scale(1.5);
     opacity: 1;
@@ -154,15 +167,12 @@ body {
     transform: translateY(100vh) scale(1);
     opacity: 0;
   }
-
   10% {
     opacity: 1;
   }
-
   90% {
     opacity: 1;
   }
-
   100% {
     transform: translateY(-20vh) scale(1.2);
     opacity: 0;
@@ -174,12 +184,10 @@ body {
     transform: scale(0);
     opacity: 1;
   }
-
   50% {
     transform: scale(3);
     opacity: 0.5;
   }
-
   100% {
     transform: scale(5);
     opacity: 0;
@@ -191,11 +199,9 @@ body {
     transform: scale(0.5);
     opacity: 0;
   }
-
   50% {
     transform: scale(1.05);
   }
-
   100% {
     transform: scale(1);
     opacity: 1;
@@ -206,7 +212,6 @@ body {
   0% {
     background-position: -200% 0;
   }
-
   100% {
     background-position: 200% 0;
   }
@@ -214,26 +219,32 @@ body {
 
 .animate-confetti {
   animation: confetti 3s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-confetti-enhanced {
   animation: confettiEnhanced 3s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-sparkle {
   animation: sparkle 1s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 .animate-float-up {
   animation: floatUp 4s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-burst-fade {
   animation: burstFade 1.5s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-popup {
   animation: popup 0.4s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-shimmer {
@@ -252,12 +263,10 @@ body {
     from {
       opacity: 0;
     }
-
     to {
       opacity: 1;
     }
   }
-
   animation-name: fadeIn;
 }
 
@@ -266,12 +275,10 @@ body {
     from {
       transform: scale(0.95);
     }
-
     to {
       transform: scale(1);
     }
   }
-
   animation-name: zoomIn95;
 }
 
@@ -280,18 +287,14 @@ body {
     from {
       transform: translateX(1rem);
     }
-
     to {
       transform: translateX(0);
     }
   }
-
   animation-name: slideInRight;
 }
 
 /* ── End Credits scroll animation ── */
-/* Must live here (global), NOT inside JSX <style> tags.                    */
-/* In-JSX <style> accumulates on every mount/unmount cycle → iOS freeze.    */
 @keyframes credits-scroll {
   0%   { transform: translateY(100vh); }
   100% { transform: translateY(-50%); }
@@ -299,6 +302,7 @@ body {
 
 .end-credits-scroller {
   animation: credits-scroll var(--credits-duration, 40s) linear infinite;
+  will-change: transform;
 }
 
 /* Hide scrollbar while still allowing mouse/touch scroll */

@@ -14,7 +14,6 @@ function isAdminRoute(hash: string): boolean {
   return (
     hash.startsWith('#/admin') ||
     hash === '#/admin-prada-calc' ||
-    hash === '#/admin-levis-calc' ||
     hash === '#/admin-calc' ||
     hash === '#/admin-data'
   )

@@ -71,7 +71,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
     // Check remote sheet config to see what the admin set
     const checkRemoteAccess = async () => {
       try {
-        const res = await fetch(`/api/sheet?gid=0&_t=${Date.now()}`, { cache: 'no-store' })
+        const res = await fetch(`/api/sheet?gid=543974967&sheetName=global_setting&_t=${Date.now()}`, { cache: 'no-store' })
         if (res.ok) {
           const csv = await res.text()
           const lines = csv.replace(/^\uFEFF/, '').split('\n')
@@ -85,7 +85,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
             for (let i = 1; i < lines.length; i++) {
               const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''))
               const rowId = idIdx !== -1 ? cols[idIdx] : ''
-              if (rowId === 'global_settings') {
+              if (rowId === 'global_settings' || rowId === 'global_setting' || i === 1) {
                 foundGlobalSettings = true
                 const markVal = markIdx !== -1 ? cols[markIdx] : ''
                 const privVal = privIdx !== -1 ? cols[privIdx] : ''
@@ -146,10 +146,10 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
 
     const envUserPwd = (import.meta as any).env?.VITE_USER_PASSWORD || (import.meta as any).env?.VITE_SITE_PASSWORD || ''
     const isBuiltInMatch =
-      password === 'levis2026' ||
+      password === 'prada2027' ||
       password === 'engagement07NTF' ||
       password === 'admin' ||
-      password === 'levis' ||
+      password === 'prada' ||
       (envUserPwd && password === envUserPwd)
 
     if (isBuiltInMatch) {
@@ -199,11 +199,11 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
       {/* Ambient background decorations */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 right-0 h-1"
-          style={{ background: 'linear-gradient(90deg, #E00034, #122D55, #E00034)' }} />
+          style={{ background: 'linear-gradient(90deg, #c4d2b1, #2a2121, #c4d2b1)' }} />
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #E00034, transparent)' }} />
+          style={{ background: 'radial-gradient(circle, #c4d2b1, transparent)' }} />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #122D55, transparent)' }} />
+          style={{ background: 'radial-gradient(circle, #2a2121, transparent)' }} />
       </div>
 
       {/* Card */}
@@ -212,30 +212,32 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
         style={{
           background: 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(155, 182, 214, 0.4)',
+          border: '1px solid rgba(196, 210, 177, 0.6)',
           borderRadius: '16px',
-          boxShadow: '0 20px 60px rgba(18,45,85,0.12), 0 4px 16px rgba(0,0,0,0.04)',
+          boxShadow: '0 20px 60px rgba(42,33,33,0.12), 0 4px 16px rgba(0,0,0,0.04)',
         }}
       >
         {/* Top accent bar */}
         <div className="h-1 w-full rounded-t-2xl"
-          style={{ background: 'linear-gradient(90deg, #E00034, #122D55, #E00034)' }} />
+          style={{ background: 'linear-gradient(90deg, #c4d2b1, #2a2121, #c4d2b1)' }} />
 
         <div className="px-10 py-10">
           {/* Logo / Brand */}
           <div className="text-center mb-7">
-            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 mb-3 rounded bg-[#E00034] text-white text-[11px] font-black tracking-widest shadow-sm">
-              LEVI'S
+            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 mb-3 rounded bg-[#2a2121] text-white text-[11px] font-bold tracking-[0.2em] shadow-sm"
+              style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+              PRADA
             </div>
-            <p className="text-xs tracking-[0.25em] uppercase mb-1 font-bold text-[#55739B]">
-              NAMTAN × FILM
+            <p className="text-xs tracking-[0.25em] uppercase mb-1 font-bold text-[#695C58]">
+              NAMTAN × PRADA
             </p>
-            <h1 className="text-2xl tracking-[0.05em] font-extrabold text-[#122D55]">
-              LIVE IN LEVI'S
+            <h1 className="text-2xl tracking-[0.08em] font-bold text-[#2a2121]"
+              style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+              SS 2027
             </h1>
             <div className="mt-2.5 mx-auto w-12 h-0.5 rounded-full"
-              style={{ background: 'linear-gradient(90deg, #E00034, #122D55)' }} />
-            <p className="mt-3 text-[11px] tracking-widest uppercase font-semibold text-[#55739B]">
+              style={{ background: 'linear-gradient(90deg, #c4d2b1, #2a2121)' }} />
+            <p className="mt-3 text-[11px] tracking-widest uppercase font-semibold text-[#695C58]">
               Private Access
             </p>
           </div>
@@ -243,7 +245,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="relative">
-              <label className="block text-xs tracking-wider uppercase mb-1.5 font-bold text-[#122D55]">
+              <label className="block text-xs tracking-wider uppercase mb-1.5 font-bold text-[#2a2121]">
                 Password
               </label>
               <input
@@ -256,21 +258,21 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
                 disabled={loading}
                 className="w-full px-4 py-3 text-sm outline-none transition-all duration-200 disabled:opacity-50 rounded-xl"
                 style={{
-                  background: '#F0F4F8',
+                  background: '#F7F8F4',
                   border: error
-                    ? '1px solid #E00034'
-                    : '1px solid rgba(155, 182, 214, 0.6)',
-                  color: '#122D55',
+                    ? '1px solid #c4d2b1'
+                    : '1px solid rgba(196, 210, 177, 0.8)',
+                  color: '#2a2121',
                   letterSpacing: '0.05em',
                 }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#122D55'
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,45,85,0.1)'
+                  e.currentTarget.style.borderColor = '#2a2121'
+                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(42,33,33,0.1)'
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = error
-                    ? '#E00034'
-                    : 'rgba(155, 182, 214, 0.6)'
+                    ? '#c4d2b1'
+                    : 'rgba(196, 210, 177, 0.8)'
                   e.currentTarget.style.boxShadow = 'none'
                 }}
               />
@@ -278,7 +280,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
 
             {/* Error message */}
             {error && (
-              <p className="text-xs text-center font-semibold animate-[fadeIn_0.3s_ease] text-[#E00034]">
+              <p className="text-xs text-center font-semibold animate-[fadeIn_0.3s_ease] text-[#d4380d]">
                 {error}
               </p>
             )}
@@ -290,19 +292,19 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
               className="w-full py-3 text-xs tracking-[0.15em] uppercase font-bold transition-all duration-300 rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-white"
               style={{
                 background: password.trim() && !loading
-                  ? '#122D55'
-                  : 'rgba(18,45,85, 0.6)',
+                  ? '#2a2121'
+                  : 'rgba(42,33,33, 0.6)',
                 cursor: loading || !password.trim() ? 'not-allowed' : 'pointer',
               }}
               onMouseEnter={(e) => {
                 if (!loading && password.trim()) {
-                  e.currentTarget.style.background = '#0B192C'
+                  e.currentTarget.style.background = '#191212'
                 }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = password.trim() && !loading
-                  ? '#122D55'
-                  : 'rgba(18,45,85, 0.6)'
+                  ? '#2a2121'
+                  : 'rgba(42,33,33, 0.6)'
               }}
             >
               {loading ? (

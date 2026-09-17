@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     const { gid } = req.query;
-    const msgSheetId = process.env.VITE_MSG_SHEET_ID;
+    const msgSheetId = process.env.VITE_MSG_SHEET_ID || '1fIgIeLfOsfsAg2-ZOH9TQOQm3E6r0eOBY33NP788PI4';
 
     if (!msgSheetId) {
         return res.status(400).json({ error: 'Missing VITE_MSG_SHEET_ID env variable' });

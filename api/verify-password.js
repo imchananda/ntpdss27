@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     if (!body) body = {};
 
     const { password } = body;
-    const correctPassword = process.env.SITE_PASSWORD;
+    const correctPassword = process.env.ADMIN_PASSWORD || process.env.SITE_PASSWORD || process.env.VITE_ADMIN_PASSWORD;
 
     if (!correctPassword) {
         return res.status(500).json({ error: 'Server misconfigured' });

@@ -41,52 +41,42 @@ export default async function handler(req, res) {
       ? new File([buffer], safeName, { type: mimeType })
       : new Blob([buffer], { type: mimeType });
 
-    // 1. Try Catbox Moe Main Server
-    try {
-      const fd = new FormData();
-      fd.append('reqtype', 'fileupload');
-      fd.append('fileToUpload', fileObj, safeName);
+    // Upload exclusively to Catbox Main Server (https://catbox.moe/user/api.php)
+    // to ensure permanent storage on https://files.catbox.moe
+    let lastError = '';
+    const userhash = process.env.CATBOX_USERHASH || '';
 
-      const catboxRes = await fetch('https://catbox.moe/user/api.php', {
-        method: 'POST',
-        headers: customHeaders,
-        body: fd,
-      });
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const fd = new FormData();
+        fd.append('reqtype', 'fileupload');
+        if (userhash) fd.append('userhash', userhash);
+        fd.append('fileToUpload', fileObj, safeName);
 
-      const directUrl = (await catboxRes.text()).trim();
-      if (catboxRes.ok && directUrl.startsWith('http')) {
-        return res.status(200).json({ ok: true, url: directUrl, provider: 'catbox' });
+        const catboxRes = await fetch('https://catbox.moe/user/api.php', {
+          method: 'POST',
+          headers: customHeaders,
+          body: fd,
+        });
+
+        const directUrl = (await catboxRes.text()).trim();
+        if (catboxRes.ok && directUrl.startsWith('http')) {
+          // Ensure URL starts with files.catbox.moe for permanent links
+          return res.status(200).json({ ok: true, url: directUrl, provider: 'catbox' });
+        }
+        lastError = directUrl || `HTTP ${catboxRes.status}`;
+        console.warn(`Catbox upload attempt ${attempt} warning:`, catboxRes.status, directUrl);
+      } catch (catboxErr) {
+        lastError = catboxErr.message;
+        console.warn(`Catbox upload attempt ${attempt} failed:`, catboxErr.message);
       }
-      console.warn('Catbox upload warning:', catboxRes.status, directUrl);
-    } catch (catboxErr) {
-      console.warn('Catbox upload failed:', catboxErr.message);
-    }
-
-    // 2. Fallback to Litterbox (Catbox temporary/backup server)
-    try {
-      const fd = new FormData();
-      fd.append('reqtype', 'fileupload');
-      fd.append('time', '72h');
-      fd.append('fileToUpload', fileObj, safeName);
-
-      const litterRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
-        method: 'POST',
-        headers: customHeaders,
-        body: fd,
-      });
-
-      const directUrl = (await litterRes.text()).trim();
-      if (litterRes.ok && directUrl.startsWith('http')) {
-        return res.status(200).json({ ok: true, url: directUrl, provider: 'litterbox' });
-      }
-      console.warn('Litterbox upload warning:', litterRes.status, directUrl);
-    } catch (litterErr) {
-      console.warn('Litterbox upload failed:', litterErr.message);
+      // Brief delay before retry if attempt failed
+      if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
     }
 
     return res.status(500).json({
       ok: false,
-      error: 'ไม่สามารถอัปโหลดรูปภาพไปยัง Catbox Cloud ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง หรือใช้การ "แปะลิงก์รูป (URL)" แทน'
+      error: `ไม่สามารถอัปโหลดไปยัง Catbox Cloud (files.catbox.moe) ได้ในขณะนี้ (${lastError}) กรุณาลองใหม่อีกครั้ง หรือใช้การ "แปะลิงก์รูป (URL)" แทน`
     });
   } catch (err) {
     console.error('Upload image error:', err);

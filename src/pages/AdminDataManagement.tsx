@@ -47,7 +47,8 @@ export interface AdminSheetTask {
   title: string;
   url: string;
   hashtag: string;
-  artist?: string; // 'both' | 'namtan' | 'film' | 'levis' | 'media'
+  artist?: string; // 'namtan'
+  phase?: string;
   focus?: number;
   boost?: string;
   image?: string;
@@ -86,7 +87,7 @@ interface AdminDataManagementProps {
 }
 
 // ─── Config & Constants ───────────────────────────────────────────────────────
-export const DEFAULT_LEVIS_HASHTAGS = `#NamtanFilmxLevis\n#LiveInLevis\n#LevisThailand\n#น้ำตาลฟิล์ม\n#NamtanFilm`;
+export const DEFAULT_PRADA_HASHTAGS = `#NamtanxPrada\n#PradaSS27\n#PradaThailand\n#น้ำตาลฟิล์ม\n#Namtan`;
 
 const PLATFORM_OPTIONS = [
   { id: 'all', label: 'ทั้งหมด (All)', icon: null },
@@ -101,17 +102,17 @@ const PLATFORM_OPTIONS = [
 ];
 
 export const ARTIST_CATEGORIES = [
-  { id: 'both', label: '🤍❤️‍🩹 คู่ NamtanFilm', badgeColor: 'bg-[#E00034] text-white' },
-  { id: 'namtan', label: '💙 Namtan เดี่ยว', badgeColor: 'bg-blue-600 text-white' },
-  { id: 'film', label: '💛 Film เดี่ยว', badgeColor: 'bg-amber-500 text-white' },
+  { id: 'namtan', label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
+  { id: 'prada', label: '✦ Prada Official', badgeColor: 'bg-[#2a2121] text-white' },
+  { id: 'media', label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-700 text-white' },
 ];
 
 export const ALL_KNOWN_ARTIST_BADGES: Record<string, { label: string; badgeColor: string }> = {
-  both: { label: '🤍❤️‍🩹 คู่ NamtanFilm', badgeColor: 'bg-[#E00034] text-white' },
-  namtan: { label: '💙 Namtan เดี่ยว', badgeColor: 'bg-blue-600 text-white' },
-  film: { label: '💛 Film เดี่ยว', badgeColor: 'bg-amber-500 text-white' },
-  levis: { label: '👖 Levi\'s Official', badgeColor: 'bg-[#122D55] text-white' },
-  media: { label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-600 text-white' },
+  both: { label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
+  namtan: { label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
+  film: { label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
+  prada: { label: '✦ Prada Official', badgeColor: 'bg-[#2a2121] text-white' },
+  media: { label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-700 text-white' },
 };
 
 const normalizeUrl = (u: string): string => {
@@ -257,7 +258,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       const saved = localStorage.getItem('ntf_global_hashtags');
       if (saved) return saved;
     } catch { /* ignore */ }
-    return DEFAULT_LEVIS_HASHTAGS;
+    return DEFAULT_PRADA_HASHTAGS;
   });
   const [syncToAllPosts, setSyncToAllPosts] = useState(false);
 
@@ -329,9 +330,9 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     if (!text) return true;
     const clean = text.trim();
     return (
-      clean === DEFAULT_LEVIS_HASHTAGS.trim() ||
+      clean === DEFAULT_PRADA_HASHTAGS.trim() ||
       clean.includes('???????????') ||
-      (clean.includes('#NamtanFilmxLevis') && clean.includes('#LiveInLevis') && clean.includes('#LevisThailand'))
+      (clean.includes('#NamtanxPrada') && (clean.includes('#PradaFW27') || clean.includes('#PradaSS27')) && clean.includes('#PradaThailand'))
     );
   }, []);
 
@@ -356,6 +357,15 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     } catch {
       return false;
     }
+  });
+  const [defaultActivePhase, setDefaultActivePhase] = useState<'all' | 'pre' | 'airport' | 'show' | 'afterglow'>(() => {
+    try {
+      const saved = localStorage.getItem('ntf_default_active_phase');
+      if (saved && ['all', 'pre', 'airport', 'show', 'afterglow'].includes(saved)) {
+        return saved as any;
+      }
+    } catch { /* ignore */ }
+    return 'all';
   });
   const [defaultStartSection, setDefaultStartSection] = useState<'boost' | 'tasks' | 'important' | 'none'>(() => {
     try {
@@ -428,7 +438,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     title: '',
     url: '',
     hashtag: globalHashtags,
-    artist: 'both',
+    artist: 'namtan',
+    phase: 'pre',
     boost: '',
     image: '',
     likes: '',
@@ -454,7 +465,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       title: '',
       url: '',
       hashtag: globalHashtags,
-      artist: 'both',
+      artist: 'namtan',
+      phase: 'pre',
       boost: '',
       image: '',
       likes: '',
@@ -581,13 +593,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       const msgRes = await fetch('/api/msg-sheet?gid=0');
       if (msgRes.ok) {
         const csv = await msgRes.text();
-        const firstLine = (csv.split('\n')[0] || '').toLowerCase();
-        // Check for "completed text" column (Column E in user's sheet)
-        if (firstLine.includes('completed text') || firstLine.includes('completed_text') || firstLine.includes('message_th') || firstLine.includes('message_en')) {
+        const lines = csv.split('\n').filter(l => l.trim().length > 0);
+        if (lines.length > 0) {
           wOk = true;
-          // Count data rows
-          const lines = csv.split('\n').filter(l => l.trim().length > 0);
-          wCount = Math.max(0, lines.length - 1); // minus header
+          wCount = lines.length > 1 ? lines.length - 1 : lines.length;
         } else {
           wOk = false;
         }
@@ -663,6 +672,53 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           continue;
         }
 
+      // Also try reading from dedicated global_setting tab (GID 543974967)
+      try {
+        const gRes = await fetch(`/api/sheet?gid=543974967&sheetName=global_setting&_t=${Date.now()}`, { cache: 'no-store' });
+        if (gRes.ok) {
+          const gCsv = await gRes.text();
+          const gRows = parseCSV(gCsv.replace(/^\uFEFF/, ''));
+          if (gRows.length > 1) {
+            const gHeaders = gRows[0].map(h => h.toLowerCase().trim());
+            const getGVal = (r: string[], h: string) => {
+              const idx = gHeaders.indexOf(h.toLowerCase().trim());
+              return idx !== -1 ? (r[idx] || '') : '';
+            };
+            const r = gRows[1];
+            const cfgTags = getGVal(r, 'hashtags') || getGVal(r, 'hashtag');
+            if (cfgTags) {
+              setGlobalHashtags(cfgTags);
+              localStorage.setItem('ntf_global_hashtags', cfgTags);
+            }
+            const phaseVal = (getGVal(r, 'show_phase_filter') || getGVal(r, 'phase_filter')).toLowerCase().trim();
+            if (phaseVal) {
+              const isPhaseOn = phaseVal === '1' || phaseVal === 'true' || phaseVal === 'yes';
+              setShowPhaseFilter(isPhaseOn);
+              localStorage.setItem('ntf_show_phase_filter', isPhaseOn ? 'true' : 'false');
+            }
+            const defaultPhaseVal = (getGVal(r, 'default_active_phase') || getGVal(r, 'default_phase') || getGVal(r, 'initial_phase')).toLowerCase().trim();
+            if (defaultPhaseVal && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(defaultPhaseVal)) {
+              const normPhase = defaultPhaseVal === 'aftermath' ? 'afterglow' : defaultPhaseVal;
+              setDefaultActivePhase(normPhase as any);
+              localStorage.setItem('ntf_default_active_phase', normPhase);
+            }
+            const defSec = (getGVal(r, 'default_section') || getGVal(r, 'active_section')).toLowerCase().trim();
+            if (defSec && ['boost', 'tasks', 'important', 'none'].includes(defSec)) {
+              setDefaultStartSection(defSec as any);
+              localStorage.setItem('ntf_default_start_section', defSec);
+            }
+            const endCreditsVal = (getGVal(r, 'show_end_credits') || getGVal(r, 'enable_end_credits') || getGVal(r, 'end_credits')).toLowerCase().trim();
+            if (endCreditsVal) {
+              const isCreditsOn = endCreditsVal === '1' || endCreditsVal === 'true' || endCreditsVal === 'yes';
+              setShowEndCreditsToggle(isCreditsOn);
+              localStorage.setItem('ntf_show_end_credits', isCreditsOn ? 'true' : 'false');
+            }
+          }
+        }
+      } catch (errG) {
+        console.warn('Could not read global_setting tab:', errG);
+      }
+
         const url = getVal(r, 'url');
         if (!url) continue;
 
@@ -680,11 +736,9 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         let artistVal = getVal(r, 'artist').toLowerCase().trim();
         if (!artistVal) {
           const t = (getVal(r, 'title') || getVal(r, 'media')).toLowerCase();
-          if (t.includes('namtanfilm') || (t.includes('namtan') && t.includes('film'))) artistVal = 'both';
-          else if (t.includes('namtan') || t.includes('tipnaree')) artistVal = 'namtan';
-          else if (t.includes('film') || t.includes('rachanun')) artistVal = 'film';
-          else if (t.includes('levi')) artistVal = 'levis';
-          else artistVal = 'media';
+          if (t.includes('prada')) artistVal = 'prada';
+          else if (t.includes('สื่อ') || t.includes('magazine') || t.includes('vogue') || t.includes('elle')) artistVal = 'media';
+          else artistVal = 'namtan';
         }
 
         const taskId = id || url || String(i);
@@ -700,6 +754,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           url,
           hashtag: getVal(r, 'hashtag') || getVal(r, 'hashtags') || '',
           artist: artistVal,
+          phase: getVal(r, 'phase') || 'pre',
           boost: getVal(r, 'boost'),
           image: taskImage,
           likes: getVal(r, 'likes'),
@@ -798,6 +853,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         title: formData.title || formData.media,
         url: formData.url,
         artist: formData.artist,
+        phase: formData.phase,
         hashtag: formData.hashtag,
         hashtags: formData.hashtag,
         focus: formData.mark ? '1' : '0',
@@ -955,7 +1011,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       title: task.title,
       url: task.url,
       hashtag: getEffectiveHashtags(task),
-      artist: task.artist || 'both',
+      artist: task.artist || 'namtan',
+      phase: task.phase || 'pre',
       boost: task.boost || '',
       image: task.image || '',
       likes: task.likes || '',
@@ -1027,6 +1084,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     setIsSubmitting(true);
     localStorage.setItem('ntf_private_access_enabled', privateAccessEnabled ? 'true' : 'false');
     localStorage.setItem('ntf_show_phase_filter', showPhaseFilter ? 'true' : 'false');
+    localStorage.setItem('ntf_default_active_phase', defaultActivePhase);
     localStorage.setItem('ntf_default_start_section', defaultStartSection);
     localStorage.setItem('ntf_show_end_credits', showEndCreditsToggle ? 'true' : 'false');
     localStorage.setItem('ntf_global_hashtags', globalHashtags);
@@ -1034,7 +1092,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       try { sessionStorage.removeItem('ntf_auth_token'); } catch { /* ignore */ }
     }
     window.dispatchEvent(new CustomEvent('ntf_access_mode_changed', { detail: { privateEnabled: privateAccessEnabled } }));
-    window.dispatchEvent(new CustomEvent('ntf_phase_filter_changed', { detail: { showPhaseFilter } }));
+    window.dispatchEvent(new CustomEvent('ntf_phase_filter_changed', { detail: { showPhaseFilter, defaultActivePhase } }));
+    window.dispatchEvent(new CustomEvent('ntf_default_phase_changed', { detail: { defaultActivePhase } }));
     window.dispatchEvent(new CustomEvent('ntf_default_section_changed', { detail: { defaultSection: defaultStartSection } }));
     window.dispatchEvent(new CustomEvent('ntf_end_credits_changed', { detail: { showEndCredits: showEndCreditsToggle } }));
     window.dispatchEvent(new CustomEvent('ntf_hashtags_changed', { detail: { hashtags: globalHashtags } }));
@@ -1043,52 +1102,49 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     setFormData(prev => ({ ...prev, hashtag: globalHashtags }));
 
     try {
-      // 1. Update global_settings row
-      await fetch('/api/admin-sheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'updateRow',
-          sheetGID: '0',
-          data: {
-            id: 'global_settings',
-            mark: privateAccessEnabled,
-            private_access: privateAccessEnabled,
-            hashtag: globalHashtags,
-            hashtags: globalHashtags,
-            show_phase_filter: showPhaseFilter ? '1' : '0',
-            phase_filter: showPhaseFilter ? '1' : '0',
-            default_section: defaultStartSection,
-            active_section: defaultStartSection,
-            show_end_credits: showEndCreditsToggle ? '1' : '0',
-            enable_end_credits: showEndCreditsToggle ? '1' : '0',
-          },
-        }),
-      });
+      // 1. Update dedicated global_setting sheet tab (GID 543974967 / sheetName "global_setting")
+      const globalPayload = {
+        id: 'global_settings',
+        mark: privateAccessEnabled,
+        private_access: privateAccessEnabled,
+        hashtag: globalHashtags,
+        hashtags: globalHashtags,
+        show_phase_filter: showPhaseFilter ? '1' : '0',
+        phase_filter: showPhaseFilter ? '1' : '0',
+        default_active_phase: defaultActivePhase,
+        default_phase: defaultActivePhase,
+        default_section: defaultStartSection,
+        active_section: defaultStartSection,
+        show_end_credits: showEndCreditsToggle ? '1' : '0',
+        enable_end_credits: showEndCreditsToggle ? '1' : '0',
+      };
 
-      // 1.1 Update Toggle Setting sheet (GID 755512629 / sheetName "Toggle Setting")
       try {
-        await fetch('/api/admin-sheet', {
+        const globalRes = await fetch('/api/admin-sheet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'updateRow',
-            sheetName: 'Toggle Setting',
-            sheetGID: '755512629',
-            data: {
-              id: 'toggle_settings',
-              default_section: defaultStartSection,
-              active_section: defaultStartSection,
-              show_phase_filter: showPhaseFilter ? '1' : '0',
-              private_access: privateAccessEnabled ? '1' : '0',
-              show_end_credits: showEndCreditsToggle ? '1' : '0',
-              enable_end_credits: showEndCreditsToggle ? '1' : '0',
-              hashtags: globalHashtags,
-            },
+            sheetName: 'global_setting',
+            sheetGID: '543974967',
+            data: globalPayload,
           }),
         });
-      } catch (errToggle) {
-        console.warn('Failed to save to Toggle Setting sheet:', errToggle);
+        const gJson = await globalRes.json().catch(() => null);
+        if (!globalRes.ok || !gJson?.ok || gJson?.data?.error === 'Row not found to update') {
+          await fetch('/api/admin-sheet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'addRow',
+              sheetName: 'global_setting',
+              sheetGID: '543974967',
+              data: globalPayload,
+            }),
+          });
+        }
+      } catch (errGlobal) {
+        console.warn('Failed to save to global_setting sheet:', errGlobal);
       }
 
       // 2. If syncToAllPosts is selected, update all existing posts in state and in sheet
@@ -1132,14 +1188,14 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] font-sans pb-16">
+    <div className="min-h-screen bg-[#F7F8F4] font-sans pb-16">
       {/* ── Top Header ── */}
-      <header className="bg-[#122D55] text-white sticky top-0 z-30 shadow-md border-b border-[#E00034]">
+      <header className="bg-[#2a2121] text-white sticky top-0 z-30 shadow-md border-b border-[#c4d2b1]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div>
               <h1 className="text-base sm:text-lg font-black tracking-wide leading-none">
-                NamtanFilm × Levi’s
+                Namtan × Prada’s
               </h1>
               <p className="text-[10px] text-sky-300/80 leading-tight mt-1">
                 จัดการและนำเข้าข้อมูลโพสต์โซเชียลมีเดีย
@@ -1153,7 +1209,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 resetForm();
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 rounded-xl bg-[#E00034] hover:bg-[#B40F28] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#E00034]/25 transition-all active:scale-95 hover:scale-[1.02]"
+              className="px-4 py-2 rounded-xl bg-[#c4d2b1] hover:bg-[#B40F28] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#c4d2b1]/25 transition-all active:scale-95 hover:scale-[1.02]"
             >
               <FaPlus className="text-xs sm:text-sm" />
               <span>เพิ่มโพสต์</span>
@@ -1180,7 +1236,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
             {/* Google label — icon only on mobile */}
             <div className="flex items-center gap-1 shrink-0 pr-0.5 sm:pr-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-bold text-[#122D55] text-[11.5px] whitespace-nowrap">
+              <span className="font-bold text-[#2a2121] text-[11.5px] whitespace-nowrap">
                 <span className="hidden sm:inline">📡 Google</span>
                 <span className="sm:hidden text-[12px]">📡</span>
               </span>
@@ -1316,7 +1372,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               className="px-1.5 sm:px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 text-[11px] font-semibold flex items-center gap-1 transition-all shadow-2xs active:scale-95 disabled:opacity-50 whitespace-nowrap"
               title="ตรวจสอบสถานะการเชื่อมต่อใหม่"
             >
-              <FaSync className={`text-[10px] text-slate-400 ${connState.testing ? 'animate-spin text-[#122D55]' : ''}`} />
+              <FaSync className={`text-[10px] text-slate-400 ${connState.testing ? 'animate-spin text-[#2a2121]' : ''}`} />
               <span className="hidden sm:inline">ตรวจเช็ค</span>
             </button>
           </div>
@@ -1356,7 +1412,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="ค้นหาชื่อสื่อ, หัวข้อโพสต์, URL หรือแฮชแท็ก..."
-              className="w-full bg-[#F0F4F8]/80 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm outline-none border border-[#9BB6D6]/40 focus:border-[#122D55] text-[#122D55]"
+              className="w-full bg-[#F7F8F4]/80 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm outline-none border border-[#9BB6D6]/40 focus:border-[#2a2121] text-[#2a2121]"
             />
             {searchTerm && (
               <button
@@ -1373,7 +1429,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
             {/* Platform Dropdown */}
             <div>
               <label className="block text-[11px] font-bold text-gray-600 mb-1 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-[#122D55]">
+                <span className="flex items-center gap-1.5 text-[#2a2121]">
                   <span>📱</span>
                   <span>แพลตฟอร์ม (Platform)</span>
                 </span>
@@ -1392,7 +1448,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 <select
                   value={filterPlatform}
                   onChange={e => setFilterPlatform(e.target.value)}
-                  className="w-full appearance-none bg-[#F0F4F8] border border-[#9BB6D6]/40 rounded-xl pl-9 pr-9 py-2 text-xs font-bold text-[#122D55] outline-none focus:bg-white focus:border-[#122D55] focus:ring-1 focus:ring-[#122D55] transition-all shadow-xs"
+                  className="w-full appearance-none bg-[#F7F8F4] border border-[#9BB6D6]/40 rounded-xl pl-9 pr-9 py-2 text-xs font-bold text-[#2a2121] outline-none focus:bg-white focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-xs"
                 >
                   {PLATFORM_OPTIONS.map(p => {
                     const count = p.id === 'all' ? tasks.length : tasks.filter(t => t.platform === p.id).length;
@@ -1414,7 +1470,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               {/* Artist Category Dropdown */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-600 mb-1 flex items-center justify-between">
-                  <span className="flex items-center gap-1 text-[#122D55] truncate">
+                  <span className="flex items-center gap-1 text-[#2a2121] truncate">
                     <span>🏷️</span>
                     <span>หมวดหมู่</span>
                   </span>
@@ -1423,7 +1479,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <select
                     value={filterArtist}
                     onChange={e => setFilterArtist(e.target.value)}
-                    className="w-full appearance-none bg-[#F0F4F8] border border-[#9BB6D6]/40 rounded-xl px-3 pr-7 py-2 text-xs font-bold text-[#122D55] outline-none focus:bg-white focus:border-[#122D55] focus:ring-1 focus:ring-[#122D55] transition-all shadow-xs truncate"
+                    className="w-full appearance-none bg-[#F7F8F4] border border-[#9BB6D6]/40 rounded-xl px-3 pr-7 py-2 text-xs font-bold text-[#2a2121] outline-none focus:bg-white focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-xs truncate"
                   >
                     <option value="all">ทั้งหมด ({tasks.length})</option>
                     {ARTIST_CATEGORIES.map(cat => {
@@ -1444,7 +1500,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               {/* Boost & Special Status Dropdown */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-600 mb-1 flex items-center justify-between">
-                  <span className="flex items-center gap-1 text-[#122D55] truncate">
+                  <span className="flex items-center gap-1 text-[#2a2121] truncate">
                     <span>⚡</span>
                     <span>สถานะพิเศษ</span>
                   </span>
@@ -1453,7 +1509,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <select
                     value={filterBoost}
                     onChange={e => setFilterBoost(e.target.value as any)}
-                    className="w-full appearance-none bg-[#F0F4F8] border border-[#9BB6D6]/40 rounded-xl px-3 pr-7 py-2 text-xs font-bold text-[#122D55] outline-none focus:bg-white focus:border-[#122D55] focus:ring-1 focus:ring-[#122D55] transition-all shadow-xs truncate"
+                    className="w-full appearance-none bg-[#F7F8F4] border border-[#9BB6D6]/40 rounded-xl px-3 pr-7 py-2 text-xs font-bold text-[#2a2121] outline-none focus:bg-white focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-xs truncate"
                   >
                     <option value="all">ทั้งหมด ({tasks.length})</option>
                     <option value="boost">
@@ -1486,7 +1542,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 onClick={() => setFilterPlatform('all')}
                 className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
                   filterPlatform === 'all'
-                    ? 'bg-[#122D55] text-white border-[#122D55] shadow-xs'
+                    ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs'
                     : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                 }`}
               >
@@ -1501,7 +1557,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setFilterPlatform(p.id)}
                     className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
                       isActive
-                        ? 'bg-[#122D55] text-white border-[#122D55] shadow-xs'
+                        ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs'
                         : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                     }`}
                   >
@@ -1521,7 +1577,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               <button
                 onClick={() => setFilterArtist('all')}
                 className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
-                  filterArtist === 'all' ? 'bg-[#122D55] text-white border-[#122D55] shadow-xs' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                  filterArtist === 'all' ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                 }`}
               >
                 ทั้งหมด
@@ -1549,7 +1605,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               <button
                 onClick={() => setFilterBoost('all')}
                 className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
-                  filterBoost === 'all' ? 'bg-[#122D55] text-white border-[#122D55] shadow-xs' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                  filterBoost === 'all' ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
                 }`}
               >
                 ทั้งหมด
@@ -1575,7 +1631,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               <button
                 onClick={() => setFilterBoost('pinned')}
                 className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all flex items-center gap-1 ${
-                  filterBoost === 'pinned' ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100/60'
+                  filterBoost === 'pinned' ? 'bg-[#f6db6a] text-[#2a2121] border-[#f6db6a] shadow-xs' : 'bg-[#f6db6a]/20 text-[#2a2121] border-[#f6db6a]/50 hover:bg-[#f6db6a]/40'
                 }`}
               >
                 <span>📌</span>
@@ -1597,7 +1653,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         {/* ── Table & Cards List ── */}
         {loading ? (
           <div className="text-center py-16">
-            <FaSpinner className="animate-spin text-3xl text-[#122D55] mx-auto mb-3" />
+            <FaSpinner className="animate-spin text-3xl text-[#2a2121] mx-auto mb-3" />
             <p className="text-sm text-gray-500 font-medium">กำลังโหลดข้อมูลจาก Google Sheet...</p>
           </div>
         ) : filteredTasks.length === 0 ? (
@@ -1611,7 +1667,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#F0F4F8] border-b border-gray-200 text-[#122D55] font-bold text-[11px] uppercase tracking-wider">
+                  <tr className="bg-[#F7F8F4] border-b border-gray-200 text-[#2a2121] font-bold text-[11px] uppercase tracking-wider">
                     <th className="py-3 px-3 w-10 text-center">ดาว</th>
                     <th className="py-3 px-3 w-14 text-center">Platform</th>
                     <th className="py-3 px-3">สื่อ</th>
@@ -1662,7 +1718,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                           {/* Media / Title */}
                           <td className="py-3 px-3 font-medium text-gray-800">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-[#122D55]">{task.media || 'ไม่มีชื่อสื่อ'}</span>
+                              <span className="font-bold text-[#2a2121]">{task.media || 'ไม่มีชื่อสื่อ'}</span>
                               {task.boost && (task.boost.includes('1') || task.boost.toLowerCase() === 'x' || task.boost.toLowerCase() === 'yes') && (
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-amber-500/15 text-amber-700 border border-amber-500/30" title="Boost Carousel">
                                   🚀
@@ -1674,8 +1730,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                                 </span>
                               )}
                               {task.boost && (task.boost.includes('3') || task.boost.toLowerCase().includes('pin')) && (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-blue-500/15 text-blue-700 border border-blue-500/30" title="ปักหมุด (Pinned)">
-                                  📌
+                                <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#f6db6a] text-[#2a2121] border border-[#f6db6a]/60 shadow-2xs" title="ปักหมุด (Pinned)">
+                                  📌 ปักหมุด
                                 </span>
                               )}
                               {task.image && (
@@ -1696,7 +1752,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                                   onClick={() => toggleEngagementDropdown(task.id)}
                                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
                                     isExpanded
-                                      ? 'bg-[#122D55] text-white border-[#122D55] shadow-xs'
+                                      ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs'
                                       : 'bg-indigo-50/90 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300'
                                   }`}
                                   title={isExpanded ? 'ย่อซ่อนสถิติ Engagement' : 'ดูรายละเอียด Engagement และเป้าหมาย'}
@@ -1744,7 +1800,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                               <button
                                 type="button"
                                 onClick={() => handleEditClick(task)}
-                                className="p-1.5 rounded-lg text-gray-500 hover:text-[#122D55] hover:bg-gray-100 transition-all inline-flex items-center justify-center"
+                                className="p-1.5 rounded-lg text-gray-500 hover:text-[#2a2121] hover:bg-gray-100 transition-all inline-flex items-center justify-center"
                                 title="แก้ไขโพสต์"
                               >
                                 <FaPencilAlt className="text-xs" />
@@ -1752,7 +1808,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                               <button
                                 type="button"
                                 onClick={() => handleDeletePost(task.id)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-[#E00034] hover:bg-red-50 transition-all inline-flex items-center justify-center"
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-[#c4d2b1] hover:bg-red-50 transition-all inline-flex items-center justify-center"
                                 title="ลบโพสต์"
                               >
                                 <FaTrash className="text-xs" />
@@ -1768,8 +1824,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                               <div className="bg-white/95 rounded-xl p-3.5 border border-indigo-100 shadow-xs space-y-2.5">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-bold text-[#122D55] flex items-center gap-1.5">
-                                      <FaChartBar className="text-[#E00034]" />
+                                    <span className="text-[11px] font-bold text-[#2a2121] flex items-center gap-1.5">
+                                      <FaChartBar className="text-[#c4d2b1]" />
                                       <span>สถิติ Engagement & ความคืบหน้าเป้าหมาย</span>
                                     </span>
                                     <span className="text-[10px] text-gray-500">
@@ -1811,10 +1867,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-xl max-h-[80dvh] sm:max-h-[90vh] flex flex-col rounded-3xl shadow-2xl border border-gray-200 overflow-hidden relative">
-            <div className="bg-[#122D55] text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div className="bg-[#2a2121] text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-[#E00034] text-white text-[10px] font-black tracking-wider">
-                  LEVI'S
+                <span className="px-2 py-0.5 rounded bg-[#c4d2b1] text-white text-[10px] font-black tracking-wider">
+                  PRADA
                 </span>
                 <h3 className="font-bold text-sm sm:text-base">
                   {editingTaskId ? 'แก้ไขโพสต์และสถิติ (Edit Post & Metrics)' : 'นำเข้าโพสต์ใหม่ (Add Mission)'}
@@ -1835,7 +1891,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               {/* URL with Duplicate Check */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  URL ของโพสต์โซเชียล <span className="text-[#E00034]">*</span>
+                  URL ของโพสต์โซเชียล <span className="text-[#c4d2b1]">*</span>
                 </label>
                 <input
                   type="url"
@@ -1851,27 +1907,27 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     }));
                   }}
                   placeholder="https://x.com/username/status/... หรือ Instagram, TikTok"
-                  className={`w-full bg-[#F0F4F8] rounded-xl px-3.5 py-2.5 text-xs outline-none border transition-all ${
+                  className={`w-full bg-[#F7F8F4] rounded-xl px-3.5 py-2.5 text-xs outline-none border transition-all ${
                     isUrlDuplicate
-                      ? 'border-[#E00034] ring-2 ring-[#E00034]/20'
-                      : 'border-gray-200 focus:border-[#122D55]'
+                      ? 'border-[#c4d2b1] ring-2 ring-[#c4d2b1]/20'
+                      : 'border-gray-200 focus:border-[#2a2121]'
                   }`}
                 />
                 {isUrlDuplicate && (
-                  <p className="text-[#E00034] text-[11px] font-bold mt-1">
+                  <p className="text-[#c4d2b1] text-[11px] font-bold mt-1">
                     ⚠️ ตรวจพบ URL ซ้ำในระบบ กรุณาตรวจสอบลิงก์อีกครั้ง
                   </p>
                 )}
               </div>
 
-              {/* Platform & Artist Category Grid */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Platform, Artist Category & Campaign Phase Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Platform</label>
                   <select
                     value={formData.platform}
                     onChange={e => setFormData({ ...formData, platform: e.target.value })}
-                    className="w-full bg-[#F0F4F8] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#122D55]"
+                    className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                   >
                     {PLATFORM_OPTIONS.filter(p => p.id !== 'all').map(p => (
                       <option key={p.id} value={p.id}>
@@ -1886,7 +1942,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <select
                     value={formData.artist}
                     onChange={e => setFormData({ ...formData, artist: e.target.value })}
-                    className="w-full bg-[#F0F4F8] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#122D55]"
+                    className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                   >
                     {ARTIST_CATEGORIES.map(cat => (
                       <option key={cat.id} value={cat.id}>
@@ -1895,12 +1951,27 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     ))}
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">ช่วงเวลาแคมเปญ (Phase)</label>
+                  <select
+                    value={formData.phase || 'pre'}
+                    onChange={e => setFormData({ ...formData, phase: e.target.value })}
+                    className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
+                  >
+                    <option value="all">✦ ทั้งหมด (All)</option>
+                    <option value="pre">🎬 Pre (18-19 Sep)</option>
+                    <option value="airport">✈️ Airport (20-21 Sep)</option>
+                    <option value="show">👠 Show (22 Sep)</option>
+                    <option value="afterglow">🥂 Afterglow (23-30 Sep)</option>
+                  </select>
+                </div>
               </div>
 
               {/* Media Name with Autosuggest */}
               <div className="relative">
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  ชื่อสื่อ / แหล่งที่มา (Media Name) <span className="text-[#E00034]">*</span>
+                  ชื่อสื่อ / แหล่งที่มา (Media Name) <span className="text-[#c4d2b1]">*</span>
                 </label>
                 <input
                   type="text"
@@ -1909,7 +1980,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   onFocus={() => setShowSuggestions(true)}
                   onChange={e => setFormData({ ...formData, media: e.target.value })}
                   placeholder="เช่น Mint Magazine, ELLE Thailand, GMMTV, ข่าวสด..."
-                  className="w-full bg-[#F0F4F8] rounded-xl px-3.5 py-2.5 text-xs outline-none border border-gray-200 focus:border-[#122D55]"
+                  className="w-full bg-[#F7F8F4] rounded-xl px-3.5 py-2.5 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                 />
 
                 {/* Auto-suggest dropdown */}
@@ -1942,8 +2013,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   rows={2}
                   value={formData.hashtag}
                   onChange={e => setFormData({ ...formData, hashtag: e.target.value })}
-                  placeholder="#NamtanFilmxLevis #LiveInLevis"
-                  className="w-full bg-[#F0F4F8] rounded-xl px-3.5 py-2 text-xs outline-none border border-gray-200 focus:border-[#122D55] font-mono leading-relaxed"
+                  placeholder="#NamtanxPrada #PradaSS27"
+                  className="w-full bg-[#F7F8F4] rounded-xl px-3.5 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121] font-mono leading-relaxed"
                 />
               </div>
 
@@ -1962,7 +2033,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 <button
                   type="submit"
                   disabled={isSubmitting || isUrlDuplicate || !formData.url.trim()}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-[#122D55] hover:bg-[#0B192C] text-white shadow transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl text-xs font-bold bg-[#2a2121] hover:bg-[#0D0D0D] text-white shadow transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isSubmitting ? (
                     <>
@@ -2001,7 +2072,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       <FaRocket className="text-xs" />
                     </span>
                     <div>
-                      <div className="text-xs font-bold text-[#122D55] flex items-center gap-2">
+                      <div className="text-xs font-bold text-[#2a2121] flex items-center gap-2">
                         <span>การบูสแคมเปญ & สถานะพิเศษ (Boost & Status)</span>
                         {(formData.boost || formData.mark || formData.image) && (
                           <span className="text-[9px] font-bold bg-amber-500 text-white px-1.5 py-0.2 rounded-full">
@@ -2099,13 +2170,13 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       <label
                         className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
                           formData.mark
-                            ? 'bg-[#E00034]/10 border-[#E00034]/40 text-red-950 ring-1 ring-[#E00034]/30 shadow-2xs'
+                            ? 'bg-[#c4d2b1]/10 border-[#c4d2b1]/40 text-red-950 ring-1 ring-[#c4d2b1]/30 shadow-2xs'
                             : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         <input
                           type="checkbox"
-                          className="w-4 h-4 mt-0.5 text-[#E00034] rounded accent-[#E00034] shrink-0"
+                          className="w-4 h-4 mt-0.5 text-[#c4d2b1] rounded accent-[#c4d2b1] shrink-0"
                           checked={formData.mark}
                           onChange={e => setFormData({ ...formData, mark: e.target.checked })}
                         />
@@ -2169,7 +2240,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             onClick={() => setImageTab('upload')}
                             className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
                               imageTab === 'upload'
-                                ? 'bg-[#122D55] text-white shadow-xs'
+                                ? 'bg-[#2a2121] text-white shadow-xs'
                                 : 'text-gray-600 hover:text-gray-900'
                             }`}
                           >
@@ -2181,7 +2252,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             onClick={() => setImageTab('url')}
                             className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
                               imageTab === 'url'
-                                ? 'bg-[#122D55] text-white shadow-xs'
+                                ? 'bg-[#2a2121] text-white shadow-xs'
                                 : 'text-gray-600 hover:text-gray-900'
                             }`}
                           >
@@ -2216,7 +2287,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             className={`border-2 border-dashed rounded-xl p-3.5 text-center cursor-pointer transition-all ${
                               isUploadingImage
                                 ? 'border-indigo-400 bg-indigo-50/70'
-                                : 'border-amber-300/80 hover:border-[#122D55] bg-white hover:bg-amber-50/30 shadow-2xs'
+                                : 'border-amber-300/80 hover:border-[#2a2121] bg-white hover:bg-amber-50/30 shadow-2xs'
                             }`}
                           >
                             {isUploadingImage ? (
@@ -2227,8 +2298,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                               </div>
                             ) : (
                               <div className="flex flex-col items-center justify-center py-1 text-gray-600 gap-1">
-                                <FaCloudUploadAlt className="text-2xl text-[#122D55]" />
-                                <div className="text-[11.5px] font-bold text-[#122D55]">
+                                <FaCloudUploadAlt className="text-2xl text-[#2a2121]" />
+                                <div className="text-[11.5px] font-bold text-[#2a2121]">
                                   คลิกเพื่อเลือกไฟล์รูปภาพ หรือลากไฟล์มาวางที่นี่
                                 </div>
                                 <div className="text-[9.5px] text-gray-500">
@@ -2259,7 +2330,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                                 setImageLoadStatus('loading');
                               }}
                               placeholder="แปะลิงก์รูปภาพ เช่น https://files.catbox.moe/... หรือ https://...jpg"
-                              className="w-full bg-white rounded-xl pl-8 pr-3 py-2 text-xs outline-none border border-amber-300/70 focus:border-[#122D55] text-gray-800 font-mono shadow-2xs"
+                              className="w-full bg-white rounded-xl pl-8 pr-3 py-2 text-xs outline-none border border-amber-300/70 focus:border-[#2a2121] text-gray-800 font-mono shadow-2xs"
                             />
                             <FaLink className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                           </div>
@@ -2350,7 +2421,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               </div>
 
               {/* ── Toggle Section 2: Engagement Metrics & Individual Targets ── */}
-              <div className="rounded-2xl border border-[#9BB6D6]/60 overflow-hidden bg-[#F0F4F8] shadow-2xs transition-all">
+              <div className="rounded-2xl border border-[#9BB6D6]/60 overflow-hidden bg-[#F7F8F4] shadow-2xs transition-all">
                 {/* Header Toggle Button */}
                 <button
                   type="button"
@@ -2362,7 +2433,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       <FaBullseye className="text-xs" />
                     </span>
                     <div>
-                      <div className="text-xs font-bold text-[#122D55] flex items-center gap-2">
+                      <div className="text-xs font-bold text-[#2a2121] flex items-center gap-2">
                         <span>กำหนดเป้าหมาย & สถิติ Engagement แต่ละข้อ</span>
                         {(formData.likes || formData.comments || formData.reposts || formData.shares || formData.views || formData.saves) && (
                           <span className="text-[9px] font-bold bg-blue-600 text-white px-1.5 py-0.2 rounded-full">
@@ -2375,7 +2446,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#122D55]">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#2a2121]">
                     <span className="text-[11px] font-semibold">
                       {showEngagementSection ? 'ย่อเก็บ' : 'ตั้งค่า'}
                     </span>
@@ -2502,7 +2573,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                                   value={currVal}
                                   onChange={e => setFormData({ ...formData, [m.key]: e.target.value })}
                                   placeholder={m.placeholderCurr}
-                                  className="w-full bg-[#F0F4F8]/70 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:bg-white focus:ring-1 focus:ring-[#122D55] text-[#122D55] font-semibold border border-transparent focus:border-[#122D55]"
+                                  className="w-full bg-[#F7F8F4]/70 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:bg-white focus:ring-1 focus:ring-[#2a2121] text-[#2a2121] font-semibold border border-transparent focus:border-[#2a2121]"
                                 />
                               </div>
 
@@ -2555,7 +2626,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       <button
                         type="submit"
                         disabled={isSubmitting || isUrlDuplicate || !formData.url.trim()}
-                        className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-[#122D55] hover:bg-[#0B192C] text-white shadow-xs transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                        className="px-4 py-1.5 rounded-xl text-[11px] font-bold bg-[#2a2121] hover:bg-[#0D0D0D] text-white shadow-xs transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
                       >
                         {isSubmitting ? (
                           <>
@@ -2582,7 +2653,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       {showConfigModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md max-h-[80dvh] sm:max-h-[88vh] flex flex-col rounded-3xl shadow-2xl border border-gray-200 overflow-hidden relative">
-            <div className="bg-[#122D55] text-white px-6 py-4 flex items-center justify-between shrink-0">
+            <div className="bg-[#2a2121] text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <FaCog className="text-sky-300" />
                 <h3 className="font-bold text-sm">ตั้งค่าแฮชแท็กหลักแคมเปญ</h3>
@@ -2606,7 +2677,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   rows={4}
                   value={globalHashtags}
                   onChange={e => setGlobalHashtags(e.target.value)}
-                  className="w-full bg-[#F0F4F8] rounded-xl px-3.5 py-2.5 text-xs outline-none border border-gray-200 focus:border-[#122D55] font-mono leading-relaxed"
+                  className="w-full bg-[#F7F8F4] rounded-xl px-3.5 py-2.5 text-xs outline-none border border-gray-200 focus:border-[#2a2121] font-mono leading-relaxed"
                 />
                 <div className="mt-2.5 p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl">
                   <label className="flex items-start gap-2 cursor-pointer text-xs font-semibold text-amber-950 select-none">
@@ -2614,7 +2685,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       type="checkbox"
                       checked={syncToAllPosts}
                       onChange={e => setSyncToAllPosts(e.target.checked)}
-                      className="w-4 h-4 mt-0.5 rounded text-[#E00034] accent-[#E00034] shrink-0"
+                      className="w-4 h-4 mt-0.5 rounded text-[#c4d2b1] accent-[#c4d2b1] shrink-0"
                     />
                     <div>
                       <span>🔄 อัปเดต Official Hashtags นี้ให้กับทุกโพสต์ในระบบด้วย</span>
@@ -2637,7 +2708,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setPrivateAccessEnabled(true)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       privateAccessEnabled
-                        ? 'border-[#E00034] bg-red-50/50 text-[#122D55] ring-1 ring-[#E00034]'
+                        ? 'border-[#c4d2b1] bg-red-50/50 text-[#2a2121] ring-1 ring-[#c4d2b1]'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -2650,7 +2721,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setPrivateAccessEnabled(false)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       !privateAccessEnabled
-                        ? 'border-emerald-500 bg-emerald-50/50 text-[#122D55] ring-1 ring-emerald-500'
+                        ? 'border-emerald-500 bg-emerald-50/50 text-[#2a2121] ring-1 ring-emerald-500'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -2674,7 +2745,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setShowPhaseFilter(true)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       showPhaseFilter
-                        ? 'border-blue-500 bg-blue-50/50 text-[#122D55] ring-1 ring-blue-500'
+                        ? 'border-blue-500 bg-blue-50/50 text-[#2a2121] ring-1 ring-blue-500'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -2697,6 +2768,41 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 </div>
               </div>
 
+              {/* Default Active Phase Selection */}
+              {showPhaseFilter && (
+                <div className="pt-2 border-t border-gray-100 animate-in fade-in duration-200">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    หน้าแรก: ช่วงเวลาเริ่มต้นเมื่อเปิดเว็บ (Default Active Phase)
+                  </label>
+                  <p className="text-[10px] text-gray-500 mb-2 leading-relaxed">
+                    เลือกปุ่มช่วงเวลา (Phase) ที่ต้องการให้ถูกเลือกเป็นอันแรกทันทีเมื่อแฟนคลับเข้ามาที่หน้าเว็บ (บันทึกลง `global_setting`)
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                    {[
+                      { id: 'all', label: 'ทั้งหมด (All)', icon: '✦' },
+                      { id: 'pre', label: 'Pre (18-19 Sep)', icon: '🎬' },
+                      { id: 'airport', label: 'Airport (20-21 Sep)', icon: '✈️' },
+                      { id: 'show', label: 'Show (22 Sep)', icon: '👠' },
+                      { id: 'afterglow', label: 'Afterglow (23-30 Sep)', icon: '🥂' },
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setDefaultActivePhase(p.id as any)}
+                        className={`p-2 rounded-xl border text-center transition-all ${
+                          defaultActivePhase === p.id
+                            ? 'border-[#2a2121] bg-[#2a2121] text-white font-bold shadow-2xs'
+                            : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="text-xs mb-0.5">{p.icon}</div>
+                        <div className="text-[10px] font-semibold leading-tight">{p.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Default Active Section Toggle */}
               <div className="pt-2 border-t border-gray-100">
                 <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -2711,11 +2817,11 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setDefaultStartSection('boost')}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       defaultStartSection === 'boost'
-                        ? 'border-[#E00034] bg-rose-50 text-[#122D55] ring-1 ring-[#E00034]'
+                        ? 'border-[#c4d2b1] bg-rose-50 text-[#2a2121] ring-1 ring-[#c4d2b1]'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    <div className="font-bold text-xs flex items-center gap-1 text-[#E00034]">🔥 Boost Posts</div>
+                    <div className="font-bold text-xs flex items-center gap-1 text-[#c4d2b1]">🔥 Boost Posts</div>
                     <div className="text-[9.5px] text-gray-500 mt-0.5">เปิดส่วน Boost Engagement</div>
                   </button>
 
@@ -2724,11 +2830,11 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setDefaultStartSection('tasks')}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       defaultStartSection === 'tasks'
-                        ? 'border-[#E00034] bg-rose-50 text-[#122D55] ring-1 ring-[#E00034]'
+                        ? 'border-[#c4d2b1] bg-rose-50 text-[#2a2121] ring-1 ring-[#c4d2b1]'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    <div className="font-bold text-xs flex items-center gap-1 text-[#E00034]">✧ Tasks List</div>
+                    <div className="font-bold text-xs flex items-center gap-1 text-[#c4d2b1]">✧ Tasks List</div>
                     <div className="text-[9.5px] text-gray-500 mt-0.5">เปิดส่วนภารกิจงานปั่น</div>
                   </button>
 
@@ -2737,11 +2843,11 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setDefaultStartSection('important')}
                     className={`p-2.5 rounded-xl border text-left transition-all ${
                       defaultStartSection === 'important'
-                        ? 'border-[#E00034] bg-rose-50 text-[#122D55] ring-1 ring-[#E00034]'
+                        ? 'border-[#c4d2b1] bg-rose-50 text-[#2a2121] ring-1 ring-[#c4d2b1]'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    <div className="font-bold text-xs flex items-center gap-1 text-[#E00034]">⭐ Focused Media</div>
+                    <div className="font-bold text-xs flex items-center gap-1 text-[#c4d2b1]">⭐ Focused Media</div>
                     <div className="text-[9.5px] text-gray-500 mt-0.5">เปิดส่วนสื่อสำนักข่าวสำคัญ</div>
                   </button>
 
@@ -2774,7 +2880,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     onClick={() => setShowEndCreditsToggle(true)}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       showEndCreditsToggle
-                        ? 'border-amber-500 bg-amber-50/50 text-[#122D55] ring-1 ring-amber-500'
+                        ? 'border-amber-500 bg-amber-50/50 text-[#2a2121] ring-1 ring-amber-500'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -2808,7 +2914,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               <button
                 onClick={handleSaveGlobalHashtags}
                 disabled={isSubmitting}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#E00034] hover:bg-[#B40F28] text-white shadow transition-all"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#c4d2b1] hover:bg-[#B40F28] text-white shadow transition-all"
               >
                 {isSubmitting ? 'กำลังบันทึก...' : 'บันทึก'}
               </button>
@@ -2821,7 +2927,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       {showPermissionGuide && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4">
           <div className="bg-white w-full max-w-lg max-h-[80dvh] sm:max-h-[88vh] flex flex-col rounded-3xl shadow-2xl border border-gray-200 overflow-hidden relative animate-fade-in">
-            <div className="bg-[#122D55] text-white px-6 py-4 flex items-center justify-between shrink-0">
+            <div className="bg-[#2a2121] text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <FaInfoCircle className="text-amber-400 text-lg" />
                 <h3 className="font-bold text-sm sm:text-base">วิธีเปิดสิทธิ์ Google Apps Script</h3>
@@ -2841,7 +2947,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
 
               <div className="space-y-3 text-xs text-gray-700">
                 <div className="flex gap-3 items-start p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
-                  <div className="w-6 h-6 rounded-full bg-[#122D55] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs">
+                  <div className="w-6 h-6 rounded-full bg-[#2a2121] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs">
                     1
                   </div>
                   <div>
@@ -2853,7 +2959,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 </div>
 
                 <div className="flex gap-3 items-start p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
-                  <div className="w-6 h-6 rounded-full bg-[#122D55] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs">
+                  <div className="w-6 h-6 rounded-full bg-[#2a2121] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs">
                     2
                   </div>
                   <div>
@@ -2865,11 +2971,11 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 </div>
 
                 <div className="flex gap-3 items-start p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
-                  <div className="w-6 h-6 rounded-full bg-[#E00034] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs">
+                  <div className="w-6 h-6 rounded-full bg-[#c4d2b1] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs">
                     3
                   </div>
                   <div>
-                    <div className="font-bold text-[#E00034]">เปลี่ยนสิทธิ์เข้าถึงเป็น "ทุกคน" (สำคัญที่สุด)</div>
+                    <div className="font-bold text-[#c4d2b1]">เปลี่ยนสิทธิ์เข้าถึงเป็น "ทุกคน" (สำคัญที่สุด)</div>
                     <div className="text-gray-600 mt-0.5 leading-relaxed">
                       1. คลิกไอคอน <strong>รูปดินสอ ✏️ (แก้ไข / Edit)</strong> ด้านขวาบน<br/>
                       2. ตรงช่อง <strong>เวอร์ชัน (Version)</strong>: เลือก <em>เวอร์ชันใหม่ (New version)</em><br/>
@@ -2905,7 +3011,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   setShowPermissionGuide(false);
                   testGoogleConnections();
                 }}
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#122D55] hover:bg-[#0B192C] text-white shadow transition-all flex items-center gap-1.5"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#2a2121] hover:bg-[#0D0D0D] text-white shadow transition-all flex items-center gap-1.5"
               >
                 <FaSync />
                 <span>ตั้งค่าเสร็จแล้ว ทดสอบเชื่อมต่อ</span>
@@ -2922,7 +3028,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           onClick={() => setLightboxImage(null)}
         >
           <div
-            className="relative max-w-2xl w-full max-h-[85vh] bg-[#122D55] rounded-3xl overflow-hidden shadow-2xl border border-white/20 flex flex-col animate-in zoom-in-95 duration-200"
+            className="relative max-w-2xl w-full max-h-[85vh] bg-[#2a2121] rounded-3xl overflow-hidden shadow-2xl border border-white/20 flex flex-col animate-in zoom-in-95 duration-200"
             onClick={e => e.stopPropagation()}
           >
             <div className="p-3.5 px-5 bg-black/40 flex items-center justify-between text-white border-b border-white/10">

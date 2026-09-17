@@ -1,9 +1,9 @@
 /**
  * =========================================================================
- *  NamtanFilm × Levi's — Google Apps Script Web App Backend
+ *  Namtan × Prada SS 2027 — Google Apps Script Web App Backend
  * =========================================================================
  *  วิธีติดตั้ง:
- *  1. เปิด Google Sheet ของแคมเปญ
+ *  1. เปิด Google Sheet ของแคมเปญ (ID: 1Z7GutAP-m5wWckVbngZaBed2cMNMThyBu2AY7D-Dn3I)
  *  2. ไปที่เมนู "ส่วนขยาย" (Extensions) > "Apps Script"
  *  3. ลบโค้ดเดิมทั้งหมด แล้ววางโค้ดไฟล์นี้ลงไป
  *  4. คลิกปุ่ม "ทำให้ใช้งานได้" (Deploy) > "การทำให้ใช้งานได้รายการใหม่" (New deployment)
@@ -20,7 +20,7 @@
 function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({
     ok: true,
-    message: "NamtanFilm x Levi's Google Apps Script is running successfully!"
+    message: "Namtan x Prada SS 2027 Google Apps Script is running successfully!"
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -39,7 +39,7 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = null;
 
-    // ค้นหาชีตตามชื่อชีตก่อน (เช่น followers หรือ data)
+    // ค้นหาชีตตามชื่อชีตก่อน (เช่น Media Data, global_setting, follwer)
     if (sheetName) {
       sheet = ss.getSheetByName(sheetName);
     }
@@ -67,27 +67,61 @@ function doPost(e) {
       return String(h).toLowerCase().trim();
     });
 
-    // ตรวจสอบและสร้างหัวคอลัมน์เป้าหมายแต่ละข้อและรูปภาพอัตโนมัติหากยังไม่มี (เว้นชีต followers)
-    if (sheet.getName().toLowerCase() !== 'followers') {
-      const targetHeaders = [
-        'target_likes',
-        'target_comments',
-        'target_reposts',
-        'target_shares',
-        'target_views',
-        'target_saves',
+    const sName = sheet.getName().toLowerCase();
+
+    // ตรวจสอบและสร้างหัวคอลัมน์เป้าหมาย
+    if (sName === 'global_setting' || sName === 'global_settings') {
+      const globalHeaders = [
+        'id',
+        'private_access',
+        'hashtags',
         'show_phase_filter',
+        'default_active_phase',
         'default_section',
-        'show_end_credits',
-        'image'
+        'show_end_credits'
       ];
-      targetHeaders.forEach(function (th) {
+      globalHeaders.forEach(function (th) {
         if (headers.indexOf(th) === -1) {
           const nextCol = sheet.getLastColumn() + 1;
           sheet.getRange(1, nextCol).setValue(th);
           headers.push(th);
         }
       });
+    } else if (sName !== 'followers' && sName !== 'follwer') {
+      const postHeaders = [
+        'target_likes',
+        'target_comments',
+        'target_reposts',
+        'target_shares',
+        'target_views',
+        'target_saves',
+        'phase',
+        'image'
+      ];
+      postHeaders.forEach(function (th) {
+        if (headers.indexOf(th) === -1) {
+          const nextCol = sheet.getLastColumn() + 1;
+          sheet.getRange(1, nextCol).setValue(th);
+          headers.push(th);
+        }
+      });
+    }
+
+    // ─── ACTION: readAll ──────────────────────────────────────────────────────
+    if (action === "readAll") {
+      const rows = sheet.getDataRange().getValues();
+      if (rows.length <= 1) {
+        return responseJSON({ ok: true, success: true, data: [] });
+      }
+      const dataRows = [];
+      for (let r = 1; r < rows.length; r++) {
+        const rowObj = {};
+        headers.forEach(function (h, colIdx) {
+          rowObj[h] = rows[r][colIdx] !== undefined ? String(rows[r][colIdx]) : "";
+        });
+        dataRows.push(rowObj);
+      }
+      return responseJSON({ ok: true, success: true, data: dataRows });
     }
 
     // ─── ACTION: addRow ───────────────────────────────────────────────────────
@@ -155,7 +189,9 @@ function doPost(e) {
         if (header === 'title' || header === 'note') return data.title || data.media || '';
         if (header === 'url') return data.url || '';
         if (header === 'hashtag' || header === 'hashtags') return data.hashtags || data.hashtag || '';
-        if (header === 'artist') return data.artist || 'both';
+        if (header === 'artist') return data.artist || 'namtan';
+        if (header === 'phase') return data.phase || 'pre';
+        if (header === 'default_active_phase' || header === 'default_phase') return data.default_active_phase || data.default_phase || 'all';
         if (header === 'focus') return data.focus || (data.mark ? '1' : '0');
         if (header === 'boost') return data.boost !== undefined ? String(data.boost) : '';
         if (header === 'likes') return data.likes !== undefined ? String(data.likes) : '';
@@ -203,9 +239,9 @@ function doPost(e) {
       }
 
       if (foundRowIndex === -1) {
-        // หากไม่พบ และเป็น global_settings, toggle_settings หรือเป็นแผ่น followers/toggle setting ให้เพิ่มแถวใหม่อัตโนมัติ
-        if (targetId === "global_settings" || targetId === "toggle_settings" || targetId === "followers_summary" || sheet.getName().toLowerCase() === "followers" || sheet.getName().toLowerCase() === "toggle setting") {
-          const newId = targetId || "toggle_settings";
+        // หากไม่พบ และเป็น global_settings, toggle_settings หรือเป็นแผ่น followers/follwer/global_setting ให้เพิ่มแถวใหม่อัตโนมัติ
+        if (targetId === "global_settings" || targetId === "toggle_settings" || targetId === "followers_summary" || sName === "followers" || sName === "follwer" || sName === "global_setting" || sName === "global_settings" || sName === "toggle setting") {
+          const newId = targetId || "global_settings";
           const newConfigRow = headers.map(function (header) {
             if (header === 'id') return newId;
             if (header === 'mark') return (data.mark === '1' || data.mark === 1 || data.mark === true) ? '1' : '0';
@@ -256,6 +292,10 @@ function doPost(e) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.hashtags || data.hashtag);
         } else if (header === 'artist' && data.artist !== undefined) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.artist);
+        } else if (header === 'phase' && data.phase !== undefined) {
+          sheet.getRange(foundRowIndex, colNum).setValue(data.phase);
+        } else if ((header === 'default_active_phase' || header === 'default_phase') && (data.default_active_phase !== undefined || data.default_phase !== undefined)) {
+          sheet.getRange(foundRowIndex, colNum).setValue(data.default_active_phase || data.default_phase);
         } else if (header === 'focus' && data.focus !== undefined) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.focus);
         } else if (header === 'boost' && data.boost !== undefined) {

@@ -3,8 +3,8 @@ export type Language = 'th' | 'en';
 export const translations = {
     th: {
         // Header
-        appTitle: 'NamtanFilm × Levi’s 👖✨',
-        featuredEngagementTitle: "บูส บูส NamtanFilm × Levi’s! 🚀",
+        appTitle: 'Namtan × Prada’s 👖✨',
+        featuredEngagementTitle: "บูส บูส Namtan × Prada’s! 🚀",
         featuredEngagementToggle: 'บูสๆ 🚀',
         importantMediaTitle: 'สื่อและพาร์ตเนอร์แฟชั่น 🌟',
         importantMediaToggle: 'โฟกัสสื่อ',
@@ -55,7 +55,7 @@ export const translations = {
 
         // Achievement
         achievementTitle: 'Denim Champions! 🎉',
-        achievementDesc: 'ขอแสดงความยินดี! คุณทำภารกิจ NamtanFilm × Levi’s ครบแล้ว 🎉',
+        achievementDesc: 'ขอแสดงความยินดี! คุณทำภารกิจ Namtan × Prada’s ครบแล้ว 🎉',
         downloadFrame: '⬇️ ดาวน์โหลดกรอบรูป',
         shareToX: '📱 แชร์ไป X',
 
@@ -130,15 +130,15 @@ export const translations = {
 
         // Short Phrases
         allLabel: 'ทั้งหมด',
-        preLabel: 'Teaser',
-        airportLabel: 'Event',
-        showLabel: 'Campaign',
-        aftermathLabel: 'After',
+        preLabel: 'Pre',
+        airportLabel: 'Airport',
+        showLabel: 'Show',
+        aftermathLabel: 'Afterglow',
         sixteenDaysShort: 'ทั้งแคมเปญ',
-        phasePreShort: 'Teaser',
-        phaseAirportShort: 'Event',
-        phaseShowShort: 'Campaign',
-        phaseAftermathShort: 'After',
+        phasePreShort: '18-19 Sep',
+        phaseAirportShort: '20-21 Sep',
+        phaseShowShort: '22 Sep',
+        phaseAftermathShort: '23-30 Sep',
 
         // Metrics Short
         likes: 'ถูกใจ',
@@ -161,8 +161,8 @@ export const translations = {
     },
     en: {
         // Header
-        appTitle: 'NamtanFilm × Levi’s 👖✨',
-        featuredEngagementTitle: "Boost NamtanFilm × Levi’s! 🚀",
+        appTitle: 'Namtan × Prada’s 👖✨',
+        featuredEngagementTitle: "Boost Namtan × Prada’s! 🚀",
         featuredEngagementToggle: 'Boost 🚀',
         importantMediaTitle: 'Fashion Media & Partners 🌟',
         importantMediaToggle: 'Focused Media',
@@ -213,7 +213,7 @@ export const translations = {
 
         // Achievement
         achievementTitle: 'Denim Champions! 🎉',
-        achievementDesc: 'Congratulations! You completed the NamtanFilm × Levi’s Missions 🎉',
+        achievementDesc: 'Congratulations! You completed the Namtan × Prada’s Missions 🎉',
         downloadFrame: '⬇️ Download Frame',
         shareToX: '📱 Share to X',
 
@@ -288,15 +288,15 @@ export const translations = {
 
         // Short Phrases
         allLabel: 'All',
-        preLabel: 'Teaser',
-        airportLabel: 'Event',
-        showLabel: 'Campaign',
-        aftermathLabel: 'After',
+        preLabel: 'Pre',
+        airportLabel: 'Airport',
+        showLabel: 'Show',
+        aftermathLabel: 'Afterglow',
         sixteenDaysShort: 'Campaign',
-        phasePreShort: 'Teaser',
-        phaseAirportShort: 'Event',
-        phaseShowShort: 'Campaign',
-        phaseAftermathShort: 'After',
+        phasePreShort: '18-19 Sep',
+        phaseAirportShort: '20-21 Sep',
+        phaseShowShort: '22 Sep',
+        phaseAftermathShort: '23-30 Sep',
 
         // Metrics Short
         likes: 'Likes',

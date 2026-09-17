@@ -114,11 +114,6 @@ const DEFAULT_NAMTAN_FOLLOWERS: FollowerData = {
   after: 2828997,
 };
 
-const DEFAULT_FILM_FOLLOWERS: FollowerData = {
-  before: 1520000,
-  after: 1535400,
-};
-
 export default function AdminCalculator() {
   const [tasks, setTasks] = useState<AdminSheetTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,18 +129,8 @@ export default function AdminCalculator() {
     }
   });
 
-  const [filmFollowers, setFilmFollowers] = useState<FollowerData>(() => {
-    try {
-      const saved = localStorage.getItem('ntf_followers_film');
-      return saved ? JSON.parse(saved) : DEFAULT_FILM_FOLLOWERS;
-    } catch {
-      return DEFAULT_FILM_FOLLOWERS;
-    }
-  });
-
   const [showEditFollowersModal, setShowEditFollowersModal] = useState(false);
   const [editNamtanForm, setEditNamtanForm] = useState<FollowerData>(namtanFollowers);
-  const [editFilmForm, setEditFilmForm] = useState<FollowerData>(filmFollowers);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,11 +140,11 @@ export default function AdminCalculator() {
 
   const [isSavingFollowers, setIsSavingFollowers] = useState(false);
 
-  // Fetch Follower Data from separate sheet tab 'followers'
+  // Fetch Follower Data from separate sheet tab 'follwer' (GID 304042117)
   const fetchFollowers = useCallback(async () => {
     try {
       // 1. Try reading via GAS admin-sheet
-      const res = await fetch('/api/admin-sheet?action=readAll&sheetName=followers');
+      const res = await fetch('/api/admin-sheet?action=readAll&sheetName=follwer&sheetGID=304042117');
       if (res.ok) {
         const text = await res.text();
         try {
@@ -169,18 +154,11 @@ export default function AdminCalculator() {
             if (row) {
               const nb = parseAbbreviatedNumber(row.namtan_followers_before || row.namtan_before);
               const na = parseAbbreviatedNumber(row.namtan_followers_after || row.namtan_after);
-              const fb = parseAbbreviatedNumber(row.film_followers_before || row.film_before);
-              const fa = parseAbbreviatedNumber(row.film_followers_after || row.film_after);
 
-              if (nb > 0 && na > 0) {
+              if (nb > 0 || na > 0) {
                 const nData = { before: nb, after: na };
                 setNamtanFollowers(nData);
                 localStorage.setItem('ntf_followers_namtan', JSON.stringify(nData));
-              }
-              if (fb > 0 && fa > 0) {
-                const fData = { before: fb, after: fa };
-                setFilmFollowers(fData);
-                localStorage.setItem('ntf_followers_film', JSON.stringify(fData));
               }
               return;
             }
@@ -188,8 +166,8 @@ export default function AdminCalculator() {
         } catch { /* JSON parse fallback */ }
       }
 
-      // 2. Fallback CSV fetch from sheetName=followers
-      const fallbackRes = await fetch('/api/sheet?sheetName=followers');
+      // 2. Fallback CSV fetch from sheetName=follwer (GID 304042117)
+      const fallbackRes = await fetch('/api/sheet?gid=304042117&sheetName=follwer');
       if (fallbackRes.ok) {
         const csv = await fallbackRes.text();
         const rows = parseCSV(csv.replace(/^\uFEFF/, ''));
@@ -203,18 +181,11 @@ export default function AdminCalculator() {
           if (row) {
             const nb = parseAbbreviatedNumber(getVal(row, 'namtan_followers_before') || getVal(row, 'namtan_before'));
             const na = parseAbbreviatedNumber(getVal(row, 'namtan_followers_after') || getVal(row, 'namtan_after'));
-            const fb = parseAbbreviatedNumber(getVal(row, 'film_followers_before') || getVal(row, 'film_before'));
-            const fa = parseAbbreviatedNumber(getVal(row, 'film_followers_after') || getVal(row, 'film_after'));
 
-            if (nb > 0 && na > 0) {
+            if (nb > 0 || na > 0) {
               const nData = { before: nb, after: na };
               setNamtanFollowers(nData);
               localStorage.setItem('ntf_followers_namtan', JSON.stringify(nData));
-            }
-            if (fb > 0 && fa > 0) {
-              const fData = { before: fb, after: fa };
-              setFilmFollowers(fData);
-              localStorage.setItem('ntf_followers_film', JSON.stringify(fData));
             }
           }
         }
@@ -229,129 +200,130 @@ export default function AdminCalculator() {
     setLoading(true);
     fetchFollowers();
     try {
-      let res = await fetch('/api/admin-sheet?action=readAll&sheetGID=0');
-      let isProxySuccess = false;
+      // 1. Primary: Fast CSV fetch directly from Google Sheets (< 1s)
+      let isSuccess = false;
+      const csvRes = await fetch(`/api/sheet?gid=0&_t=${Date.now()}`);
+      if (csvRes.ok) {
+        const csv = await csvRes.text();
+        const rows = parseCSV(csv.replace(/^\uFEFF/, ''));
+        if (rows.length > 0) {
+          const headers = rows[0].map(h => h.toLowerCase().trim());
+          const getVal = (r: string[], h: string) => {
+            const idx = headers.indexOf(h.toLowerCase().trim());
+            return idx !== -1 ? (r[idx] || '') : '';
+          };
 
-      if (res.ok) {
-        const text = await res.text();
-        try {
-          const json = JSON.parse(text);
-          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-            isProxySuccess = true;
+          const parsed: AdminSheetTask[] = [];
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            const id = getVal(r, 'id');
+            if (!id || id === 'global_settings') continue;
+            const url = getVal(r, 'url');
+            const title = getVal(r, 'title') || getVal(r, 'note');
+            const media = getVal(r, 'media');
+            if (!url && !title && !media) continue;
 
-            const parsed: AdminSheetTask[] = json.data
-              .filter((r: any) => r.id && r.id !== 'global_settings')
-              .map((r: any) => {
-                let rawPlatform = (r.platform || 'x').toLowerCase().trim();
-                if (['ig', 'instagram', 'insta'].includes(rawPlatform)) rawPlatform = 'instagram';
-                else if (['fb', 'facebook'].includes(rawPlatform)) rawPlatform = 'facebook';
-                else if (['tt', 'tiktok'].includes(rawPlatform)) rawPlatform = 'tiktok';
-                else if (['yt', 'youtube'].includes(rawPlatform)) rawPlatform = 'youtube';
-                else if (['threads', 'thread', 'th'].includes(rawPlatform)) rawPlatform = 'threads';
+            let rawPlatform = (getVal(r, 'platform') || 'x').toLowerCase().trim();
+            if (['ig', 'instagram', 'insta'].includes(rawPlatform)) rawPlatform = 'instagram';
+            else if (['fb', 'facebook'].includes(rawPlatform)) rawPlatform = 'facebook';
+            else if (['tt', 'tiktok'].includes(rawPlatform)) rawPlatform = 'tiktok';
+            else if (['yt', 'youtube'].includes(rawPlatform)) rawPlatform = 'youtube';
+            else if (['threads', 'thread', 'th'].includes(rawPlatform)) rawPlatform = 'threads';
 
-                const markVal = (r.mark || '').toString().toLowerCase().trim();
-                const focusVal = (r.focus || '').toString().toLowerCase().trim();
-                const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
+            const markVal = getVal(r, 'mark').toLowerCase().trim();
+            const focusVal = getVal(r, 'focus').toLowerCase().trim();
+            const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
 
-                let artistVal = (r.artist || '').toString().toLowerCase().trim();
-                if (!artistVal) {
-                  const t = ((r.title || '') + ' ' + (r.media || '')).toLowerCase();
-                  if (t.includes('namtanfilm') || (t.includes('namtan') && t.includes('film'))) artistVal = 'both';
-                  else if (t.includes('namtan') || t.includes('tipnaree')) artistVal = 'namtan';
-                  else if (t.includes('film') || t.includes('rachanun')) artistVal = 'film';
-                  else artistVal = 'both';
-                }
+            let artistVal = (getVal(r, 'artist') || getVal(r, 'category')).toLowerCase().trim();
+            if (!artistVal) {
+              const fullText = (media + ' ' + title + ' ' + url).toLowerCase();
+              if (fullText.includes('namtan') || fullText.includes('น้ำตาล')) {
+                artistVal = 'namtan';
+              } else if (fullText.includes('prada')) {
+                artistVal = 'prada';
+              } else {
+                artistVal = 'media';
+              }
+            }
 
-                return {
-                  id: r.id,
-                  mark: isMarked,
-                  platform: rawPlatform,
-                  media: r.media || '',
-                  title: r.title || r.note || '',
-                  url: r.url || '',
-                  artist: artistVal,
-                  boost: r.boost || '',
-                  target: r.target || '',
-                  likes: parseAbbreviatedNumber(r.likes || r.like),
-                  comments: parseAbbreviatedNumber(r.comments || r.comment),
-                  shares: parseAbbreviatedNumber(r.shares || r.share),
-                  reposts: parseAbbreviatedNumber(r.reposts || r.repost),
-                  views: parseAbbreviatedNumber(r.views || r.view),
-                  saves: parseAbbreviatedNumber(r.saves || r.save),
-                  image: r.image || '',
-                  source: 'sheet',
-                };
-              });
-
-            setTasks(parsed);
+            parsed.push({
+              id,
+              mark: isMarked,
+              platform: rawPlatform,
+              media: media || 'ไม่มีชื่อสื่อ',
+              title: title || '',
+              url: url || '',
+              artist: artistVal,
+              boost: getVal(r, 'boost'),
+              target: getVal(r, 'target'),
+              likes: parseAbbreviatedNumber(getVal(r, 'likes') || getVal(r, 'like')),
+              comments: parseAbbreviatedNumber(getVal(r, 'comments') || getVal(r, 'comment')),
+              shares: parseAbbreviatedNumber(getVal(r, 'shares') || getVal(r, 'share')),
+              reposts: parseAbbreviatedNumber(getVal(r, 'reposts') || getVal(r, 'repost')),
+              views: parseAbbreviatedNumber(getVal(r, 'views') || getVal(r, 'view')),
+              saves: parseAbbreviatedNumber(getVal(r, 'saves') || getVal(r, 'save')),
+              image: getVal(r, 'image'),
+              source: 'sheet',
+            });
           }
-        } catch {
-          // JSON parse fail fallback to CSV
+          setTasks(parsed);
+          isSuccess = true;
         }
       }
 
-      if (!isProxySuccess) {
-        const fallbackRes = await fetch('/api/sheet?gid=0');
-        if (fallbackRes.ok) {
-          const csv = await fallbackRes.text();
-          const rows = parseCSV(csv.replace(/^\uFEFF/, ''));
-          if (rows.length > 0) {
-            const headers = rows[0].map(h => h.toLowerCase().trim());
-            const getVal = (r: string[], h: string) => {
-              const idx = headers.indexOf(h.toLowerCase().trim());
-              return idx !== -1 ? (r[idx] || '') : '';
-            };
+      // 2. Fallback: GAS readAll proxy if CSV failed
+      if (!isSuccess) {
+        const res = await fetch('/api/admin-sheet?action=readAll&sheetGID=0');
+        if (res.ok) {
+          const text = await res.text();
+          try {
+            const json = JSON.parse(text);
+            if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+              const parsed: AdminSheetTask[] = json.data
+                .filter((r: any) => r.id && r.id !== 'global_settings')
+                .map((r: any) => {
+                  let rawPlatform = (r.platform || 'x').toLowerCase().trim();
+                  if (['ig', 'instagram', 'insta'].includes(rawPlatform)) rawPlatform = 'instagram';
+                  else if (['fb', 'facebook'].includes(rawPlatform)) rawPlatform = 'facebook';
+                  else if (['tt', 'tiktok'].includes(rawPlatform)) rawPlatform = 'tiktok';
+                  else if (['yt', 'youtube'].includes(rawPlatform)) rawPlatform = 'youtube';
+                  else if (['threads', 'thread', 'th'].includes(rawPlatform)) rawPlatform = 'threads';
 
-            const parsed: AdminSheetTask[] = [];
-            for (let i = 1; i < rows.length; i++) {
-              const r = rows[i];
-              const id = getVal(r, 'id');
-              if (!id || id === 'global_settings') continue;
-              const url = getVal(r, 'url');
-              if (!url) continue;
+                  const markVal = (r.mark || '').toString().toLowerCase().trim();
+                  const focusVal = (r.focus || '').toString().toLowerCase().trim();
+                  const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
 
-              let rawPlatform = (getVal(r, 'platform') || 'x').toLowerCase().trim();
-              if (['ig', 'instagram', 'insta'].includes(rawPlatform)) rawPlatform = 'instagram';
-              else if (['fb', 'facebook'].includes(rawPlatform)) rawPlatform = 'facebook';
-              else if (['tt', 'tiktok'].includes(rawPlatform)) rawPlatform = 'tiktok';
-              else if (['yt', 'youtube'].includes(rawPlatform)) rawPlatform = 'youtube';
-              else if (['threads', 'thread', 'th'].includes(rawPlatform)) rawPlatform = 'threads';
+                  let artistVal = (r.artist || r.category || '').toString().toLowerCase().trim();
+                  if (!artistVal) {
+                    const fullText = ((r.media || '') + ' ' + (r.title || '') + ' ' + (r.url || '')).toLowerCase();
+                    if (fullText.includes('namtan') || fullText.includes('น้ำตาล')) artistVal = 'namtan';
+                    else if (fullText.includes('prada')) artistVal = 'prada';
+                    else artistVal = 'media';
+                  }
 
-              const markVal = getVal(r, 'mark').toLowerCase().trim();
-              const focusVal = getVal(r, 'focus').toLowerCase().trim();
-              const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
-
-              let artistVal = getVal(r, 'artist').toLowerCase().trim();
-              if (!artistVal) {
-                const t = (getVal(r, 'title') || getVal(r, 'media')).toLowerCase();
-                if (t.includes('namtanfilm') || (t.includes('namtan') && t.includes('film'))) artistVal = 'both';
-                else if (t.includes('namtan') || t.includes('tipnaree')) artistVal = 'namtan';
-                else if (t.includes('film') || t.includes('rachanun')) artistVal = 'film';
-                else artistVal = 'both';
-              }
-
-              parsed.push({
-                id,
-                mark: isMarked,
-                platform: rawPlatform,
-                media: getVal(r, 'media'),
-                title: getVal(r, 'title') || getVal(r, 'note'),
-                url,
-                artist: artistVal,
-                boost: getVal(r, 'boost'),
-                target: getVal(r, 'target'),
-                likes: parseAbbreviatedNumber(getVal(r, 'likes') || getVal(r, 'like')),
-                comments: parseAbbreviatedNumber(getVal(r, 'comments') || getVal(r, 'comment')),
-                shares: parseAbbreviatedNumber(getVal(r, 'shares') || getVal(r, 'share')),
-                reposts: parseAbbreviatedNumber(getVal(r, 'reposts') || getVal(r, 'repost')),
-                views: parseAbbreviatedNumber(getVal(r, 'views') || getVal(r, 'view')),
-                saves: parseAbbreviatedNumber(getVal(r, 'saves') || getVal(r, 'save')),
-                image: getVal(r, 'image'),
-                source: 'sheet',
-              });
+                  return {
+                    id: r.id,
+                    mark: isMarked,
+                    platform: rawPlatform,
+                    media: r.media || '',
+                    title: r.title || r.note || '',
+                    url: r.url || '',
+                    artist: artistVal,
+                    boost: r.boost || '',
+                    target: r.target || '',
+                    likes: parseAbbreviatedNumber(r.likes || r.like),
+                    comments: parseAbbreviatedNumber(r.comments || r.comment),
+                    shares: parseAbbreviatedNumber(r.shares || r.share),
+                    reposts: parseAbbreviatedNumber(r.reposts || r.repost),
+                    views: parseAbbreviatedNumber(r.views || r.view),
+                    saves: parseAbbreviatedNumber(r.saves || r.save),
+                    image: r.image || '',
+                    source: 'sheet',
+                  };
+                });
+              setTasks(parsed);
             }
-            setTasks(parsed);
-          }
+          } catch { /* ignore */ }
         }
       }
 
@@ -371,31 +343,25 @@ export default function AdminCalculator() {
   const handleSaveFollowers = async () => {
     setIsSavingFollowers(true);
     setNamtanFollowers(editNamtanForm);
-    setFilmFollowers(editFilmForm);
     localStorage.setItem('ntf_followers_namtan', JSON.stringify(editNamtanForm));
-    localStorage.setItem('ntf_followers_film', JSON.stringify(editFilmForm));
 
     const followerPayload = {
       id: 'followers_summary',
       namtan_followers_before: String(editNamtanForm.before),
       namtan_followers_after: String(editNamtanForm.after),
-      film_followers_before: String(editFilmForm.before),
-      film_followers_after: String(editFilmForm.after),
       namtan_before: String(editNamtanForm.before),
       namtan_after: String(editNamtanForm.after),
-      film_before: String(editFilmForm.before),
-      film_after: String(editFilmForm.after),
     };
 
     try {
-      // 1. Save to separate sheet tab 'followers' via updateRow
+      // 1. Save to separate sheet tab 'follwer' (GID 304042117) via updateRow
       const res = await fetch('/api/admin-sheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'updateRow',
-          sheetName: 'followers',
-          sheetGID: 'followers',
+          sheetName: 'follwer',
+          sheetGID: '304042117',
           data: followerPayload,
         }),
       });
@@ -409,27 +375,12 @@ export default function AdminCalculator() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'addRow',
-            sheetName: 'followers',
-            sheetGID: 'followers',
+            sheetName: 'follwer',
+            sheetGID: '304042117',
             data: followerPayload,
           }),
         });
       }
-
-      // 3. Also save to global_settings in main sheet as fallback
-      await fetch('/api/admin-sheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'updateRow',
-          sheetName: 'data',
-          sheetGID: '0',
-          data: {
-            ...followerPayload,
-            id: 'global_settings',
-          },
-        }),
-      }).catch(() => null);
 
       setShowEditFollowersModal(false);
       fetchData();
@@ -506,9 +457,9 @@ export default function AdminCalculator() {
   // Artist Breakdown
   const artistBreakdown = useMemo(() => {
     const categories = [
-      { id: 'both', label: 'น้ำตาล & ฟิล์ม (คู่)', color: 'bg-[#E00034]' },
-      { id: 'namtan', label: 'น้ำตาล (เดี่ยว)', color: 'bg-amber-500' },
-      { id: 'film', label: 'ฟิล์ม (เดี่ยว)', color: 'bg-[#122D55]' },
+      { id: 'namtan', label: '📸 บัญชีน้ำตาล (Namtan Official)', color: 'bg-[#c4d2b1]' },
+      { id: 'media', label: '🌟 สื่อแฟชั่น & นิตยสาร (Fashion Media)', color: 'bg-[#1E3E62]' },
+      { id: 'prada', label: '👠 Prada Official', color: 'bg-[#2a2121]' },
     ];
 
     return categories.map(cat => {
@@ -559,29 +510,26 @@ export default function AdminCalculator() {
   const namtanGain = namtanFollowers.after - namtanFollowers.before;
   const namtanPct = (namtanGain / namtanFollowers.before) * 100;
 
-  const filmGain = filmFollowers.after - filmFollowers.before;
-  const filmPct = (filmGain / filmFollowers.before) * 100;
-
   return (
-    <div className="min-h-screen bg-[#F0F4F8] text-gray-800 font-sans pb-16">
-      {/* ── Top Header Banner (Levi's Inspired Bright Red & Denim Navy) ── */}
-      <div className="bg-gradient-to-r from-[#122D55] via-[#1E3E62] to-[#122D55] text-white shadow-md border-b-4 border-[#E00034]">
+    <div className="min-h-screen bg-[#F7F8F4] text-gray-800 font-sans pb-16">
+      {/* ── Top Header Banner (Prada Inspired Bright Red & Denim Navy) ── */}
+      <div className="bg-gradient-to-r from-[#2a2121] via-[#1E3E62] to-[#2a2121] text-white shadow-md border-b-4 border-[#c4d2b1]">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#E00034] flex items-center justify-center text-white text-xl shadow-md shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-[#c4d2b1] flex items-center justify-center text-white text-xl shadow-md shrink-0">
               👖
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-black tracking-wide leading-none">
-                  NamtanFilm × Levi’s
+                  Namtan × Prada SS 2027
                 </h1>
-                <span className="bg-[#E00034] text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+                <span className="bg-[#c4d2b1] text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
                   Summary Dashboard
                 </span>
               </div>
               <p className="text-xs text-sky-200/80 mt-1 font-medium">
-                สรุปภาพรวมสถิติ Engagement และผู้ติดตามโซเชียลมีเดีย
+                สรุปภาพรวมสถิติ Engagement และผู้ติดตามโซเชียลมีเดีย แคมเปญ Prada SS 2027
               </p>
             </div>
           </div>
@@ -612,14 +560,13 @@ export default function AdminCalculator() {
         {/* ── Section 1: Follower Growth (Namtan & Film) ── */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-[#122D55] uppercase tracking-wider flex items-center gap-2">
-              <FaUsers className="text-[#E00034]" />
-              <span>ยอดผู้ติดตาม Instagram (ก่อน vs หลัง อีเวนต์)</span>
+            <h2 className="text-sm font-black text-[#2a2121] uppercase tracking-wider flex items-center gap-2">
+              <FaUsers className="text-[#c4d2b1]" />
+              <span>ยอดผู้ติดตาม Instagram — น้ำตาล (Namtan Tipnaree)</span>
             </h2>
             <button
               onClick={() => {
                 setEditNamtanForm(namtanFollowers);
-                setEditFilmForm(filmFollowers);
                 setShowEditFollowersModal(true);
               }}
               className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 border border-blue-200 cursor-pointer"
@@ -629,84 +576,43 @@ export default function AdminCalculator() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {/* Namtan Card */}
             <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-pink-500/10 to-transparent rounded-bl-full pointer-events-none" />
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 p-0.5 shadow-xs">
-                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-pink-600 font-black text-sm">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-pink-500/10 to-transparent rounded-bl-full pointer-events-none" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 p-0.5 shadow-xs">
+                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-pink-600 font-black text-base">
                       N
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-[#122D55] text-base leading-none">น้ำตาล (Namtan)</h3>
-                    <p className="text-[11px] text-gray-500 font-medium mt-0.5">@namtan.tipnaree</p>
+                    <h3 className="font-extrabold text-[#2a2121] text-lg leading-none">น้ำตาล (Namtan Tipnaree)</h3>
+                    <p className="text-xs text-gray-500 font-medium mt-1">@namtan.tipnaree</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
+                <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
                   Instagram
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-center bg-slate-50/80 rounded-xl p-3 border border-slate-100">
+              <div className="grid grid-cols-3 gap-3 text-center bg-slate-50/80 rounded-xl p-4 border border-slate-100">
                 <div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">ก่อนอีเวนต์</div>
-                  <div className="text-base sm:text-lg font-black text-gray-600 tabular-nums">{fmt(namtanFollowers.before)}</div>
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ก่อนอีเวนต์</div>
+                  <div className="text-lg sm:text-xl font-black text-gray-600 tabular-nums">{fmt(namtanFollowers.before)}</div>
                 </div>
                 <div className="border-x border-slate-200">
-                  <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-0.5">หลังอีเวนต์ (ปัจจุบัน)</div>
-                  <div className="text-base sm:text-lg font-black text-[#122D55] tabular-nums">{fmt(namtanFollowers.after)}</div>
+                  <div className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">หลังอีเวนต์ (ปัจจุบัน)</div>
+                  <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(namtanFollowers.after)}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">เพิ่มขึ้น</div>
-                  <div className="text-base sm:text-lg font-black text-emerald-600 tabular-nums">
+                  <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">เพิ่มขึ้น</div>
+                  <div className="text-lg sm:text-xl font-black text-emerald-600 tabular-nums">
                     +{fmt(namtanGain)}
                   </div>
-                  <div className="text-[10px] font-bold text-emerald-500">
+                  <div className="text-xs font-bold text-emerald-500 mt-0.5">
                     (+{namtanPct.toFixed(2)}%)
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Film Card */}
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-bl-full pointer-events-none" />
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-600 to-purple-600 p-0.5 shadow-xs">
-                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-blue-600 font-black text-sm">
-                      F
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-[#122D55] text-base leading-none">ฟิล์ม (Film)</h3>
-                    <p className="text-[11px] text-gray-500 font-medium mt-0.5">@film.rchanun</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  Instagram
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 text-center bg-slate-50/80 rounded-xl p-3 border border-slate-100">
-                <div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">ก่อนอีเวนต์</div>
-                  <div className="text-base sm:text-lg font-black text-gray-600 tabular-nums">{fmt(filmFollowers.before)}</div>
-                </div>
-                <div className="border-x border-slate-200">
-                  <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-0.5">หลังอีเวนต์ (ปัจจุบัน)</div>
-                  <div className="text-base sm:text-lg font-black text-[#122D55] tabular-nums">{fmt(filmFollowers.after)}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">เพิ่มขึ้น</div>
-                  <div className="text-base sm:text-lg font-black text-emerald-600 tabular-nums">
-                    +{fmt(filmGain)}
-                  </div>
-                  <div className="text-[10px] font-bold text-emerald-500">
-                    (+{filmPct.toFixed(2)}%)
                   </div>
                 </div>
               </div>
@@ -717,11 +623,11 @@ export default function AdminCalculator() {
         {/* ── Section 2: Filters Bar ── */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-extrabold text-[#122D55] uppercase tracking-wider flex items-center gap-1.5">
-              <FaFilter className="text-[#E00034]" />
+            <h2 className="text-xs font-extrabold text-[#2a2121] uppercase tracking-wider flex items-center gap-1.5">
+              <FaFilter className="text-[#c4d2b1]" />
               <span>ตัวกรองสรุปข้อมูล (Interactive Dashboard Filters)</span>
             </h2>
-            <span className="text-xs font-bold text-[#122D55] bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">
+            <span className="text-xs font-bold text-[#2a2121] bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">
               พบ {filteredTasks.length} รายการ
             </span>
           </div>
@@ -735,7 +641,7 @@ export default function AdminCalculator() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="ค้นหาชื่อสื่อ / ข้อความ..."
-                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#122D55]/30 focus:border-[#122D55]"
+                className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2a2121]/30 focus:border-[#2a2121]"
               />
             </div>
 
@@ -744,7 +650,7 @@ export default function AdminCalculator() {
               <select
                 value={filterPlatform}
                 onChange={e => setFilterPlatform(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#122D55]/30 focus:border-[#122D55]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2a2121]/30 focus:border-[#2a2121]"
               >
                 <option value="all">🌐 แพลตฟอร์ม: ทั้งหมด</option>
                 <option value="instagram">📸 Instagram</option>
@@ -763,12 +669,12 @@ export default function AdminCalculator() {
               <select
                 value={filterArtist}
                 onChange={e => setFilterArtist(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#122D55]/30 focus:border-[#122D55]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2a2121]/30 focus:border-[#2a2121]"
               >
-                <option value="all">🎭 ศิลปิน: ทั้งหมด</option>
-                <option value="both">👥 น้ำตาลฟิล์มคู่</option>
-                <option value="namtan">👩 น้ำตาลเดี่ยว</option>
-                <option value="film">👩‍🦰 ฟิล์มเดี่ยว</option>
+                <option value="all">📁 หมวดหมู่สื่อ: ทั้งหมด</option>
+                <option value="namtan">📸 บัญชีน้ำตาล (Namtan Official)</option>
+                <option value="media">🌟 สื่อแฟชั่น & นิตยสาร (Fashion Media)</option>
+                <option value="prada">👠 Prada Official</option>
               </select>
             </div>
 
@@ -777,7 +683,7 @@ export default function AdminCalculator() {
               <select
                 value={filterBoost}
                 onChange={e => setFilterBoost(e.target.value as any)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#122D55]/30 focus:border-[#122D55]"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2a2121]/30 focus:border-[#2a2121]"
               >
                 <option value="all">⭐ สถานะพิเศษ: ทั้งหมด</option>
                 <option value="boost">🚀 ติด Boost / สื่อสำคัญ</option>
@@ -790,12 +696,12 @@ export default function AdminCalculator() {
         {/* ── Section 3: Engagement Metrics Summary (Hero Card + 6 Metric Grid) ── */}
         <div className="space-y-4">
           {/* Total Hero Card */}
-          <div className="bg-gradient-to-r from-[#122D55] via-[#1E3E62] to-[#122D55] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#2a2121] via-[#1E3E62] to-[#2a2121] rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
             <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="bg-[#E00034] text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+                  <span className="bg-[#c4d2b1] text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
                     Total Engagement Summary
                   </span>
                   <span className="text-xs text-sky-200 font-medium">
@@ -834,7 +740,7 @@ export default function AdminCalculator() {
                 <span className="w-7 h-7 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center text-xs font-bold">❤️</span>
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-[#122D55] tabular-nums">{fmt(metrics.likes)}</div>
+                <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(metrics.likes)}</div>
                 <div className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {metrics.totalEngagement > 0 ? ((metrics.likes / metrics.totalEngagement) * 100).toFixed(1) : 0}% ของทั้งหมด
                 </div>
@@ -848,7 +754,7 @@ export default function AdminCalculator() {
                 <span className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">💬</span>
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-[#122D55] tabular-nums">{fmt(metrics.comments)}</div>
+                <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(metrics.comments)}</div>
                 <div className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {metrics.totalEngagement > 0 ? ((metrics.comments / metrics.totalEngagement) * 100).toFixed(1) : 0}% ของทั้งหมด
                 </div>
@@ -862,7 +768,7 @@ export default function AdminCalculator() {
                 <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">📤</span>
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-[#122D55] tabular-nums">{fmt(metrics.shares)}</div>
+                <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(metrics.shares)}</div>
                 <div className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {metrics.totalEngagement > 0 ? ((metrics.shares / metrics.totalEngagement) * 100).toFixed(1) : 0}% ของทั้งหมด
                 </div>
@@ -876,7 +782,7 @@ export default function AdminCalculator() {
                 <span className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold">🔁</span>
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-[#122D55] tabular-nums">{fmt(metrics.reposts)}</div>
+                <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(metrics.reposts)}</div>
                 <div className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {metrics.totalEngagement > 0 ? ((metrics.reposts / metrics.totalEngagement) * 100).toFixed(1) : 0}% ของทั้งหมด
                 </div>
@@ -890,7 +796,7 @@ export default function AdminCalculator() {
                 <span className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">👁️</span>
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-[#122D55] tabular-nums">{fmt(metrics.views)}</div>
+                <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(metrics.views)}</div>
                 <div className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {metrics.totalEngagement > 0 ? ((metrics.views / metrics.totalEngagement) * 100).toFixed(1) : 0}% ของทั้งหมด
                 </div>
@@ -904,7 +810,7 @@ export default function AdminCalculator() {
                 <span className="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center text-xs font-bold">🔖</span>
               </div>
               <div>
-                <div className="text-lg sm:text-xl font-black text-[#122D55] tabular-nums">{fmt(metrics.saves)}</div>
+                <div className="text-lg sm:text-xl font-black text-[#2a2121] tabular-nums">{fmt(metrics.saves)}</div>
                 <div className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {metrics.totalEngagement > 0 ? ((metrics.saves / metrics.totalEngagement) * 100).toFixed(1) : 0}% ของทั้งหมด
                 </div>
@@ -917,9 +823,9 @@ export default function AdminCalculator() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Artist Breakdown */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-            <h3 className="text-xs font-extrabold text-[#122D55] uppercase tracking-wider flex items-center justify-between">
+            <h3 className="text-xs font-extrabold text-[#2a2121] uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <FaUserFriends className="text-[#E00034]" />
+                <FaUserFriends className="text-[#c4d2b1]" />
                 <span>สรุปแยกตามหมวดหมู่ศิลปิน</span>
               </span>
               <span className="text-[10px] font-bold text-gray-400">Share of Total</span>
@@ -929,12 +835,12 @@ export default function AdminCalculator() {
               {artistBreakdown.map(cat => (
                 <div key={cat.id} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-[#122D55] flex items-center gap-1.5">
+                    <span className="text-[#2a2121] flex items-center gap-1.5">
                       <span className={`w-2.5 h-2.5 rounded-full ${cat.color}`} />
                       <span>{cat.label}</span>
                       <span className="text-[10px] font-normal text-gray-400">({cat.count} โพสต์)</span>
                     </span>
-                    <span className="text-[#122D55] font-black">{fmt(cat.total)} ({cat.pct.toFixed(1)}%)</span>
+                    <span className="text-[#2a2121] font-black">{fmt(cat.total)} ({cat.pct.toFixed(1)}%)</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                     <div className={`${cat.color} h-full rounded-full transition-all duration-500`} style={{ width: `${Math.min(100, cat.pct)}%` }} />
@@ -946,7 +852,7 @@ export default function AdminCalculator() {
 
           {/* Platform Breakdown */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-            <h3 className="text-xs font-extrabold text-[#122D55] uppercase tracking-wider flex items-center justify-between">
+            <h3 className="text-xs font-extrabold text-[#2a2121] uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <FaChartBar className="text-[#1D4ED8]" />
                 <span>สรุปแยกตามแพลตฟอร์ม</span>
@@ -961,15 +867,15 @@ export default function AdminCalculator() {
                 platformBreakdown.map(p => (
                   <div key={p.id} className="space-y-1">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#122D55] flex items-center gap-1.5">
+                      <span className="text-[#2a2121] flex items-center gap-1.5">
                         {p.icon}
                         <span>{p.label}</span>
                         <span className="text-[10px] font-normal text-gray-400">({p.count} โพสต์)</span>
                       </span>
-                      <span className="text-[#122D55] font-black">{fmt(p.total)} ({p.pct.toFixed(1)}%)</span>
+                      <span className="text-[#2a2121] font-black">{fmt(p.total)} ({p.pct.toFixed(1)}%)</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-[#122D55] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, p.pct)}%` }} />
+                      <div className="bg-[#2a2121] h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, p.pct)}%` }} />
                     </div>
                   </div>
                 ))
@@ -981,7 +887,7 @@ export default function AdminCalculator() {
         {/* ── Section 5: Filtered Posts Table List ── */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden space-y-0">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-xs font-extrabold text-[#122D55] uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className="text-xs font-extrabold text-[#2a2121] uppercase tracking-wider flex items-center gap-1.5">
               <span>📜</span> รายการโพสต์ในชุดข้อมูล ({filteredTasks.length} รายการ)
             </h3>
           </div>
@@ -989,7 +895,7 @@ export default function AdminCalculator() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-[#122D55] font-bold text-[11px] uppercase tracking-wider">
+                <tr className="bg-slate-50 border-b border-slate-200 text-[#2a2121] font-bold text-[11px] uppercase tracking-wider">
                   <th className="py-3 px-3 w-10 text-center">ดาว</th>
                   <th className="py-3 px-3 w-14 text-center">Platform</th>
                   <th className="py-3 px-3">สื่อ</th>
@@ -1023,7 +929,7 @@ export default function AdminCalculator() {
                         </td>
                         <td className="py-2.5 px-3 font-medium text-gray-800">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-[#122D55]">{t.media || 'ไม่มีชื่อสื่อ'}</span>
+                            <span className="font-bold text-[#2a2121]">{t.media || 'ไม่มีชื่อสื่อ'}</span>
                             {t.boost && (
                               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-amber-500/15 text-amber-700 border border-amber-500/30" title="Boost">
                                 🚀
@@ -1035,7 +941,7 @@ export default function AdminCalculator() {
                         <td className="py-2.5 px-3 text-right tabular-nums text-gray-700">{t.comments ? fmt(t.comments) : '-'}</td>
                         <td className="py-2.5 px-3 text-right tabular-nums text-gray-700">{t.shares || t.reposts ? fmt((t.shares || 0) + (t.reposts || 0)) : '-'}</td>
                         <td className="py-2.5 px-3 text-right tabular-nums text-gray-700">{t.views ? fmt(t.views) : '-'}</td>
-                        <td className="py-2.5 px-3 text-right font-black text-[#122D55] tabular-nums">{fmt(rowTotal)}</td>
+                        <td className="py-2.5 px-3 text-right font-black text-[#2a2121] tabular-nums">{fmt(rowTotal)}</td>
                         <td className="py-2.5 px-3 text-center">
                           <a
                             href={t.url}
@@ -1063,8 +969,8 @@ export default function AdminCalculator() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-[#122D55] text-base flex items-center gap-2">
-                <FaUsers className="text-[#E00034]" />
+              <h3 className="font-extrabold text-[#2a2121] text-base flex items-center gap-2">
+                <FaUsers className="text-[#c4d2b1]" />
                 <span>แก้ไขยอดผู้ติดตาม (Follower Numbers)</span>
               </h3>
               <button
@@ -1102,33 +1008,6 @@ export default function AdminCalculator() {
                   </div>
                 </div>
               </div>
-
-              {/* Film inputs */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
-                <h4 className="text-xs font-extrabold text-blue-700 flex items-center gap-1.5">
-                  <span>📸</span> ฟิล์ม (@film.rchanun)
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-500 mb-1">ก่อนอีเวนต์</label>
-                    <input
-                      type="number"
-                      value={editFilmForm.before}
-                      onChange={e => setEditFilmForm({ ...editFilmForm, before: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-gray-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-gray-500 mb-1">หลังอีเวนต์ (ปัจจุบัน)</label>
-                    <input
-                      type="number"
-                      value={editFilmForm.after}
-                      onChange={e => setEditFilmForm({ ...editFilmForm, after: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-gray-800"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -1141,7 +1020,7 @@ export default function AdminCalculator() {
               <button
                 onClick={handleSaveFollowers}
                 disabled={isSavingFollowers}
-                className="px-4 py-2 rounded-xl bg-[#122D55] hover:bg-[#1E3E62] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#2a2121] hover:bg-[#1E3E62] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
                 {isSavingFollowers ? (
                   <FaSpinner className="text-xs animate-spin" />

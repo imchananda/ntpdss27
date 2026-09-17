@@ -1,5 +1,5 @@
 /**
- * Image Upload & Compression Helper for NamtanFilm x Levi's
+ * Image Upload & Compression Helper for Namtan x Prada
  * Uploads images via /api/upload-image (Catbox Cloud)
  */
 
@@ -91,46 +91,28 @@ export async function uploadImageToCatbox(file: File): Promise<string> {
     console.warn('Backend proxy upload failed, trying direct browser upload fallback:', err);
   }
 
-  // 3. Fallback: Direct upload from browser to Catbox API
-  try {
-    const fd = new FormData();
-    fd.append('reqtype', 'fileupload');
-    fd.append('fileToUpload', file, file.name);
+  // 3. Fallback: Direct upload from browser to Catbox API (https://catbox.moe/user/api.php)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const fd = new FormData();
+      fd.append('reqtype', 'fileupload');
+      fd.append('fileToUpload', file, file.name);
 
-    const directRes = await fetch('https://catbox.moe/user/api.php', {
-      method: 'POST',
-      body: fd,
-    });
+      const directRes = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: fd,
+      });
 
-    const directUrl = (await directRes.text()).trim();
-    if (directRes.ok && directUrl.startsWith('http')) {
-      return directUrl;
+      const directUrl = (await directRes.text()).trim();
+      if (directRes.ok && directUrl.startsWith('http')) {
+        return directUrl;
+      }
+    } catch (err) {
+      console.warn(`Direct Catbox upload attempt ${attempt} failed:`, err);
     }
-  } catch (err) {
-    console.warn('Direct Catbox upload failed:', err);
   }
 
-  // 4. Fallback 2: Direct upload from browser to Litterbox Cloud
-  try {
-    const fd = new FormData();
-    fd.append('reqtype', 'fileupload');
-    fd.append('time', '72h');
-    fd.append('fileToUpload', file, file.name);
-
-    const litterRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
-      method: 'POST',
-      body: fd,
-    });
-
-    const litterUrl = (await litterRes.text()).trim();
-    if (litterRes.ok && litterUrl.startsWith('http')) {
-      return litterUrl;
-    }
-  } catch (err) {
-    console.warn('Direct Litterbox upload failed:', err);
-  }
-
-  throw new Error('ไม่สามารถอัปโหลดรูปภาพได้ในขณะนี้ กรุณาเปลี่ยนไปใช้วิธี "แปะลิงก์รูป (URL)" แทน');
+  throw new Error('ไม่สามารถอัปโหลดรูปภาพแบบถาวร (files.catbox.moe) ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง หรือใช้วิธี "แปะลิงก์รูป (URL)" แทน');
 }
 
 /**

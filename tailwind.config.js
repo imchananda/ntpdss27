@@ -7,21 +7,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        levis: {
-          red: '#E00034',
-          darkred: '#B40F28',
-          indigo: '#122D55',
-          dark: '#0B192C',
-          denim: '#1E3E62',
-          chambray: '#8DA4C4',
-          ice: '#E8EFF7',
-          canvas: '#FAFAFC',
-          gold: '#E5A93C',
-          leather: '#D2A679',
-        },
         prada: {
           offwhite: 'rgb(var(--prada-offwhite) / <alpha-value>)',
           cream: 'rgb(var(--prada-cream) / <alpha-value>)',
+          sage: 'rgb(var(--prada-sage) / <alpha-value>)',
           parchment: 'rgb(var(--prada-parchment) / <alpha-value>)',
           stone: 'rgb(var(--prada-stone) / <alpha-value>)',
           warm: 'rgb(var(--prada-warm) / <alpha-value>)',
@@ -36,7 +25,7 @@ export default {
       },
       fontFamily: {
         google: ['"Google Sans"', '"Noto Sans Thai"', 'sans-serif'],
-        display: ['"Poiret One"', '"Noto Sans Thai"', 'serif'],
+        display: ['"Cormorant Garamond"', '"Noto Sans Thai"', 'serif'],
         body: ['"Noto Sans Thai"', 'Inter', 'sans-serif'],
         sans: ['"Noto Sans Thai"', 'Inter', 'sans-serif'],
       },

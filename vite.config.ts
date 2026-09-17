@@ -111,7 +111,7 @@ function adminSheetDevPlugin(gasUrl: string): Plugin {
 }
 
 // Custom dev middleware for /api/upload-image (Catbox Cloud)
-function uploadImageDevPlugin(): Plugin {
+function uploadImageDevPlugin(catboxUserhash = ''): Plugin {
   return {
     name: 'upload-image-dev-proxy',
     configureServer(server) {
@@ -158,53 +158,39 @@ function uploadImageDevPlugin(): Plugin {
                   ? new File([buffer], safeName, { type: mimeType })
                   : new Blob([buffer], { type: mimeType });
 
-                // 1. Try Catbox Moe Main Server
-                try {
-                  const fd = new FormData();
-                  fd.append('reqtype', 'fileupload');
-                  fd.append('fileToUpload', fileObj, safeName);
+                // Upload exclusively to Catbox Main Server (https://catbox.moe/user/api.php)
+                // to ensure permanent storage on https://files.catbox.moe
+                let lastError = '';
+                const userhash = catboxUserhash || process.env.CATBOX_USERHASH || '';
 
-                  const catboxRes = await fetch('https://catbox.moe/user/api.php', {
-                    method: 'POST',
-                    headers: customHeaders,
-                    body: fd,
-                  });
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                  try {
+                    const fd = new FormData();
+                    fd.append('reqtype', 'fileupload');
+                    if (userhash) fd.append('userhash', userhash);
+                    fd.append('fileToUpload', fileObj, safeName);
 
-                  const directUrl = (await catboxRes.text()).trim();
-                  if (catboxRes.ok && directUrl.startsWith('http')) {
-                    res.statusCode = 200;
-                    res.end(JSON.stringify({ ok: true, url: directUrl, provider: 'catbox' }));
-                    return;
+                    const catboxRes = await fetch('https://catbox.moe/user/api.php', {
+                      method: 'POST',
+                      headers: customHeaders,
+                      body: fd,
+                    });
+
+                    const directUrl = (await catboxRes.text()).trim();
+                    if (catboxRes.ok && directUrl.startsWith('http')) {
+                      res.statusCode = 200;
+                      res.end(JSON.stringify({ ok: true, url: directUrl, provider: 'catbox' }));
+                      return;
+                    }
+                    lastError = directUrl || `HTTP ${catboxRes.status}`;
+                  } catch (catboxErr: any) {
+                    lastError = catboxErr.message;
                   }
-                } catch {
-                  // ignore & try fallback
-                }
-
-                // 2. Fallback to Litterbox (Catbox temporary/backup server)
-                try {
-                  const fd = new FormData();
-                  fd.append('reqtype', 'fileupload');
-                  fd.append('time', '72h');
-                  fd.append('fileToUpload', fileObj, safeName);
-
-                  const litterRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
-                    method: 'POST',
-                    headers: customHeaders,
-                    body: fd,
-                  });
-
-                  const directUrl = (await litterRes.text()).trim();
-                  if (litterRes.ok && directUrl.startsWith('http')) {
-                    res.statusCode = 200;
-                    res.end(JSON.stringify({ ok: true, url: directUrl, provider: 'litterbox' }));
-                    return;
-                  }
-                } catch {
-                  // ignore
+                  if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
                 }
 
                 res.statusCode = 500;
-                res.end(JSON.stringify({ ok: false, error: 'Failed to upload to Catbox CDN' }));
+                res.end(JSON.stringify({ ok: false, error: `Failed to upload to permanent Catbox CDN (files.catbox.moe): ${lastError}` }));
               } catch (err: any) {
                 res.statusCode = 500;
                 res.end(JSON.stringify({ ok: false, error: err.message }));
@@ -224,14 +210,14 @@ export default defineConfig(({ mode }) => {
   // @ts-expect-error process is defined in the Node environment where Vite runs
   const env = loadEnv(mode, process.cwd(), '');
   const gasUrl = env.VITE_GAS_URL || process.env.VITE_GAS_URL || '';
-  const sheetId = env.SHEET_ID || process.env.SHEET_ID || '1wfDp4FABGJKj33ozdxtk-G0a5yCpbZ7Y9TP_T5GvRrE';
-  const msgSheetId = env.VITE_MSG_SHEET_ID || process.env.VITE_MSG_SHEET_ID || '';
+  const sheetId = env.SHEET_ID || process.env.SHEET_ID || '1Z7GutAP-m5wWckVbngZaBed2cMNMThyBu2AY7D-Dn3I';
+  const msgSheetId = env.VITE_MSG_SHEET_ID || process.env.VITE_MSG_SHEET_ID || '1fIgIeLfOsfsAg2-ZOH9TQOQm3E6r0eOBY33NP788PI4';
 
   return {
     plugins: [
       react(),
       adminSheetDevPlugin(gasUrl),
-      uploadImageDevPlugin()
+      uploadImageDevPlugin(env.CATBOX_USERHASH || process.env.CATBOX_USERHASH || '')
     ],
     base: './', // For GitHub Pages deployment
     server: {
@@ -241,12 +227,15 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => {
             const url = new URL(path, 'http://localhost');
-            const gid = url.searchParams.get('gid') || '0';
+            const gid = url.searchParams.get('gid');
             const sheetName = url.searchParams.get('sheetName');
+            if (gid) {
+              return `/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+            }
             if (sheetName) {
               return `/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
             }
-            return `/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+            return `/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
           }
         },
         '/api/msg-sheet': {
@@ -265,6 +254,20 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api\/gdrive/, ''),
           headers: {
             'Referer': 'https://drive.google.com',
+          }
+        }
+      }
+    },
+    build: {
+      target: 'es2020',
+      cssCodeSplit: true,
+      sourcemap: false,
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'icons-vendor': ['react-icons'],
           }
         }
       }

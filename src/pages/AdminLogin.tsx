@@ -42,7 +42,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       }
     } catch {
       // Fallback
-      if (password === 'admin' || password === 'levis2026') {
+      if (password === 'admin' || password === 'prada2027') {
         onLoginSuccess();
       } else {
         setError('เกิดข้อผิดพลาดในการตรวจสอบ กรุณาลองใหม่อีกครั้ง');
@@ -55,30 +55,30 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Subtle denim background gradients */}
+    <div className="min-h-screen bg-[#F7F8F4] flex items-center justify-center p-4 relative overflow-hidden font-sans">
+      {/* Subtle background gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#122D55]/10 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#E00034]/10 blur-3xl" />
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#2a2121]/10 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#c4d2b1]/10 blur-3xl" />
       </div>
 
       <div
-        className={`w-full max-w-md relative z-10 bg-white/95 backdrop-blur-xl border border-[#9BB6D6]/40 shadow-2xl shadow-[#122D55]/10 rounded-3xl p-8 ${
+        className={`w-full max-w-md relative z-10 bg-white/95 backdrop-blur-xl border border-[#c4d2b1]/60 shadow-2xl shadow-[#2a2121]/10 rounded-3xl p-8 ${
           shaking ? 'animate-[shake_0.4s_ease-in-out]' : ''
         }`}
       >
         {/* Top Accent line */}
-        <div className="h-1 w-full bg-gradient-to-r from-[#E00034] via-[#122D55] to-[#E00034] rounded-full mb-6" />
+        <div className="h-1 w-full bg-gradient-to-r from-[#c4d2b1] via-[#2a2121] to-[#c4d2b1] rounded-full mb-6" />
 
         {/* Logo & Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#E00034] text-white text-[11px] font-black tracking-widest shadow-sm mb-3">
-            LEVI'S
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#c4d2b1] text-[#2a2121] text-[11px] font-black tracking-widest shadow-sm mb-3">
+            PRADA
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#122D55] tracking-tight">
-            NamtanFilm × Levi’s
+          <h1 className="text-xl sm:text-2xl font-black text-[#2a2121] tracking-tight">
+            Namtan × Prada’s
           </h1>
-          <p className="text-[#55739B] text-xs font-semibold tracking-widest uppercase mt-1">
+          <p className="text-[#695C58] text-xs font-semibold tracking-widest uppercase mt-1">
             Admin Management Portal
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#122D55] mb-1.5 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-[#2a2121] mb-1.5 uppercase tracking-wider">
               Admin Password
             </label>
             <input
@@ -98,15 +98,15 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               }}
               placeholder="••••••••••••"
               disabled={loading}
-              className={`w-full bg-[#F0F4F8]/80 rounded-xl px-4 py-3 outline-none text-[#122D55] placeholder:text-gray-400 font-mono text-sm border transition-all ${
+              className={`w-full bg-[#F7F8F4]/80 rounded-xl px-4 py-3 outline-none text-[#2a2121] placeholder:text-gray-400 font-mono text-sm border transition-all ${
                 error
-                  ? 'border-[#E00034] ring-2 ring-[#E00034]/20'
-                  : 'border-[#9BB6D6]/60 focus:border-[#122D55] focus:ring-2 focus:ring-[#122D55]/20'
+                  ? 'border-red-500 ring-2 ring-red-500/20'
+                  : 'border-[#c4d2b1] focus:border-[#2a2121] focus:ring-2 focus:ring-[#2a2121]/20'
               }`}
               autoFocus
             />
             {error && (
-              <p className="text-[#E00034] text-xs font-medium mt-1.5 pl-1">
+              <p className="text-red-500 text-xs font-medium mt-1.5 pl-1">
                 {error}
               </p>
             )}
@@ -115,7 +115,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           <button
             type="submit"
             disabled={loading || !password.trim()}
-            className="w-full bg-[#122D55] hover:bg-[#0B192C] text-white font-bold rounded-xl py-3.5 transition-all shadow-md active:scale-[0.98] disabled:opacity-50 tracking-wider flex items-center justify-center gap-2"
+            className="w-full bg-[#2a2121] hover:bg-[#191212] text-white font-bold rounded-xl py-3.5 transition-all shadow-md active:scale-[0.98] disabled:opacity-50 tracking-wider flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -131,7 +131,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         <div className="mt-6 text-center">
           <a
             href="#/"
-            className="text-xs text-[#55739B] hover:text-[#122D55] underline transition-colors"
+            className="text-xs text-[#695C58] hover:text-[#2a2121] underline transition-colors"
           >
             ← กลับสู่หน้าหลักแฟนคลับ
           </a>

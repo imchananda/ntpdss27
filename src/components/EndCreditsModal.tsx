@@ -121,7 +121,7 @@ export default function EndCreditsModal({ isOpen, onClose }: EndCreditsModalProp
                 </h1>
                 <p className="text-4xl font-extralight mb-3 text-[#B8986E]">×</p>
                 <h2 className="font-bold drop-shadow-2xl text-4xl sm:text-5xl" style={{ letterSpacing: '0.25em', background: 'linear-gradient(135deg, #fff 0%, #B8986E 50%, #fff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                    PRADA FW26
+                    PRADA SS27
                 </h2>
             </div>
 
