@@ -212,66 +212,6 @@ const detectPlatformFromUrl = (url: string): string => {
   return 'x';
 };
 
-const renderDropdownMetricCard = (
-  label: string,
-  curr?: string,
-  tgt?: string,
-  theme: 'rose' | 'blue' | 'emerald' | 'purple' | 'amber' | 'teal' = 'rose'
-) => {
-  const currNum = parseAbbrNumber(curr);
-  const tgtNum = parseAbbrNumber(tgt);
-  const hasTarget = tgtNum > 0;
-  const pct = hasTarget ? Math.min(Math.round((currNum / tgtNum) * 100), 100) : 0;
-  const isDone = hasTarget && currNum >= tgtNum;
-  const hasData = Boolean(curr || tgt);
-
-  const themeClasses = {
-    rose: { bg: 'bg-rose-50/50', border: 'border-rose-200/80', text: 'text-rose-700', bar: 'bg-rose-500' },
-    blue: { bg: 'bg-blue-50/50', border: 'border-blue-200/80', text: 'text-blue-700', bar: 'bg-blue-500' },
-    emerald: { bg: 'bg-emerald-50/50', border: 'border-emerald-200/80', text: 'text-emerald-700', bar: 'bg-emerald-500' },
-    purple: { bg: 'bg-purple-50/50', border: 'border-purple-200/80', text: 'text-purple-700', bar: 'bg-purple-500' },
-    amber: { bg: 'bg-amber-50/50', border: 'border-amber-200/80', text: 'text-amber-800', bar: 'bg-amber-500' },
-    teal: { bg: 'bg-teal-50/50', border: 'border-teal-200/80', text: 'text-teal-700', bar: 'bg-teal-500' },
-  }[theme];
-
-  return (
-    <div className={`p-2.5 rounded-xl border ${themeClasses.border} ${themeClasses.bg} flex flex-col justify-between gap-1 shadow-xs transition-all`}>
-      <div className="flex items-center justify-between text-[10px] font-bold">
-        <span className="text-gray-700">{label}</span>
-        {hasTarget ? (
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isDone ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
-            {isDone ? '🎉 100%' : `${pct}%`}
-          </span>
-        ) : (
-          <span className="text-[9px] text-gray-400 font-normal">ยังไม่ตั้งเป้า</span>
-        )}
-      </div>
-
-      <div className="flex items-baseline gap-1 mt-0.5">
-        <span className={`text-xs font-bold ${themeClasses.text}`}>{curr || '0'}</span>
-        {hasTarget && (
-          <>
-            <span className="text-gray-400 text-[10px] font-normal">/</span>
-            <span className="text-gray-600 text-[11px] font-medium">{tgt}</span>
-          </>
-        )}
-      </div>
-
-      {hasTarget ? (
-        <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden mt-1">
-          <div
-            className={`h-full rounded-full ${isDone ? 'bg-emerald-500' : themeClasses.bar} transition-all duration-300`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      ) : (
-        <div className="text-[9px] text-gray-400 mt-1">
-          {hasData ? 'ยอดปัจจุบัน' : 'ไม่มีข้อมูล'}
-        </div>
-      )}
-    </div>
-  );
-};
 
 // ─── Platform Icon Helper ─────────────────────────────────────────────────────
 const getPlatformIcon = (platform: string) => {
@@ -461,6 +401,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   // Track which task engagement dropdowns are currently open
   const [expandedEngagementIds, setExpandedEngagementIds] = useState<Set<string>>(new Set());
 
+  // Track inline editing engagement metric input values per task ID
+  const [inlineEngagementValues, setInlineEngagementValues] = useState<Record<string, Record<string, string>>>({});
+  const [isSavingInline, setIsSavingInline] = useState<string | null>(null);
+
   const toggleEngagementDropdown = useCallback((id: string) => {
     setExpandedEngagementIds(prev => {
       const next = new Set(prev);
@@ -472,6 +416,143 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       return next;
     });
   }, []);
+
+  const handleInlineEngagementChange = useCallback((taskId: string, field: string, value: string) => {
+    setInlineEngagementValues(prev => ({
+      ...prev,
+      [taskId]: {
+        ...(prev[taskId] || {}),
+        [field]: value,
+      },
+    }));
+  }, []);
+
+  const getInlineMetricValue = useCallback((task: AdminSheetTask, field: string): string => {
+    const custom = inlineEngagementValues[task.id]?.[field];
+    if (custom !== undefined) return custom;
+    return (task[field as keyof AdminSheetTask] as string) || '';
+  }, [inlineEngagementValues]);
+
+  const handleSaveInlineEngagement = useCallback(async (task: AdminSheetTask) => {
+    setIsSavingInline(task.id);
+    const nowIso = new Date().toISOString();
+
+    const currentLikes = getInlineMetricValue(task, 'likes');
+    const currentComments = getInlineMetricValue(task, 'comments');
+    const currentReposts = getInlineMetricValue(task, 'reposts');
+    const currentViews = getInlineMetricValue(task, 'views');
+    const currentShares = getInlineMetricValue(task, 'shares');
+    const currentSaves = getInlineMetricValue(task, 'saves');
+
+    // Optimistic local state update
+    setTasks(prev =>
+      prev.map(t =>
+        t.id === task.id
+          ? {
+              ...t,
+              likes: currentLikes,
+              comments: currentComments,
+              reposts: currentReposts,
+              views: currentViews,
+              shares: currentShares,
+              saves: currentSaves,
+              last_updated: nowIso,
+            }
+          : t
+      )
+    );
+
+    try {
+      await fetch('/api/admin-sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'updateRow',
+          sheetGID: '0',
+          data: {
+            id: task.id,
+            url: task.url,
+            likes: currentLikes,
+            comments: currentComments,
+            reposts: currentReposts,
+            views: currentViews,
+            shares: currentShares,
+            saves: currentSaves,
+            last_updated: nowIso,
+          },
+        }),
+      });
+      window.dispatchEvent(new CustomEvent('ntf_trigger_fetch_data'));
+    } catch (err) {
+      console.error('Failed to save inline engagement:', err);
+      alert('เกิดข้อผิดพลาดในการบันทึกลง Google Sheet');
+    } finally {
+      setIsSavingInline(null);
+    }
+  }, [getInlineMetricValue]);
+
+  const renderEditableMetricCard = (
+    task: AdminSheetTask,
+    field: 'likes' | 'comments' | 'reposts' | 'views' | 'shares' | 'saves',
+    label: string,
+    targetVal?: string,
+    colorScheme: 'rose' | 'blue' | 'emerald' | 'purple' | 'amber' | 'teal' = 'blue'
+  ) => {
+    const val = getInlineMetricValue(task, field);
+    const numVal = parseAbbrNumber(val);
+    const numTarget = parseAbbrNumber(targetVal);
+    const pct = numTarget > 0 ? Math.min(Math.round((numVal / numTarget) * 100), 100) : 0;
+
+    const bgClasses = {
+      rose: 'bg-rose-50/70 border-rose-200/80 focus-within:border-rose-400',
+      blue: 'bg-blue-50/70 border-blue-200/80 focus-within:border-blue-400',
+      emerald: 'bg-emerald-50/70 border-emerald-200/80 focus-within:border-emerald-400',
+      purple: 'bg-purple-50/70 border-purple-200/80 focus-within:border-purple-400',
+      amber: 'bg-amber-50/70 border-amber-200/80 focus-within:border-amber-400',
+      teal: 'bg-teal-50/70 border-teal-200/80 focus-within:border-teal-400',
+    }[colorScheme];
+
+    const barClasses = {
+      rose: 'bg-rose-500',
+      blue: 'bg-blue-500',
+      emerald: 'bg-emerald-500',
+      purple: 'bg-purple-500',
+      amber: 'bg-amber-500',
+      teal: 'bg-teal-500',
+    }[colorScheme];
+
+    return (
+      <div className={`p-2 rounded-xl border ${bgClasses} flex flex-col justify-between space-y-1.5 shadow-2xs`}>
+        <div className="flex items-center justify-between text-[10px] font-bold text-gray-700">
+          <span>{label}</span>
+          {numTarget > 0 && <span className="text-[9px] font-bold text-gray-500">{pct}%</span>}
+        </div>
+
+        <div className="relative flex items-center">
+          <input
+            type="text"
+            value={val}
+            onChange={e => handleInlineEngagementChange(task.id, field, e.target.value)}
+            placeholder="0 (เช่น 5k)"
+            className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-[#2a2121] outline-none focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-2xs"
+          />
+        </div>
+
+        {numTarget > 0 ? (
+          <div className="space-y-0.5">
+            <div className="h-1 w-full bg-gray-200/80 rounded-full overflow-hidden">
+              <div className={`h-full ${barClasses} rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
+            </div>
+            <div className="text-[8px] font-medium text-gray-400 text-right">
+              เป้า: {parseAbbrNumber(targetVal).toLocaleString()}
+            </div>
+          </div>
+        ) : (
+          <div className="text-[8px] font-medium text-gray-400 text-right">ไม่มีเป้าหมาย</div>
+        )}
+      </div>
+    );
+  };
 
   // App Script Config
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1964,37 +2045,57 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                           </td>
                         </tr>
 
-                        {/* Dropdown Engagement Details Row */}
+                        {/* Dropdown Engagement Details & Inline Quick Edit Row */}
                         {isExpanded && (
                           <tr key={`${task.id || idx}-engagement`} className="bg-gradient-to-r from-slate-50 via-indigo-50/20 to-slate-50 border-b border-indigo-100/70 animate-in fade-in slide-in-from-top-1 duration-200">
                             <td colSpan={6} className="py-3 px-4 sm:px-6">
-                              <div className="bg-white/95 rounded-xl p-3.5 border border-indigo-100 shadow-xs space-y-2.5">
-                                <div className="flex items-center justify-between">
+                              <div className="bg-white/95 rounded-xl p-3.5 border border-indigo-100 shadow-xs space-y-3">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
                                   <div className="flex items-center gap-2">
                                     <span className="text-[11px] font-bold text-[#2a2121] flex items-center gap-1.5">
                                       <FaChartBar className="text-[#c4d2b1]" />
-                                      <span>สถิติ Engagement & ความคืบหน้าเป้าหมาย</span>
+                                      <span>อัปเดตสถิติ Engagement & ความคืบหน้าเป้าหมาย</span>
                                     </span>
                                     <span className="text-[10px] text-gray-500">
                                       • {task.media || 'สื่อ'}
                                     </span>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleEngagementDropdown(task.id)}
-                                    className="text-[10px] text-gray-400 hover:text-gray-700 px-2 py-0.5 rounded-full hover:bg-gray-100 font-semibold transition-colors"
-                                  >
-                                    ✕ ย่อเก็บ
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveInlineEngagement(task)}
+                                      disabled={isSavingInline === task.id}
+                                      className="px-3 py-1 rounded-lg bg-[#c4d2b1] hover:bg-[#b0c09d] text-[#2a2121] text-[11px] font-bold flex items-center gap-1 shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                                    >
+                                      {isSavingInline === task.id ? (
+                                        <>
+                                          <FaSpinner className="animate-spin text-[10px]" />
+                                          <span>กำลังบันทึก...</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <FaCheck className="text-[10px]" />
+                                          <span>บันทึกยอดเอนเกจ</span>
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleEngagementDropdown(task.id)}
+                                      className="text-[10px] text-gray-400 hover:text-gray-700 px-2 py-1 rounded-full hover:bg-gray-100 font-semibold transition-colors cursor-pointer"
+                                    >
+                                      ✕ ย่อเก็บ
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-0.5">
-                                  {renderDropdownMetricCard('❤️ ไลก์ (Likes)', task.likes, task.target_likes, 'rose')}
-                                  {renderDropdownMetricCard('💬 คอมเมนต์', task.comments, task.target_comments, 'blue')}
-                                  {renderDropdownMetricCard('🔄 รีโพสต์ / RT', task.reposts, task.target_reposts, 'emerald')}
-                                  {renderDropdownMetricCard('👁️ ยอดวิว (Views)', task.views, task.target_views, 'purple')}
-                                  {renderDropdownMetricCard('↗️ แชร์ (Shares)', task.shares, task.target_shares, 'amber')}
-                                  {renderDropdownMetricCard('🔖 บันทึก (Saves)', task.saves, task.target_saves, 'teal')}
+                                  {renderEditableMetricCard(task, 'likes', '❤️ ไลก์ (Likes)', task.target_likes, 'rose')}
+                                  {renderEditableMetricCard(task, 'comments', '💬 คอมเมนต์', task.target_comments, 'blue')}
+                                  {renderEditableMetricCard(task, 'reposts', '🔄 รีโพสต์ / RT', task.target_reposts, 'emerald')}
+                                  {renderEditableMetricCard(task, 'views', '👁️ ยอดวิว (Views)', task.target_views, 'purple')}
+                                  {renderEditableMetricCard(task, 'shares', '↗️ แชร์ (Shares)', task.target_shares, 'amber')}
+                                  {renderEditableMetricCard(task, 'saves', '🔖 บันทึก (Saves)', task.target_saves, 'teal')}
                                 </div>
                               </div>
                             </td>
