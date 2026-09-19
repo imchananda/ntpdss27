@@ -103,6 +103,8 @@ export const translations = {
         fbTip1: '📝 คัดลอกข้อความ → ใส่ใน Comment Facebook (อย่าลืมกดไลก์และแชร์เป็นสาธารณะด้วยนะ 👍)',
 
         // Stats Labels & Descriptions
+        grandTotalEngagementLabel: 'Engagement รวมทั้งหมด',
+        grandTotalEngagementDesc: 'ยอดรวมทุกกิจกรรม (Likes + Comments + Shares/RT + Views + Saves)',
         totalLikesLabel: 'ถูกใจทั้งหมด',
         totalLikesDesc: 'รวมยอดถูกใจจากทุกแพลตฟอร์ม',
         commentsLabel: 'คอมเมนต์',
@@ -261,6 +263,8 @@ export const translations = {
         fbTip1: "📝 Copy message → paste as Facebook Comment (Don't forget to like & share publicly! 👍)",
 
         // Stats Labels & Descriptions
+        grandTotalEngagementLabel: 'Total Engagement',
+        grandTotalEngagementDesc: 'Combined sum of all interactions (Likes + Comments + Shares + Views + Saves)',
         totalLikesLabel: 'Total Likes',
         totalLikesDesc: 'Total likes across all platforms',
         commentsLabel: 'Comments',

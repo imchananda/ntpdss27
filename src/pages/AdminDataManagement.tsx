@@ -107,6 +107,45 @@ export const ARTIST_CATEGORIES = [
   { id: 'media', label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-700 text-white' },
 ];
 
+export interface EngagementTargetMetrics {
+  likes: string;
+  reposts: string;
+  comments: string;
+  views: string;
+  shares: string;
+  saves: string;
+}
+
+export type PlatformTargetMap = Record<string, EngagementTargetMetrics>;
+export type CategoryDefaultTargets = Record<string, PlatformTargetMap>;
+
+export const INITIAL_DEFAULT_TARGETS: CategoryDefaultTargets = {
+  namtan: {
+    x: { likes: '10k', reposts: '10k', comments: '2k', views: '500k', shares: '', saves: '2k' },
+    instagram: { likes: '1m', reposts: '', comments: '50k', views: '', shares: '1m', saves: '' },
+    ig_reels: { likes: '1m', reposts: '', comments: '50k', views: '10m', shares: '1m', saves: '' },
+    tiktok: { likes: '300k', reposts: '30k', comments: '2k', views: '1m', shares: '300k', saves: '' },
+    facebook: { likes: '10k', reposts: '', comments: '1k', views: '', shares: '10k', saves: '' },
+    etc: { likes: '1k', reposts: '1k', comments: '1k', views: '10k', shares: '1k', saves: '1k' },
+  },
+  prada: {
+    x: { likes: '10k', reposts: '10k', comments: '2k', views: '500k', shares: '', saves: '2k' },
+    instagram: { likes: '1m', reposts: '', comments: '50k', views: '', shares: '1m', saves: '' },
+    ig_reels: { likes: '1m', reposts: '', comments: '20k', views: '10m', shares: '1m', saves: '' },
+    tiktok: { likes: '100k', reposts: '10k', comments: '2k', views: '1m', shares: '100k', saves: '' },
+    facebook: { likes: '10k', reposts: '', comments: '1k', views: '', shares: '10k', saves: '' },
+    etc: { likes: '1k', reposts: '1k', comments: '1k', views: '10k', shares: '1k', saves: '1k' },
+  },
+  media: {
+    x: { likes: '10k', reposts: '10k', comments: '1k', views: '100k', shares: '', saves: '1k' },
+    instagram: { likes: '10k', reposts: '', comments: '20k', views: '', shares: '50k', saves: '' },
+    ig_reels: { likes: '10k', reposts: '', comments: '5k', views: '100k', shares: '50k', saves: '' },
+    tiktok: { likes: '10k', reposts: '1k', comments: '1k', views: '100k', shares: '1k', saves: '' },
+    facebook: { likes: '1k', reposts: '', comments: '1k', views: '', shares: '1k', saves: '' },
+    etc: { likes: '1k', reposts: '1k', comments: '1k', views: '10k', shares: '1k', saves: '1k' },
+  },
+};
+
 export const ALL_KNOWN_ARTIST_BADGES: Record<string, { label: string; badgeColor: string }> = {
   both: { label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
   namtan: { label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
@@ -128,6 +167,7 @@ const normalizeUrl = (u: string): string => {
 const detectPlatformFromUrl = (url: string): string => {
   const u = url.toLowerCase();
   if (u.includes('twitter.com') || u.includes('x.com')) return 'x';
+  if (u.includes('instagram.com/reel/') || u.includes('instagram.com/reels/')) return 'ig_reels';
   if (u.includes('instagram.com')) return 'instagram';
   if (u.includes('tiktok.com')) return 'tiktok';
   if (u.includes('facebook.com') || u.includes('fb.watch')) return 'facebook';
@@ -430,6 +470,22 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Category & Platform Default Engagement Target Presets (อ่าน/เขียนผ่าน Google Sheet global_setting เท่านั้น)
+  const [categoryDefaultTargets, setCategoryDefaultTargets] = useState<CategoryDefaultTargets>(INITIAL_DEFAULT_TARGETS);
+  const [isIgReelsSelected, setIsIgReelsSelected] = useState<boolean>(false);
+
+  const getPresetTargets = useCallback((artistKey: string, platformKey: string, rawUrl: string, forceReels?: boolean): EngagementTargetMetrics => {
+    const artist = (artistKey || 'namtan').toLowerCase();
+    let plat = (platformKey || 'x').toLowerCase();
+    const useReels = forceReels !== undefined ? forceReels : (isIgReelsSelected || (rawUrl && (rawUrl.toLowerCase().includes('/reel/') || rawUrl.toLowerCase().includes('/reels/'))));
+    if (plat === 'ig_reels' || (plat === 'instagram' && useReels)) {
+      plat = 'ig_reels';
+    }
+    const catMap = categoryDefaultTargets[artist] || categoryDefaultTargets['namtan'] || INITIAL_DEFAULT_TARGETS.namtan;
+    const platTargets = catMap[plat] || catMap['etc'] || INITIAL_DEFAULT_TARGETS.namtan.etc;
+    return platTargets;
+  }, [categoryDefaultTargets, isIgReelsSelected]);
+
   // Form state
   const [formData, setFormData] = useState({
     mark: false,
@@ -484,6 +540,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       target: '',
     });
     setEditingTaskId(null);
+    setIsIgReelsSelected(false);
     setStatusMessage(null);
     setImageUploadError(null);
     setShowBoostSection(false);
@@ -621,6 +678,65 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
+      // 1. Fetch dedicated global_setting tab (GID 543974967 / sheetName "global_setting") FIRST
+      try {
+        const gRes = await fetch(`/api/sheet?gid=543974967&sheetName=global_setting&_t=${Date.now()}`, { cache: 'no-store' });
+        if (gRes.ok) {
+          const gCsv = await gRes.text();
+          const gRows = parseCSV(gCsv.replace(/^\uFEFF/, ''));
+          if (gRows.length > 1) {
+            const gHeaders = gRows[0].map(h => h.toLowerCase().trim());
+            const getGVal = (r: string[], h: string) => {
+              const idx = gHeaders.indexOf(h.toLowerCase().trim());
+              return idx !== -1 ? (r[idx] || '') : '';
+            };
+            const r = gRows[1];
+            const cfgTags = getGVal(r, 'hashtags') || getGVal(r, 'hashtag');
+            if (cfgTags) {
+              setGlobalHashtags(cfgTags);
+              localStorage.setItem('ntf_global_hashtags', cfgTags);
+            }
+            const phaseVal = (getGVal(r, 'show_phase_filter') || getGVal(r, 'phase_filter')).toLowerCase().trim();
+            if (phaseVal) {
+              const isPhaseOn = phaseVal === '1' || phaseVal === 'true' || phaseVal === 'yes';
+              setShowPhaseFilter(isPhaseOn);
+              localStorage.setItem('ntf_show_phase_filter', isPhaseOn ? 'true' : 'false');
+            }
+            const defaultPhaseVal = (getGVal(r, 'default_active_phase') || getGVal(r, 'default_phase') || getGVal(r, 'initial_phase')).toLowerCase().trim();
+            if (defaultPhaseVal && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(defaultPhaseVal)) {
+              const normPhase = defaultPhaseVal === 'aftermath' ? 'afterglow' : defaultPhaseVal;
+              setDefaultActivePhase(normPhase as any);
+              localStorage.setItem('ntf_default_active_phase', normPhase);
+            }
+            const defSec = (getGVal(r, 'default_section') || getGVal(r, 'active_section')).toLowerCase().trim();
+            if (defSec && ['boost', 'tasks', 'important', 'none'].includes(defSec)) {
+              setDefaultStartSection(defSec as any);
+              localStorage.setItem('ntf_default_start_section', defSec);
+            }
+            const endCreditsVal = (getGVal(r, 'show_end_credits') || getGVal(r, 'enable_end_credits') || getGVal(r, 'end_credits')).toLowerCase().trim();
+            if (endCreditsVal) {
+              const isCreditsOn = endCreditsVal === '1' || endCreditsVal === 'true' || endCreditsVal === 'yes';
+              setShowEndCreditsToggle(isCreditsOn);
+              localStorage.setItem('ntf_show_end_credits', isCreditsOn ? 'true' : 'false');
+            }
+            const jsonTargetsRaw = getGVal(r, 'default_targets_json') || getGVal(r, 'default_targets');
+            if (jsonTargetsRaw) {
+              try {
+                const parsed = JSON.parse(jsonTargetsRaw);
+                if (parsed && typeof parsed === 'object') {
+                  setCategoryDefaultTargets(parsed);
+                }
+              } catch (eParse) {
+                console.warn('Could not parse default_targets_json from dedicated sheet:', eParse);
+              }
+            }
+          }
+        }
+      } catch (errG) {
+        console.warn('Could not read global_setting tab:', errG);
+      }
+
+      // 2. Fetch main posts sheet (gid=0)
       const res = await fetch(`/api/sheet?gid=0&_t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch from sheet proxy');
       const csv = await res.text();
@@ -669,55 +785,19 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
             setShowEndCreditsToggle(isCreditsOn);
             localStorage.setItem('ntf_show_end_credits', isCreditsOn ? 'true' : 'false');
           }
-          continue;
-        }
-
-      // Also try reading from dedicated global_setting tab (GID 543974967)
-      try {
-        const gRes = await fetch(`/api/sheet?gid=543974967&sheetName=global_setting&_t=${Date.now()}`, { cache: 'no-store' });
-        if (gRes.ok) {
-          const gCsv = await gRes.text();
-          const gRows = parseCSV(gCsv.replace(/^\uFEFF/, ''));
-          if (gRows.length > 1) {
-            const gHeaders = gRows[0].map(h => h.toLowerCase().trim());
-            const getGVal = (r: string[], h: string) => {
-              const idx = gHeaders.indexOf(h.toLowerCase().trim());
-              return idx !== -1 ? (r[idx] || '') : '';
-            };
-            const r = gRows[1];
-            const cfgTags = getGVal(r, 'hashtags') || getGVal(r, 'hashtag');
-            if (cfgTags) {
-              setGlobalHashtags(cfgTags);
-              localStorage.setItem('ntf_global_hashtags', cfgTags);
-            }
-            const phaseVal = (getGVal(r, 'show_phase_filter') || getGVal(r, 'phase_filter')).toLowerCase().trim();
-            if (phaseVal) {
-              const isPhaseOn = phaseVal === '1' || phaseVal === 'true' || phaseVal === 'yes';
-              setShowPhaseFilter(isPhaseOn);
-              localStorage.setItem('ntf_show_phase_filter', isPhaseOn ? 'true' : 'false');
-            }
-            const defaultPhaseVal = (getGVal(r, 'default_active_phase') || getGVal(r, 'default_phase') || getGVal(r, 'initial_phase')).toLowerCase().trim();
-            if (defaultPhaseVal && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(defaultPhaseVal)) {
-              const normPhase = defaultPhaseVal === 'aftermath' ? 'afterglow' : defaultPhaseVal;
-              setDefaultActivePhase(normPhase as any);
-              localStorage.setItem('ntf_default_active_phase', normPhase);
-            }
-            const defSec = (getGVal(r, 'default_section') || getGVal(r, 'active_section')).toLowerCase().trim();
-            if (defSec && ['boost', 'tasks', 'important', 'none'].includes(defSec)) {
-              setDefaultStartSection(defSec as any);
-              localStorage.setItem('ntf_default_start_section', defSec);
-            }
-            const endCreditsVal = (getGVal(r, 'show_end_credits') || getGVal(r, 'enable_end_credits') || getGVal(r, 'end_credits')).toLowerCase().trim();
-            if (endCreditsVal) {
-              const isCreditsOn = endCreditsVal === '1' || endCreditsVal === 'true' || endCreditsVal === 'yes';
-              setShowEndCreditsToggle(isCreditsOn);
-              localStorage.setItem('ntf_show_end_credits', isCreditsOn ? 'true' : 'false');
+          const jsonTargetsRaw = getVal(r, 'default_targets_json') || getVal(r, 'default_targets');
+          if (jsonTargetsRaw) {
+            try {
+              const pObj = JSON.parse(jsonTargetsRaw);
+              if (pObj && typeof pObj === 'object') {
+                setCategoryDefaultTargets(pObj);
+              }
+            } catch (eParse) {
+              console.warn('Could not parse default_targets_json from main sheet:', eParse);
             }
           }
+          continue;
         }
-      } catch (errG) {
-        console.warn('Could not read global_setting tab:', errG);
-      }
 
         const url = getVal(r, 'url');
         if (!url) continue;
@@ -1004,6 +1084,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   // ─── Edit Button Click ──────────────────────────────────────────────────────
   const handleEditClick = (task: AdminSheetTask) => {
     setEditingTaskId(task.id);
+    const isReels = task.url?.toLowerCase().includes('/reel/') || task.url?.toLowerCase().includes('/reels/') || false;
+    setIsIgReelsSelected(isReels);
     setFormData({
       mark: task.mark,
       platform: task.platform,
@@ -1117,6 +1199,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         active_section: defaultStartSection,
         show_end_credits: showEndCreditsToggle ? '1' : '0',
         enable_end_credits: showEndCreditsToggle ? '1' : '0',
+        default_targets_json: JSON.stringify(categoryDefaultTargets),
+        default_targets: JSON.stringify(categoryDefaultTargets),
       };
 
       try {
@@ -1900,11 +1984,30 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   onChange={e => {
                     const newUrl = e.target.value;
                     const detected = detectPlatformFromUrl(newUrl);
-                    setFormData(prev => ({
-                      ...prev,
-                      url: newUrl,
-                      platform: detected,
-                    }));
+                    const isReels = detected === 'ig_reels' || newUrl.toLowerCase().includes('/reel/') || newUrl.toLowerCase().includes('/reels/');
+                    const normPlat = (detected === 'ig_reels' || detected === 'instagram') ? 'instagram' : detected;
+                    setIsIgReelsSelected(isReels);
+                    
+                    if (!editingTaskId) {
+                      const targets = getPresetTargets(formData.artist, normPlat, newUrl, isReels);
+                      setFormData(prev => ({
+                        ...prev,
+                        url: newUrl,
+                        platform: normPlat,
+                        target_likes: targets.likes || '',
+                        target_reposts: targets.reposts || '',
+                        target_comments: targets.comments || '',
+                        target_views: targets.views || '',
+                        target_shares: targets.shares || '',
+                        target_saves: targets.saves || '',
+                      }));
+                    } else {
+                      setFormData(prev => ({
+                        ...prev,
+                        url: newUrl,
+                        platform: normPlat,
+                      }));
+                    }
                   }}
                   placeholder="https://x.com/username/status/... หรือ Instagram, TikTok"
                   className={`w-full bg-[#F7F8F4] rounded-xl px-3.5 py-2.5 text-xs outline-none border transition-all ${
@@ -1926,7 +2029,24 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <label className="block text-xs font-bold text-gray-700 mb-1">Platform</label>
                   <select
                     value={formData.platform}
-                    onChange={e => setFormData({ ...formData, platform: e.target.value })}
+                    onChange={e => {
+                      const newPlat = e.target.value;
+                      if (!editingTaskId) {
+                        const targets = getPresetTargets(formData.artist, newPlat, formData.url);
+                        setFormData(prev => ({
+                          ...prev,
+                          platform: newPlat,
+                          target_likes: targets.likes || '',
+                          target_reposts: targets.reposts || '',
+                          target_comments: targets.comments || '',
+                          target_views: targets.views || '',
+                          target_shares: targets.shares || '',
+                          target_saves: targets.saves || '',
+                        }));
+                      } else {
+                        setFormData(prev => ({ ...prev, platform: newPlat }));
+                      }
+                    }}
                     className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                   >
                     {PLATFORM_OPTIONS.filter(p => p.id !== 'all').map(p => (
@@ -1941,7 +2061,24 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <label className="block text-xs font-bold text-gray-700 mb-1">หมวดหมู่ศิลปิน</label>
                   <select
                     value={formData.artist}
-                    onChange={e => setFormData({ ...formData, artist: e.target.value })}
+                    onChange={e => {
+                      const newArtist = e.target.value;
+                      if (!editingTaskId) {
+                        const targets = getPresetTargets(newArtist, formData.platform, formData.url);
+                        setFormData(prev => ({
+                          ...prev,
+                          artist: newArtist,
+                          target_likes: targets.likes || '',
+                          target_reposts: targets.reposts || '',
+                          target_comments: targets.comments || '',
+                          target_views: targets.views || '',
+                          target_shares: targets.shares || '',
+                          target_saves: targets.saves || '',
+                        }));
+                      } else {
+                        setFormData(prev => ({ ...prev, artist: newArtist }));
+                      }
+                    }}
                     className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                   >
                     {ARTIST_CATEGORIES.map(cat => (
@@ -1967,6 +2104,71 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   </select>
                 </div>
               </div>
+
+              {/* Instagram Type Sub-toggle (Photos/Carousel vs Reels) */}
+              {formData.platform === 'instagram' && (
+                <div className="p-3 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border border-pink-200/80 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+                  <div className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <span>🎬</span>
+                    <span>ประเภทโพสต์ Instagram:</span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-pink-200 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsIgReelsSelected(false);
+                        if (!editingTaskId) {
+                          const targets = getPresetTargets(formData.artist, 'instagram', formData.url, false);
+                          setFormData(prev => ({
+                            ...prev,
+                            target_likes: targets.likes || '',
+                            target_reposts: targets.reposts || '',
+                            target_comments: targets.comments || '',
+                            target_views: targets.views || '',
+                            target_shares: targets.shares || '',
+                            target_saves: targets.saves || '',
+                          }));
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                        !isIgReelsSelected
+                          ? 'bg-pink-600 text-white shadow-2xs'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>📸</span>
+                      <span>ภาพนิ่ง / Carousel</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsIgReelsSelected(true);
+                        if (!editingTaskId) {
+                          const targets = getPresetTargets(formData.artist, 'ig_reels', formData.url, true);
+                          setFormData(prev => ({
+                            ...prev,
+                            target_likes: targets.likes || '',
+                            target_reposts: targets.reposts || '',
+                            target_comments: targets.comments || '',
+                            target_views: targets.views || '',
+                            target_shares: targets.shares || '',
+                            target_saves: targets.saves || '',
+                          }));
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                        isIgReelsSelected
+                          ? 'bg-purple-600 text-white shadow-2xs'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>🎬</span>
+                      <span>IG Reels (วิดีโอ)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Media Name with Autosuggest */}
               <div className="relative">
@@ -2900,6 +3102,110 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     <div className="font-bold text-xs flex items-center gap-1 text-slate-700">🚫 ปิดใช้งาน (Disabled)</div>
                     <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">ซ่อนปุ่มเครดิตและป๊อปอัปฉลองทั้งหมด</div>
                   </button>
+                </div>
+              </div>
+
+              {/* Default Engagement Targets Matrix Editor */}
+              <div className="pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-800">
+                      🎯 ตั้งค่าเป้าหมายเบื้องต้นตามหมวดหมู่และแพลตฟอร์ม (Default Target Presets)
+                    </label>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      กำหนดเป้าหมายเริ่มต้นสำหรับการเพิ่มโพสต์ใหม่แยกตามหมวดหมู่และแพลตฟอร์ม (บันทึกลง `global_setting` Sheet)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('คุณต้องการคืนค่าเป้าหมายเบื้องต้นกลับเป็นค่าเริ่มต้นของระบบหรือไม่? (หมายเหตุ: ต้องกดปุ่ม "บันทึก" เพื่ออัปเดตลง Google Sheet)')) {
+                        setCategoryDefaultTargets(INITIAL_DEFAULT_TARGETS);
+                      }
+                    }}
+                    className="text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-200 transition-all shrink-0"
+                  >
+                    🔄 รีเซ็ตค่าเริ่มต้น
+                  </button>
+                </div>
+
+                <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                  {ARTIST_CATEGORIES.map(cat => {
+                    const catMap = categoryDefaultTargets[cat.id] || INITIAL_DEFAULT_TARGETS[cat.id] || INITIAL_DEFAULT_TARGETS.namtan;
+                    const platforms = [
+                      { id: 'x', label: 'X (Twitter)' },
+                      { id: 'instagram', label: 'Instagram (IG)' },
+                      { id: 'ig_reels', label: 'IG Reels' },
+                      { id: 'tiktok', label: 'TikTok' },
+                      { id: 'facebook', label: 'Facebook' },
+                      { id: 'etc', label: 'อื่นๆ (etc.)' },
+                    ];
+
+                    return (
+                      <div key={cat.id} className="bg-white rounded-xl border border-gray-200 p-3 shadow-2xs">
+                        <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-gray-100">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cat.badgeColor}`}>
+                            {cat.label}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-medium">ตารางเป้าหมายเบื้องต้น</span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-[11px] border-collapse min-w-[500px]">
+                            <thead>
+                              <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-100">
+                                <th className="p-1.5 w-24">Platform</th>
+                                <th className="p-1.5 text-center">Like</th>
+                                <th className="p-1.5 text-center">Repost</th>
+                                <th className="p-1.5 text-center">Comment</th>
+                                <th className="p-1.5 text-center">View</th>
+                                <th className="p-1.5 text-center">Share</th>
+                                <th className="p-1.5 text-center">Save</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {platforms.map(p => {
+                                const m = catMap[p.id] || { likes: '', reposts: '', comments: '', views: '', shares: '', saves: '' };
+                                const updateMetric = (field: keyof EngagementTargetMetrics, val: string) => {
+                                  setCategoryDefaultTargets(prev => {
+                                    const prevCat = prev[cat.id] || {};
+                                    const prevPlat = prevCat[p.id] || { likes: '', reposts: '', comments: '', views: '', shares: '', saves: '' };
+                                    return {
+                                      ...prev,
+                                      [cat.id]: {
+                                        ...prevCat,
+                                        [p.id]: {
+                                          ...prevPlat,
+                                          [field]: val,
+                                        },
+                                      },
+                                    };
+                                  });
+                                };
+
+                                return (
+                                  <tr key={p.id} className="hover:bg-gray-50/50">
+                                    <td className="p-1.5 font-bold text-gray-700 whitespace-nowrap">{p.label}</td>
+                                    {(['likes', 'reposts', 'comments', 'views', 'shares', 'saves'] as const).map(field => (
+                                      <td key={field} className="p-1">
+                                        <input
+                                          type="text"
+                                          value={m[field] || ''}
+                                          onChange={e => updateMetric(field, e.target.value)}
+                                          placeholder="-"
+                                          className="w-full bg-[#F7F8F4] border border-gray-200 rounded-md px-1.5 py-1 text-[11px] text-center font-mono outline-none focus:border-[#2a2121] focus:bg-white"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

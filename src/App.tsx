@@ -288,7 +288,7 @@ function App() {
   }, []);
 
   const [statsPeriod] = useState<'emv' | 'miv'>('miv');
-  const [summaryModalPeriod, setSummaryModalPeriod] = useState<'emv' | 'miv'>('miv');
+  const [summaryModalPeriod] = useState<'emv' | 'miv'>('miv');
 
   const [visibleCount, setVisibleCount] = useState(30);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -1122,11 +1122,11 @@ function App() {
           {/* Hero Editorial Banner Layout (Top Banner - Normal Scroll) */}
           <div className="relative w-full overflow-hidden bg-transparent mb-1 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[200px] sm:min-h-[240px]">
             {/* Language Switcher (Top Right Absolute) */}
-            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#2a2121]/30 bg-white/40 backdrop-blur-md shadow-sm">
+            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#c4d2b1] bg-white/60 backdrop-blur-md shadow-sm">
               <button
                 onClick={() => setLanguage('th')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'th'
-                  ? 'bg-[#2a2121] text-white'
+                  ? 'bg-[#c4d2b1] text-[#2a2121]'
                   : 'text-[#2a2121]/70 hover:text-[#2a2121]'
                   }`}
               >
@@ -1135,7 +1135,7 @@ function App() {
               <button
                 onClick={() => setLanguage('en')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'en'
-                  ? 'bg-[#2a2121] text-white'
+                  ? 'bg-[#c4d2b1] text-[#2a2121]'
                   : 'text-[#2a2121]/70 hover:text-[#2a2121]'
                   }`}
               >
@@ -1388,7 +1388,7 @@ function App() {
                                 className="flex shrink-0 bg-white rounded-2xl overflow-hidden border border-prada-warm/20 shadow-sm hover:shadow-lg hover:border-prada-gold/40 transition-all active:scale-[0.98] group/post cursor-pointer"
                               >
                                 {/* Left: Thumbnail panel */}
-                                <div className={`w-28 sm:w-36 shrink-0 flex flex-col items-center justify-center bg-gradient-to-br ${iconPlatform?.color || 'from-gray-400 to-gray-600'} relative overflow-hidden`}>
+                                <div className="w-28 sm:w-36 shrink-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#e4eccf] to-[#c4d2b1] relative overflow-hidden">
                                   {post.image ? (
                                     <img
                                       src={post.image}
@@ -1413,13 +1413,13 @@ function App() {
                                       }}
                                     />
                                   ) : null}
-                                  <div className="absolute inset-0 bg-black/10" />
-                                  <div className={`relative z-10 text-white/80 text-3xl sm:text-4xl ${post.image ? 'opacity-0' : 'opacity-60'}`}>
+                                  <div className="absolute inset-0 bg-black/5" />
+                                  <div className={`relative z-10 text-[#2a2121]/70 text-3xl sm:text-4xl ${post.image ? 'opacity-0' : 'opacity-80'}`}>
                                     {iconPlatform?.icon || <span className="text-2xl font-bold">{post.platform[0]?.toUpperCase()}</span>}
                                   </div>
                                   {/* External link icon on hover */}
                                   <div className="absolute top-2 right-2 opacity-0 group-hover/post:opacity-70 transition-opacity z-20">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="w-3.5 h-3.5">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#2a2121" strokeWidth="2.5" className="w-3.5 h-3.5">
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                                     </svg>
                                   </div>
@@ -1429,7 +1429,7 @@ function App() {
                                 <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col gap-2">
                                   {/* Post Header */}
                                   <div className="flex items-center gap-2">
-                                    <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br ${iconPlatform?.color || 'from-gray-400 to-gray-600'} text-white shadow-sm`}>
+                                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-white border border-[#c4d2b1] text-[#2a2121] shadow-sm">
                                       <div className="w-3.5 h-3.5 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{iconPlatform?.icon}</div>
                                     </div>
                                     <div className="flex flex-col min-w-0">
@@ -1469,7 +1469,7 @@ function App() {
                                           {tgt > 0 && (
                                             <div className="h-1 w-full bg-prada-warm/30 rounded-full overflow-hidden">
                                               <div
-                                                className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r ${iconPlatform?.color || 'from-prada-charcoal to-prada-taupe'}`}
+                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#f5df7a] via-[#c4d2b1] to-[#9cb082]"
                                                 style={{ width: `${mPct}%` }}
                                               />
                                             </div>
@@ -1606,7 +1606,7 @@ function App() {
                             <span className="text-[10px] text-prada-taupe/60">
                               {t('missionCount')}
                             </span>
-                            <span className="text-[11px] font-bold text-[#C53A4B]">
+                            <span className="text-[11px] font-bold text-prada-charcoal">
                               {importantPosts.length} {t('missionCountUnit')}
                             </span>
                           </div>
@@ -1621,16 +1621,16 @@ function App() {
                                 <div
                                   key={post.id || idx}
                                   onClick={() => { setSelectedTask(post); setShowMarkDone(false); setGeneratedMessage(''); }}
-                                  className="flex flex-col bg-white rounded-2xl p-2.5 sm:p-3 border border-[#C53A4B]/20 shadow-sm hover:shadow-md hover:border-[#C53A4B]/40 transition-all group/post relative overflow-hidden cursor-pointer"
+                                  className="flex flex-col bg-white rounded-2xl p-2.5 sm:p-3 border border-[#c4d2b1]/40 shadow-sm hover:shadow-md hover:border-[#c4d2b1] transition-all group/post relative overflow-hidden cursor-pointer"
                                 >
                                   {/* Header: Platform Icon + Title */}
                                   <div className="flex items-center gap-2.5 mb-2.5 relative z-10 w-full overflow-hidden">
-                                    <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br ${iconPlatform?.color || 'from-[#C53A4B] to-[#E35D6A]'} text-white shadow-sm relative group-hover/post:scale-105 transition-transform`}>
+                                    <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-white border border-[#c4d2b1] text-[#2a2121] shadow-sm relative group-hover/post:scale-105 transition-transform">
                                       <div className="w-4 h-4 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{iconPlatform?.icon}</div>
                                       <div className="absolute inset-0 bg-white/0 group-hover/post:bg-white/10 transition-colors" />
                                     </div>
                                     <div className="flex flex-col min-w-0 flex-1">
-                                      <span className="text-[11px] font-bold text-[#C53A4B] leading-none uppercase tracking-wider truncate">
+                                      <span className="text-[11px] font-bold text-prada-charcoal leading-none uppercase tracking-wider truncate">
                                         {post.title || `PRADA`}
                                       </span>
                                       <span className="text-[8px] font-semibold text-prada-taupe/60 capitalize mt-[2px] leading-tight">
@@ -1658,14 +1658,14 @@ function App() {
                                               <span>{metric.label}</span>
                                             </span>
                                             <div className="flex items-baseline gap-1">
-                                              <span className="text-[10px] font-bold text-[#C53A4B]">{metric.value.toLocaleString()}</span>
+                                              <span className="text-[10px] font-bold text-prada-charcoal">{metric.value.toLocaleString()}</span>
                                               {tgt > 0 && <span className="text-[8px] font-medium text-prada-taupe/40">/ {tgt.toLocaleString()}</span>}
                                             </div>
                                           </div>
                                           {tgt > 0 && (
-                                            <div className="h-1 w-full bg-[#C53A4B]/10 rounded-full overflow-hidden">
+                                            <div className="h-1 w-full bg-[#c4d2b1]/30 rounded-full overflow-hidden">
                                               <div
-                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-[#C53A4B]"
+                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#f5df7a] via-[#c4d2b1] to-[#9cb082]"
                                                 style={{ width: `${mPct}%` }}
                                               />
                                             </div>
@@ -1677,9 +1677,9 @@ function App() {
 
                                   {/* Total Summary */}
                                   <div className="pt-2 mt-1 border-t border-prada-warm/50 flex items-center justify-between relative z-10 w-full leading-none">
-                                    <span className="text-[9px] font-bold text-[#D09F93] uppercase tracking-widest">{t('totalEngagementLabel') || 'TOTAL'}</span>
+                                    <span className="text-[9px] font-bold text-prada-taupe uppercase tracking-widest">{t('totalEngagementLabel') || 'TOTAL'}</span>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-[11px] font-bold text-[#C53A4B]">{totalEngagement.toLocaleString()}</span>
+                                      <span className="text-[11px] font-bold text-prada-charcoal">{totalEngagement.toLocaleString()}</span>
                                       {(post.target ?? 0) > 0 && (
                                         <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/40'}`}>
                                           ({pct.toFixed(1)}%)
@@ -1927,58 +1927,58 @@ function App() {
       {/* Bottom Bar Container (Fixed at bottom, transparent) */}
       < footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2" >
         <div className="max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto relative px-4">
-          {/* Stats Bar - Deep Indigo Theme */}
-          <div className="bg-[#2a2121]/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-2xl border border-[#2a2121]/40 w-full shadow-[#2a2121]/30">
+          {/* Stats Bar - Prada Sage Theme */}
+          <div className="bg-prada-sage/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl border border-prada-stone/40 w-full shadow-black/10">
             <button
               onClick={() => setShowPlatformSummaryModal(true)}
               className="flex items-center gap-1.5 hover:opacity-70 transition-opacity flex-shrink-0"
             >
-              <span className="text-[12px] font-bold text-white whitespace-nowrap">✦ {t('summary')}</span>
+              <span className="text-[12px] font-bold text-prada-charcoal whitespace-nowrap">✦ {t('summary')}</span>
             </button>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-6 bg-prada-charcoal/15" />
 
             <button
               onClick={() => setShowStatsCard(true)}
               className="flex flex-col items-center min-w-[45px] hover:opacity-70 transition-opacity"
             >
-              <div className="text-[13px] font-bold text-white shadow-sm leading-none mb-0.5">
+              <div className="text-[13px] font-bold text-prada-charcoal shadow-sm leading-none mb-0.5">
                 📊
               </div>
-              <div className="text-[7.5px] text-prada-cream/80 uppercase tracking-widest whitespace-nowrap leading-none">{language === 'th' ? 'สถิติของฉัน' : 'My Stats'}</div>
+              <div className="text-[7.5px] text-prada-charcoal/80 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{language === 'th' ? 'สถิติของฉัน' : 'MY STATS'}</div>
             </button>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-6 bg-prada-charcoal/15" />
 
             <div className="flex flex-col items-center min-w-[45px]">
-              <div className="text-[11px] font-bold text-prada-cream flex items-baseline leading-none mb-0.5 whitespace-nowrap">
-                {pendingCount} <span className="text-[9px] font-normal opacity-60 ml-1">/ {totalTasksList.length}</span>
+              <div className="text-[11px] font-bold text-prada-charcoal flex items-baseline leading-none mb-0.5 whitespace-nowrap">
+                {pendingCount} <span className="text-[9px] font-normal text-prada-charcoal/60 ml-1">/ {totalTasksList.length}</span>
               </div>
-              <div className="text-[7.5px] text-prada-cream/60 uppercase tracking-widest whitespace-nowrap leading-none">{t('pending')}</div>
+              <div className="text-[7.5px] text-prada-charcoal/70 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{t('pending')}</div>
             </div>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-6 bg-prada-charcoal/15" />
 
             <div className="flex flex-col items-center min-w-[45px]">
-              <div className="text-[13px] font-bold text-white leading-none mb-0.5">
+              <div className="text-[13px] font-bold text-prada-charcoal leading-none mb-0.5">
                 {totalTasksList.length
                   ? (totalCompletedCount === totalTasksList.length
                     ? 100
                     : Math.floor((totalCompletedCount / totalTasksList.length) * 100))
                   : 0}%
               </div>
-              <div className="text-[7.5px] text-prada-cream/60 uppercase tracking-widest leading-none">{t('totalLabel')}</div>
+              <div className="text-[7.5px] text-prada-charcoal/70 uppercase tracking-widest font-bold leading-none">{t('totalLabel')}</div>
             </div>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div className="w-px h-6 bg-prada-charcoal/15" />
 
             {/* Refresh Button */}
             <button
               onClick={() => fetchAllData(true)}
               disabled={refreshing}
-              className={`flex-shrink-0 p-1.5 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 transition-all ${refreshing ? 'animate-spin opacity-50' : ''}`}
+              className={`flex-shrink-0 p-1.5 rounded-full border border-prada-charcoal/20 bg-prada-charcoal/10 hover:bg-prada-charcoal/20 transition-all ${refreshing ? 'animate-spin opacity-50' : ''}`}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3.5 h-3.5 text-white">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3.5 h-3.5 text-prada-charcoal">
                 <path d="M4 4v5h5M20 20v-5h-5M20 9A9 9 0 0 0 5.64 5.64L4 9M4 15a9 9 0 0 0 14.36 3.36L20 15" />
               </svg>
             </button>
@@ -2087,13 +2087,13 @@ function App() {
               <div className="w-12 h-1.5 bg-prada-warm rounded-full mx-auto mt-3 mb-2 sm:hidden" />
 
               {/* Header */}
-              <div className="px-5 pt-3.5 pb-4 flex items-center justify-between bg-prada-charcoal shrink-0 shadow-md">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span className="text-white font-serif">✦</span> {t('summary')}
+              <div className="px-5 pt-3.5 pb-4 flex items-center justify-between bg-prada-sage shrink-0 shadow-sm border-b border-prada-stone/30">
+                <h3 className="text-lg font-bold text-prada-charcoal flex items-center gap-2">
+                  <span className="text-prada-charcoal font-serif">✦</span> {t('summary')}
                 </h3>
                 <button
                   onClick={() => setShowPlatformSummaryModal(false)}
-                  className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors border border-white/20"
+                  className="w-8 h-8 rounded-full bg-prada-charcoal/10 hover:bg-prada-charcoal/20 flex items-center justify-center text-prada-charcoal transition-colors border border-prada-charcoal/10 font-bold"
                 >
                   ✕
                 </button>
@@ -2116,31 +2116,27 @@ function App() {
                             <span className="text-prada-charcoal font-serif text-lg">✦</span>
                             <h4 className="text-prada-charcoal font-bold text-[15px] tracking-wide">{t('totalStats')}</h4>
                           </div>
-
-                          {/* MIV / EMV Toggle */}
-                          <div className="flex bg-white/50 backdrop-blur-md p-1 rounded-xl shadow-sm border border-prada-warm/30">
-                            <button
-                              onClick={() => setSummaryModalPeriod('miv')}
-                              className={`px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-[0.15em] transition-all ${summaryModalPeriod === 'miv'
-                                ? 'bg-prada-charcoal text-white shadow-md'
-                                : 'text-prada-charcoal/60 hover:text-prada-charcoal'
-                                }`}
-                            >
-                              MIV
-                            </button>
-                            <button
-                              onClick={() => setSummaryModalPeriod('emv')}
-                              className={`px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-[0.15em] transition-all ${summaryModalPeriod === 'emv'
-                                ? 'bg-prada-charcoal text-white shadow-md'
-                                : 'text-prada-charcoal/60 hover:text-prada-charcoal'
-                                }`}
-                            >
-                              EMV
-                            </button>
-                          </div>
                         </div>
 
                         <div className="relative z-10 flex flex-col gap-4">
+
+                          {/* Grand Total Combined Engagement Card */}
+                          {(() => {
+                            const grandTotalEngagement = totalAll.likes + totalAll.comments + totalAll.shares + totalAll.reposts + totalAll.views + totalAll.saves;
+                            return (
+                              <div className="bg-white/90 backdrop-blur-md rounded-2xl py-5 px-4 border border-prada-warm/40 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden">
+                                <span className="text-3xl sm:text-4xl font-black text-prada-charcoal tracking-tight leading-none mb-2" title={grandTotalEngagement.toLocaleString()}>
+                                  {grandTotalEngagement.toLocaleString()}
+                                </span>
+                                
+                                <span className="text-prada-charcoal/70 font-bold text-[11px] uppercase tracking-[0.2em] flex items-center gap-1.5">
+                                  <span className="text-prada-warm text-[10px]">✦</span>
+                                  {t('grandTotalEngagementLabel')}
+                                  <span className="text-prada-warm text-[10px]">✦</span>
+                                </span>
+                              </div>
+                            );
+                          })()}
 
                           {/* Highlighted Likes */}
                           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-prada-warm/20 flex items-center justify-between shadow-sm">
