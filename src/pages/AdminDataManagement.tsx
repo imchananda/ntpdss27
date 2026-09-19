@@ -610,7 +610,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     url: '',
     hashtag: globalHashtags,
     artist: 'namtan',
-    phase: 'pre',
+    phase: 'airport',
     boost: '',
     image: '',
     likes: '',
@@ -637,7 +637,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       url: '',
       hashtag: globalHashtags,
       artist: 'namtan',
-      phase: 'pre',
+      phase: 'airport',
       boost: '',
       image: '',
       likes: '',
@@ -949,7 +949,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           url,
           hashtag: getVal(r, 'hashtag') || getVal(r, 'hashtags') || '',
           artist: artistVal,
-          phase: getVal(r, 'phase') || 'pre',
+          phase: getVal(r, 'phase') || 'airport',
           boost: getVal(r, 'boost'),
           image: taskImage,
           likes: getVal(r, 'likes'),
@@ -1211,7 +1211,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       url: task.url,
       hashtag: getEffectiveHashtags(task),
       artist: task.artist || 'namtan',
-      phase: task.phase || 'pre',
+      phase: task.phase || 'airport',
       boost: task.boost || '',
       image: task.image || '',
       likes: task.likes || '',
@@ -2261,10 +2261,9 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                   >
                     <option value="all">✦ ทั้งหมด (All)</option>
-                    <option value="pre">🎬 Pre (18-19 Sep)</option>
                     <option value="airport">✈️ Airport (20-21 Sep)</option>
                     <option value="show">👠 Show (22 Sep)</option>
-                    <option value="afterglow">🥂 Afterglow (23-30 Sep)</option>
+                    <option value="afterglow">🥂 Afterglow (23 Sep - 06 Oct)</option>
                   </select>
                 </div>
               </div>
@@ -3103,7 +3102,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   แถบช่วงเวลาแคมเปญ (Campaign Phase Filter)
                 </label>
                 <p className="text-[10px] text-gray-500 mb-2 leading-relaxed">
-                  เลือกแสดงหรือซ่อนแถบ 5 ปุ่ม (All, Teaser, Event, Campaign, After) ที่หน้าแรกของเว็บแฟนคลับ หากแคมเปญรวมอยู่ในแผ่นงานเดียว แนะนำให้เลือก "ซ่อน" เพื่อให้หน้าเว็บกระชับขึ้น
+                  เลือกแสดงหรือซ่อนแถบ 4 ปุ่ม (All, Event, Campaign, After) ที่หน้าแรกของเว็บแฟนคลับ หากแคมเปญรวมอยู่ในแผ่นงานเดียว แนะนำให้เลือก "ซ่อน" เพื่อให้หน้าเว็บกระชับขึ้น
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -3143,13 +3142,12 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <p className="text-[10px] text-gray-500 mb-2 leading-relaxed">
                     เลือกปุ่มช่วงเวลา (Phase) ที่ต้องการให้ถูกเลือกเป็นอันแรกทันทีเมื่อแฟนคลับเข้ามาที่หน้าเว็บ (บันทึกลง `global_setting`)
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {[
                       { id: 'all', label: 'ทั้งหมด (All)', icon: '✦' },
-                      { id: 'pre', label: 'Pre (18-19 Sep)', icon: '🎬' },
                       { id: 'airport', label: 'Airport (20-21 Sep)', icon: '✈️' },
                       { id: 'show', label: 'Show (22 Sep)', icon: '👠' },
-                      { id: 'afterglow', label: 'Afterglow (23-30 Sep)', icon: '🥂' },
+                      { id: 'afterglow', label: 'Afterglow (23 Sep - 06 Oct)', icon: '🥂' },
                     ].map(p => (
                       <button
                         key={p.id}

@@ -193,7 +193,7 @@ function doPost(e) {
         if (header === 'url') return data.url || '';
         if (header === 'hashtag' || header === 'hashtags') return data.hashtags || data.hashtag || '';
         if (header === 'artist') return data.artist || 'namtan';
-        if (header === 'phase') return data.phase || 'pre';
+        if (header === 'phase') return data.phase || 'airport';
         if (header === 'default_active_phase' || header === 'default_phase') return data.default_active_phase || data.default_phase || 'all';
         if (header === 'focus') return data.focus || (data.mark ? '1' : '0');
         if (header === 'boost') return data.boost !== undefined ? String(data.boost) : '';

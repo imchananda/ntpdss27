@@ -623,7 +623,7 @@ function App() {
               else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube', 'threads'].includes(rawPlatform)) rawPlatform = 'x';
 
               const rawTaskPhase = (getVal('phase') || '').toLowerCase().trim();
-              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all') ? rawTaskPhase : (sheet.phase !== 'all' ? sheet.phase : 'pre');
+              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all') ? rawTaskPhase : (sheet.phase !== 'all' ? sheet.phase : 'airport');
 
               const task: Task = {
                 id: getVal('id') || getVal('url') || String(i),
@@ -1179,10 +1179,9 @@ function App() {
           {/* Phase Filters - Transparent Deep Indigo Theme (Normal Scroll) */}
           {showPhaseFilter && (
             <div className="bg-transparent mb-2">
-              <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto px-1 pt-1 pb-1 grid grid-cols-5 gap-1.5">
+              <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto px-1 pt-1 pb-1 grid grid-cols-4 gap-1.5">
                 {[
                   { id: 'all', icon: '✦', label: t('allLabel'), desc: t('sixteenDaysShort') },
-                  { id: 'pre', icon: '🎬', label: t('preLabel'), desc: t('phasePreShort') },
                   { id: 'airport', icon: '✈️', label: t('airportLabel'), desc: t('phaseAirportShort') },
                   { id: 'show', icon: '👠', label: t('showLabel'), desc: t('phaseShowShort') },
                   { id: 'afterglow', icon: '🥂', label: t('aftermathLabel'), desc: t('phaseAftermathShort') },

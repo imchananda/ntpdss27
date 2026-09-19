@@ -140,7 +140,7 @@ export const translations = {
         phasePreShort: '18-19 Sep',
         phaseAirportShort: '20-21 Sep',
         phaseShowShort: '22 Sep',
-        phaseAftermathShort: '23-30 Sep',
+        phaseAftermathShort: '23 Sep - 06 Oct',
 
         // Metrics Short
         likes: 'ถูกใจ',
@@ -300,7 +300,7 @@ export const translations = {
         phasePreShort: '18-19 Sep',
         phaseAirportShort: '20-21 Sep',
         phaseShowShort: '22 Sep',
-        phaseAftermathShort: '23-30 Sep',
+        phaseAftermathShort: '23 Sep - 06 Oct',
 
         // Metrics Short
         likes: 'Likes',

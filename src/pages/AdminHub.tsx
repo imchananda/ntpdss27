@@ -163,7 +163,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
                     : 'bg-slate-700/60 text-slate-300 border-slate-600'
                 }`}
-                title={showPhaseFilter ? `Phase Filter: เปิดแสดง 5 ช่วงเวลา (Default: ${defaultActivePhase})` : 'Phase Filter: ปิดซ่อน 5 ช่วงเวลา'}
+                title={showPhaseFilter ? `Phase Filter: เปิดแสดง 4 ช่วงเวลา (Default: ${defaultActivePhase})` : 'Phase Filter: ปิดซ่อน 4 ช่วงเวลา'}
               >
                 <span>{showPhaseFilter ? `📅 Phase: ON (${defaultActivePhase})` : '📅 Phase: OFF'}</span>
               </span>
