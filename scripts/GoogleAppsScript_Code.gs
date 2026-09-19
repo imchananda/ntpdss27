@@ -98,7 +98,8 @@ function doPost(e) {
         'target_views',
         'target_saves',
         'phase',
-        'image'
+        'image',
+        'last_updated'
       ];
       postHeaders.forEach(function (th) {
         if (headers.indexOf(th) === -1) {
@@ -210,6 +211,7 @@ function doPost(e) {
         if (header === 'target_views' || header === 'targetviews') return data.target_views !== undefined ? String(data.target_views) : '';
         if (header === 'target_saves' || header === 'targetsaves') return data.target_saves !== undefined ? String(data.target_saves) : '';
         if (header === 'image' || header === 'img' || header === 'picture') return data.image || data.img || '';
+        if (header === 'last_updated' || header === 'updated_at') return data.last_updated || data.updated_at || new Date().toISOString();
         if (header === 'namtan_before' || header === 'namtan_followers_before') return data.namtan_before || data.namtan_followers_before || '';
         if (header === 'namtan_after' || header === 'namtan_followers_after') return data.namtan_after || data.namtan_followers_after || '';
         if (header === 'film_before' || header === 'film_followers_before') return data.film_before || data.film_followers_before || '';
@@ -302,8 +304,12 @@ function doPost(e) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.focus);
         } else if (header === 'boost' && data.boost !== undefined) {
           sheet.getRange(foundRowIndex, colNum).setValue(String(data.boost));
-        } else if ((header === 'image' || header === 'img' || header === 'picture') && (data.image !== undefined || data.img !== undefined)) {
-          sheet.getRange(foundRowIndex, colNum).setValue(data.image !== undefined ? data.image : data.img);
+        } else if (header === 'image' || header === 'img' || header === 'picture') {
+          if (data.image !== undefined || data.img !== undefined) {
+            sheet.getRange(foundRowIndex, colNum).setValue(data.image !== undefined ? data.image : data.img);
+          }
+        } else if (header === 'last_updated' || header === 'updated_at') {
+          sheet.getRange(foundRowIndex, colNum).setValue(data.last_updated || data.updated_at || new Date().toISOString());
         } else if (['likes', 'comments', 'shares', 'reposts', 'views', 'saves', 'target', 'target_likes', 'target_comments', 'target_shares', 'target_reposts', 'target_views', 'target_saves'].indexOf(header) !== -1 && data[header] !== undefined) {
           sheet.getRange(foundRowIndex, colNum).setValue(String(data[header]));
         } else if (data[header] !== undefined) {

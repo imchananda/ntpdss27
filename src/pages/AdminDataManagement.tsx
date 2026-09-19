@@ -65,7 +65,41 @@ export interface AdminSheetTask {
   saves?: string;
   target_saves?: string;
   target?: string;
+  last_updated?: string;
+  updated_at?: string;
   source?: 'sheet' | 'local';
+}
+
+export function getPostUpdateStatus(lastUpdatedStr?: string): {
+  isStale: boolean;
+  hoursAgo: number;
+  label: string;
+} {
+  if (!lastUpdatedStr) {
+    return { isStale: true, hoursAgo: 999, label: 'ยังไม่เคยอัปเดต' };
+  }
+  const d = new Date(lastUpdatedStr);
+  if (isNaN(d.getTime())) {
+    return { isStale: true, hoursAgo: 999, label: 'ยังไม่เคยอัปเดต' };
+  }
+  const diffMs = Date.now() - d.getTime();
+  const hoursAgo = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (hoursAgo >= 24) {
+    const daysAgo = Math.floor(hoursAgo / 24);
+    return {
+      isStale: true,
+      hoursAgo,
+      label: `ต้องอัปเดต (${hoursAgo >= 48 ? `${daysAgo} วัน` : `${hoursAgo} ชม.`})`
+    };
+  }
+
+  if (hoursAgo === 0) {
+    const minsAgo = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+    return { isStale: false, hoursAgo: 0, label: `อัปเดตเมื่อ ${minsAgo} นาทีที่แล้ว` };
+  }
+
+  return { isStale: false, hoursAgo, label: `อัปเดตเมื่อ ${hoursAgo} ชม. ที่แล้ว` };
 }
 
 export function parseAbbrNumber(val?: string | number): number {
@@ -292,7 +326,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [filterArtist, setFilterArtist] = useState('all');
-  const [filterBoost, setFilterBoost] = useState<'all' | 'boost' | 'media' | 'pinned' | 'marked'>('all');
+  const [filterBoost, setFilterBoost] = useState<'all' | 'boost' | 'media' | 'pinned' | 'marked' | 'stale'>('all');
   const [globalHashtags, setGlobalHashtags] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('ntf_global_hashtags');
@@ -850,6 +884,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           saves: getVal(r, 'saves') || getVal(r, 'save'),
           target_saves: getVal(r, 'target_saves') || getVal(r, 'targetsaves') || '',
           target: getVal(r, 'target') || getVal(r, 'goal'),
+          last_updated: getVal(r, 'last_updated') || getVal(r, 'updated_at') || getVal(r, 'timestamp') || '',
           source: 'sheet',
         });
       }
@@ -900,7 +935,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         (filterBoost === 'boost' && isBoosted) ||
         (filterBoost === 'media' && isMedia) ||
         (filterBoost === 'pinned' && isPinned) ||
-        (filterBoost === 'marked' && task.mark);
+        (filterBoost === 'marked' && task.mark) ||
+        (filterBoost === 'stale' && getPostUpdateStatus(task.last_updated).isStale);
 
       return matchSearch && matchPlatform && matchArtist && matchBoost;
     });
@@ -1730,6 +1766,15 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 <FaStar className="text-[10px] text-amber-500" />
                 <span>เฉพาะติดดาว ({tasks.filter(t => t.mark).length})</span>
               </button>
+              <button
+                onClick={() => setFilterBoost('stale')}
+                className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all flex items-center gap-1 ${
+                  filterBoost === 'stale' ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100/60'
+                }`}
+              >
+                <span>⏰</span>
+                <span>ต้องอัปเดต (&gt;24 ชม.) ({tasks.filter(t => getPostUpdateStatus(t.last_updated).isStale).length})</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1828,6 +1873,24 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                                   🎯 {task.target}
                                 </span>
                               )}
+
+                              {/* 24-Hour Update Reminder Badge */}
+                              {(() => {
+                                const updateStatus = getPostUpdateStatus(task.last_updated);
+                                return (
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold border transition-all ${
+                                      updateStatus.isStale
+                                        ? 'bg-rose-500/15 text-rose-700 border-rose-500/30 animate-pulse'
+                                        : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+                                    }`}
+                                    title={`เวลาอัปเดตล่าสุด: ${task.last_updated ? new Date(task.last_updated).toLocaleString('th-TH') : 'ยังไม่เคยบันทึกเวลา'}`}
+                                  >
+                                    <span>{updateStatus.isStale ? '⏰' : '✓'}</span>
+                                    <span>{updateStatus.label}</span>
+                                  </span>
+                                );
+                              })()}
 
                               {/* Engagement Dropdown Trigger Button (Icon Only - No Text) */}
                               {hasEngagement && (
