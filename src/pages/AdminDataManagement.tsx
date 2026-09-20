@@ -186,6 +186,8 @@ export const ALL_KNOWN_ARTIST_BADGES: Record<string, { label: string; badgeColor
   film: { label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
   prada: { label: '✦ Prada Official', badgeColor: 'bg-[#2a2121] text-white' },
   media: { label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-700 text-white' },
+  'สื่อ': { label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-700 text-white' },
+  'สื่อ / นิตยสาร': { label: '📰 สื่อ / นิตยสาร', badgeColor: 'bg-slate-700 text-white' },
 };
 
 const normalizeUrl = (u: string): string => {
@@ -928,11 +930,32 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         const focusVal = getVal(r, 'focus').toLowerCase().trim();
         const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
 
-        let artistVal = getVal(r, 'artist').toLowerCase().trim();
+        let rawArtist = (
+          getVal(r, 'artist') ||
+          getVal(r, 'category') ||
+          getVal(r, 'artist_category') ||
+          getVal(r, 'artistcategory') ||
+          getVal(r, 'หมวดหมู่ศิลปิน') ||
+          getVal(r, 'หมวดหมู่') ||
+          getVal(r, 'ผู้โพสต์') ||
+          getVal(r, 'ประเภท')
+        ).toLowerCase().trim();
+
+        let artistVal = '';
+        if (['media', 'สื่อ', 'สื่อ / นิตยสาร', 'สื่อ/นิตยสาร', 'magazine', 'vogue', 'elle', 'นิตยสาร'].some(k => rawArtist.includes(k))) {
+          artistVal = 'media';
+        } else if (['prada', 'prada official'].some(k => rawArtist.includes(k))) {
+          artistVal = 'prada';
+        } else if (['namtan', 'น้ำตาล'].some(k => rawArtist.includes(k))) {
+          artistVal = 'namtan';
+        } else if (rawArtist) {
+          artistVal = rawArtist;
+        }
+
         if (!artistVal) {
-          const t = (getVal(r, 'title') || getVal(r, 'media')).toLowerCase();
+          const t = ((getVal(r, 'title') || '') + ' ' + (getVal(r, 'media') || '')).toLowerCase();
           if (t.includes('prada')) artistVal = 'prada';
-          else if (t.includes('สื่อ') || t.includes('magazine') || t.includes('vogue') || t.includes('elle')) artistVal = 'media';
+          else if (t.includes('สื่อ') || t.includes('magazine') || t.includes('vogue') || t.includes('elle') || t.includes('นิตยสาร')) artistVal = 'media';
           else artistVal = 'namtan';
         }
 
@@ -1055,6 +1078,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         title: formData.title || formData.media,
         url: formData.url,
         artist: formData.artist,
+        category: formData.artist,
+        artist_category: formData.artist,
+        หมวดหมู่ศิลปิน: formData.artist === 'media' ? 'สื่อ / นิตยสาร' : formData.artist === 'prada' ? 'Prada Official' : 'Namtan',
+        หมวดหมู่: formData.artist === 'media' ? 'สื่อ / นิตยสาร' : formData.artist === 'prada' ? 'Prada Official' : 'Namtan',
         phase: formData.phase,
         hashtag: formData.hashtag,
         hashtags: formData.hashtag,
@@ -1208,6 +1235,20 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     setEditingTaskId(task.id);
     const isReels = task.url?.toLowerCase().includes('/reel/') || task.url?.toLowerCase().includes('/reels/') || false;
     setIsIgReelsSelected(isReels);
+    let normArtist = (task.artist || '').toLowerCase().trim();
+    if (['media', 'สื่อ', 'สื่อ / นิตยสาร', 'สื่อ/นิตยสาร', 'magazine', 'vogue', 'elle', 'นิตยสาร'].some(k => normArtist.includes(k))) {
+      normArtist = 'media';
+    } else if (['prada', 'prada official'].some(k => normArtist.includes(k))) {
+      normArtist = 'prada';
+    } else if (['namtan', 'น้ำตาล'].some(k => normArtist.includes(k))) {
+      normArtist = 'namtan';
+    } else if (!normArtist) {
+      const t = ((task.title || '') + ' ' + (task.media || '')).toLowerCase();
+      if (t.includes('prada')) normArtist = 'prada';
+      else if (t.includes('สื่อ') || t.includes('magazine') || t.includes('vogue') || t.includes('elle') || t.includes('นิตยสาร')) normArtist = 'media';
+      else normArtist = 'namtan';
+    }
+
     setFormData({
       mark: task.mark,
       platform: task.platform,
@@ -1215,7 +1256,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       title: task.title,
       url: task.url,
       hashtag: getEffectiveHashtags(task),
-      artist: task.artist || '',
+      artist: normArtist,
       phase: task.phase || '',
       boost: task.boost || '',
       image: task.image || '',

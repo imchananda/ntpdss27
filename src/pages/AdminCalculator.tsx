@@ -234,15 +234,36 @@ export default function AdminCalculator() {
             const focusVal = getVal(r, 'focus').toLowerCase().trim();
             const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
 
-            let artistVal = (getVal(r, 'artist') || getVal(r, 'category')).toLowerCase().trim();
+            let rawArtist = (
+              getVal(r, 'artist') ||
+              getVal(r, 'category') ||
+              getVal(r, 'artist_category') ||
+              getVal(r, 'artistcategory') ||
+              getVal(r, 'หมวดหมู่ศิลปิน') ||
+              getVal(r, 'หมวดหมู่') ||
+              getVal(r, 'ผู้โพสต์') ||
+              getVal(r, 'ประเภท')
+            ).toLowerCase().trim();
+
+            let artistVal = '';
+            if (['media', 'สื่อ', 'สื่อ / นิตยสาร', 'สื่อ/นิตยสาร', 'magazine', 'vogue', 'elle', 'นิตยสาร'].some(k => rawArtist.includes(k))) {
+              artistVal = 'media';
+            } else if (['prada', 'prada official'].some(k => rawArtist.includes(k))) {
+              artistVal = 'prada';
+            } else if (['namtan', 'น้ำตาล'].some(k => rawArtist.includes(k))) {
+              artistVal = 'namtan';
+            } else if (rawArtist) {
+              artistVal = rawArtist;
+            }
+
             if (!artistVal) {
               const fullText = (media + ' ' + title + ' ' + url).toLowerCase();
-              if (fullText.includes('namtan') || fullText.includes('น้ำตาล')) {
-                artistVal = 'namtan';
-              } else if (fullText.includes('prada')) {
+              if (fullText.includes('prada')) {
                 artistVal = 'prada';
-              } else {
+              } else if (fullText.includes('สื่อ') || fullText.includes('magazine') || fullText.includes('vogue') || fullText.includes('elle') || fullText.includes('นิตยสาร')) {
                 artistVal = 'media';
+              } else {
+                artistVal = 'namtan';
               }
             }
 
@@ -293,12 +314,23 @@ export default function AdminCalculator() {
                   const focusVal = (r.focus || '').toString().toLowerCase().trim();
                   const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
 
-                  let artistVal = (r.artist || r.category || '').toString().toLowerCase().trim();
+                  let rawArtist = (r.artist || r.category || r.artist_category || r['หมวดหมู่ศิลปิน'] || r['หมวดหมู่'] || '').toString().toLowerCase().trim();
+                  let artistVal = '';
+                  if (['media', 'สื่อ', 'สื่อ / นิตยสาร', 'สื่อ/นิตยสาร', 'magazine', 'vogue', 'elle', 'นิตยสาร'].some(k => rawArtist.includes(k))) {
+                    artistVal = 'media';
+                  } else if (['prada', 'prada official'].some(k => rawArtist.includes(k))) {
+                    artistVal = 'prada';
+                  } else if (['namtan', 'น้ำตาล'].some(k => rawArtist.includes(k))) {
+                    artistVal = 'namtan';
+                  } else if (rawArtist) {
+                    artistVal = rawArtist;
+                  }
+
                   if (!artistVal) {
                     const fullText = ((r.media || '') + ' ' + (r.title || '') + ' ' + (r.url || '')).toLowerCase();
-                    if (fullText.includes('namtan') || fullText.includes('น้ำตาล')) artistVal = 'namtan';
-                    else if (fullText.includes('prada')) artistVal = 'prada';
-                    else artistVal = 'media';
+                    if (fullText.includes('prada')) artistVal = 'prada';
+                    else if (fullText.includes('สื่อ') || fullText.includes('magazine') || fullText.includes('vogue') || fullText.includes('elle') || fullText.includes('นิตยสาร')) artistVal = 'media';
+                    else artistVal = 'namtan';
                   }
 
                   return {
