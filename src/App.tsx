@@ -361,6 +361,9 @@ function App() {
     const filtered = all.filter(t => {
       const p = (t.phase || '').toLowerCase();
       const a = ((t as any).artist || '').toLowerCase();
+      if (activePhase === 'pre' || activePhase === 'airport') {
+        return p === 'pre' || p === 'airport' || a === 'pre' || a === 'airport';
+      }
       if (activePhase === 'afterglow' || activePhase === 'aftermath') {
         return (
           p === 'afterglow' || p === 'aftermath' || p === 'aftermath2' ||
@@ -623,7 +626,7 @@ function App() {
               else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube', 'threads'].includes(rawPlatform)) rawPlatform = 'x';
 
               const rawTaskPhase = (getVal('phase') || '').toLowerCase().trim();
-              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all') ? rawTaskPhase : (sheet.phase !== 'all' ? sheet.phase : 'airport');
+              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all') ? rawTaskPhase : (sheet.phase !== 'all' ? sheet.phase : 'pre');
 
               const task: Task = {
                 id: getVal('id') || getVal('url') || String(i),
@@ -1182,11 +1185,11 @@ function App() {
               <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto px-1 pt-1 pb-1 grid grid-cols-4 gap-1.5">
                 {[
                   { id: 'all', icon: '✦', label: t('allLabel'), desc: t('sixteenDaysShort') },
-                  { id: 'airport', icon: '✈️', label: t('airportLabel'), desc: t('phaseAirportShort') },
+                  { id: 'pre', icon: '✈️', label: t('preLabel'), desc: t('phasePreShort') },
                   { id: 'show', icon: '👠', label: t('showLabel'), desc: t('phaseShowShort') },
                   { id: 'afterglow', icon: '🥂', label: t('aftermathLabel'), desc: t('phaseAftermathShort') },
                 ].map(phase => {
-                  const isActive = activePhase === phase.id || (phase.id === 'afterglow' && activePhase === 'aftermath');
+                  const isActive = activePhase === phase.id || (phase.id === 'pre' && activePhase === 'airport') || (phase.id === 'afterglow' && activePhase === 'aftermath');
                   return (
                     <button
                       key={phase.id}

@@ -2261,7 +2261,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
                   >
                     <option value="all">✦ ทั้งหมด (All)</option>
-                    <option value="airport">✈️ Airport (20-21 Sep)</option>
+                    <option value="pre">✈️ Pre (20-21 Sep)</option>
                     <option value="show">👠 Show (22 Sep)</option>
                     <option value="afterglow">🥂 Afterglow (23 Sep - 06 Oct)</option>
                   </select>
@@ -3145,7 +3145,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {[
                       { id: 'all', label: 'ทั้งหมด (All)', icon: '✦' },
-                      { id: 'airport', label: 'Airport (20-21 Sep)', icon: '✈️' },
+                      { id: 'pre', label: 'Pre (20-21 Sep)', icon: '✈️' },
                       { id: 'show', label: 'Show (22 Sep)', icon: '👠' },
                       { id: 'afterglow', label: 'Afterglow (23 Sep - 06 Oct)', icon: '🥂' },
                     ].map(p => (
