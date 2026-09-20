@@ -178,8 +178,12 @@ function App() {
     return {};
   });
 
-  const [featuredFilterPlatform, setFeaturedFilterPlatform] = useState<string | null>(null);
-  const [taskFilterPlatform, setTaskFilterPlatform] = useState<string | null>(null);
+  const [featuredFilterPlatform, setFeaturedFilterPlatform] = useState<string | null>(() => {
+    try { return localStorage.getItem('ntf_user_featured_platform'); } catch { return null; }
+  });
+  const [taskFilterPlatform, setTaskFilterPlatform] = useState<string | null>(() => {
+    try { return localStorage.getItem('ntf_user_task_platform'); } catch { return null; }
+  });
 
   // Ref for the main scrollable container
   const mainRef = useRef<HTMLElement>(null);
@@ -187,6 +191,10 @@ function App() {
   // Phase and Stats State
   const [activePhase, setActivePhase] = useState<'all' | 'pre' | 'airport' | 'show' | 'afterglow' | 'aftermath'>(() => {
     try {
+      const savedUserPhase = localStorage.getItem('ntf_user_active_phase');
+      if (savedUserPhase && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(savedUserPhase)) {
+        return savedUserPhase as any;
+      }
       const saved = localStorage.getItem('ntf_default_active_phase');
       if (saved && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(saved)) {
         return saved as any;
@@ -351,14 +359,11 @@ function App() {
   const totalTasksList = useMemo(() => Object.values(allTasks).flat(), [allTasks]);
   const totalCompletedCount = useMemo(() => {
     let count = 0;
-    Object.entries(completed).forEach(([phase, sheetCompleted]) => {
-      const sheetTasks = allTasks[phase] || [];
-      sheetTasks.forEach(task => {
-        if (sheetCompleted[task.id]) count++;
-      });
+    tasks.forEach(task => {
+      if (isTaskCompleted(task)) count++;
     });
     return count;
-  }, [completed, allTasks]);
+  }, [tasks, isTaskCompleted]);
 
   // Focus tasks = tasks with focus >= 1 (focus badge or hot badge)
   const allFocusTasks = useMemo(() => totalTasksList.filter(t => (t.focus ?? 0) >= 1), [totalTasksList]);
@@ -389,8 +394,8 @@ function App() {
 
   // Calculate platform-specific engagement stats
   const getPlatformStats = useCallback((platform?: string, period: 'emv' | 'miv' = statsPeriod) => {
-    // Filter by platform
-    let pTasks = platform ? totalTasksList.filter(t => t.platform === platform) : totalTasksList;
+    // Filter by platform using activePhase-filtered tasks
+    let pTasks = platform ? tasks.filter(t => t.platform === platform) : tasks;
 
     // Filter by period
     // MIV = all sheets; EMV = only airport + show + aftermath (excludes pre & aftermath2)
@@ -399,14 +404,14 @@ function App() {
     }
 
     return {
-      likes: pTasks.reduce((s, t) => s + t.likes, 0),
-      comments: pTasks.reduce((s, t) => s + t.comments, 0),
-      shares: pTasks.reduce((s, t) => s + t.shares, 0),
-      reposts: pTasks.reduce((s, t) => s + t.reposts, 0),
+      likes: pTasks.reduce((s, t) => s + (t.likes || 0), 0),
+      comments: pTasks.reduce((s, t) => s + (t.comments || 0), 0),
+      shares: pTasks.reduce((s, t) => s + (t.shares || 0), 0),
+      reposts: pTasks.reduce((s, t) => s + (t.reposts || 0), 0),
       views: pTasks.reduce((s, t) => s + (t.views || 0), 0),
       saves: pTasks.reduce((s, t) => s + (t.saves || 0), 0)
     };
-  }, [totalTasksList, statsPeriod]);
+  }, [tasks, statsPeriod]);
 
   // Memoize global stats to prevent recalculation on every render (e.g. during scroll)
   const dashboardStats = useMemo(() => getPlatformStats(), [getPlatformStats]);
@@ -427,12 +432,12 @@ function App() {
 
   const allTasksStats = useMemo(() => {
     return {
-      likes: totalTasksList.reduce((s, t) => s + t.likes, 0),
-      comments: totalTasksList.reduce((s, t) => s + t.comments, 0),
-      shares: totalTasksList.reduce((s, t) => s + t.shares, 0),
-      reposts: totalTasksList.reduce((s, t) => s + t.reposts, 0),
+      likes: tasks.reduce((s, t) => s + (t.likes || 0), 0),
+      comments: tasks.reduce((s, t) => s + (t.comments || 0), 0),
+      shares: tasks.reduce((s, t) => s + (t.shares || 0), 0),
+      reposts: tasks.reduce((s, t) => s + (t.reposts || 0), 0),
     };
-  }, [totalTasksList]);
+  }, [tasks]);
 
   // Mark as loaded after first render
   useEffect(() => {
@@ -850,10 +855,48 @@ function App() {
     return () => clearInterval(interval);
   }, [fetchAllData, fetchPositiveMessages]);
 
-  // Handle automatic scrolling top when Phase changes
+  // Persist filter states to localStorage
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      if (featuredFilterPlatform) localStorage.setItem('ntf_user_featured_platform', featuredFilterPlatform);
+      else localStorage.removeItem('ntf_user_featured_platform');
+    } catch { /* ignore */ }
+  }, [featuredFilterPlatform]);
+
+  useEffect(() => {
+    try {
+      if (taskFilterPlatform) localStorage.setItem('ntf_user_task_platform', taskFilterPlatform);
+      else localStorage.removeItem('ntf_user_task_platform');
+    } catch { /* ignore */ }
+  }, [taskFilterPlatform]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ntf_user_active_phase', activePhase);
+    } catch { /* ignore */ }
   }, [activePhase]);
+
+  // Save & Restore User Window Scroll Position across tab reloads / external link navigation
+  useEffect(() => {
+    const savedY = localStorage.getItem('ntf_user_scroll_pos');
+    if (savedY) {
+      const posY = parseInt(savedY, 10);
+      if (!isNaN(posY) && posY > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: posY, behavior: 'instant' as any });
+        }, 150);
+      }
+    }
+
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        localStorage.setItem('ntf_user_scroll_pos', String(window.scrollY));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Helper to check if a task is pinned (ปักหมุด)
   const isTaskPinned = useCallback((t: Task) => {
@@ -1931,7 +1974,7 @@ function App() {
 
             <div className="flex flex-col items-center min-w-[45px]">
               <div className="text-[11px] font-bold text-white flex items-baseline leading-none mb-0.5 whitespace-nowrap">
-                {pendingCount} <span className="text-[9px] font-normal text-white/70 ml-1">/ {totalTasksList.length}</span>
+                {pendingCount} <span className="text-[9px] font-normal text-white/70 ml-1">/ {tasks.length}</span>
               </div>
               <div className="text-[7.5px] text-white/80 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{t('pending')}</div>
             </div>
@@ -1940,10 +1983,10 @@ function App() {
 
             <div className="flex flex-col items-center min-w-[45px]">
               <div className="text-[13px] font-bold text-white leading-none mb-0.5">
-                {totalTasksList.length
-                  ? (totalCompletedCount === totalTasksList.length
+                {tasks.length
+                  ? (totalCompletedCount === tasks.length
                     ? 100
-                    : Math.floor((totalCompletedCount / totalTasksList.length) * 100))
+                    : Math.floor((totalCompletedCount / tasks.length) * 100))
                   : 0}%
               </div>
               <div className="text-[7.5px] text-white/80 uppercase tracking-widest font-bold leading-none">{t('totalLabel')}</div>
@@ -2002,7 +2045,7 @@ function App() {
                   <div className="bg-prada-cream/50 rounded-2xl p-4 border border-prada-warm flex items-center justify-between">
                     <span className="text-sm font-medium text-prada-charcoal/80 uppercase tracking-wider">{t('completedTasks')}</span>
                     <span className="text-lg font-bold text-prada-charcoal">
-                      {totalCompletedCount} <span className="text-sm font-normal text-prada-taupe">/ {totalTasksList.length}</span>
+                      {totalCompletedCount} <span className="text-sm font-normal text-prada-taupe">/ {tasks.length}</span>
                     </span>
                   </div>
 

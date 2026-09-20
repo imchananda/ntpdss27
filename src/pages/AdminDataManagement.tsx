@@ -265,10 +265,18 @@ function parseCSV(csvText: string): string[][] {
 export default function AdminDataManagement({ onBackToApp }: AdminDataManagementProps) {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<AdminSheetTask[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterPlatform, setFilterPlatform] = useState('all');
-  const [filterArtist, setFilterArtist] = useState('all');
-  const [filterBoost, setFilterBoost] = useState<'all' | 'boost' | 'media' | 'pinned' | 'marked' | 'stale'>('all');
+  const [searchTerm, setSearchTerm] = useState(() => {
+    try { return localStorage.getItem('ntf_admin_search_term') || ''; } catch { return ''; }
+  });
+  const [filterPlatform, setFilterPlatform] = useState(() => {
+    try { return localStorage.getItem('ntf_admin_filter_platform') || 'all'; } catch { return 'all'; }
+  });
+  const [filterArtist, setFilterArtist] = useState(() => {
+    try { return localStorage.getItem('ntf_admin_filter_artist') || 'all'; } catch { return 'all'; }
+  });
+  const [filterBoost, setFilterBoost] = useState<'all' | 'boost' | 'media' | 'pinned' | 'marked' | 'stale'>(() => {
+    try { return (localStorage.getItem('ntf_admin_filter_boost') as any) || 'all'; } catch { return 'all'; }
+  });
   const [globalHashtags, setGlobalHashtags] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('ntf_global_hashtags');
@@ -399,6 +407,45 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     } catch { /* ignore */ }
     return true;
   });
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    try { localStorage.setItem('ntf_admin_search_term', searchTerm); } catch { /* ignore */ }
+  }, [searchTerm]);
+
+  useEffect(() => {
+    try { localStorage.setItem('ntf_admin_filter_platform', filterPlatform); } catch { /* ignore */ }
+  }, [filterPlatform]);
+
+  useEffect(() => {
+    try { localStorage.setItem('ntf_admin_filter_artist', filterArtist); } catch { /* ignore */ }
+  }, [filterArtist]);
+
+  useEffect(() => {
+    try { localStorage.setItem('ntf_admin_filter_boost', filterBoost); } catch { /* ignore */ }
+  }, [filterBoost]);
+
+  // Admin Scroll Position Persistence
+  useEffect(() => {
+    const savedY = localStorage.getItem('ntf_admin_scroll_pos');
+    if (savedY) {
+      const posY = parseInt(savedY, 10);
+      if (!isNaN(posY) && posY > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: posY, behavior: 'instant' as any });
+        }, 150);
+      }
+    }
+
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        localStorage.setItem('ntf_admin_scroll_pos', String(window.scrollY));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Track which task engagement dropdowns are currently open
   const [expandedEngagementIds, setExpandedEngagementIds] = useState<Set<string>>(new Set());
