@@ -63,14 +63,44 @@ export default function StatsCardModal({ isOpen, onClose, completed, allTasks, t
     const stats = useMemo(() => {
         // Collect all completed tasks with timestamps
         const completedTasks: Array<{ task: Task; completedAt: string }> = [];
-        Object.entries(completed).forEach(([phase, phaseCompleted]) => {
-            const phaseTasks = allTasks[phase] || [];
-            phaseTasks.forEach(task => {
-                if (phaseCompleted[task.id]) {
-                    completedTasks.push({ task, completedAt: phaseCompleted[task.id].completedAt });
+        const allTaskList = Object.values(allTasks).flat();
+
+        allTaskList.forEach(task => {
+            let completedInfo: { completedAt: string } | null = null;
+            if (completed[task.phase] && completed[task.phase][task.id]) {
+                completedInfo = completed[task.phase][task.id];
+            } else {
+                for (const phaseMap of Object.values(completed)) {
+                    if (phaseMap && phaseMap[task.id]) {
+                        completedInfo = phaseMap[task.id];
+                        break;
+                    }
+                }
+            }
+
+            if (completedInfo) {
+                completedTasks.push({
+                    task,
+                    completedAt: completedInfo.completedAt || new Date().toISOString()
+                });
+            }
+        });
+
+        // Fallback: If completedTasks is still empty but completed has entries (e.g. task ID mismatch or custom task)
+        if (completedTasks.length === 0) {
+            Object.entries(completed).forEach(([phaseName, phaseCompleted]) => {
+                if (phaseCompleted && typeof phaseCompleted === 'object') {
+                    Object.entries(phaseCompleted).forEach(([taskId, info]) => {
+                        if (info && info.completedAt) {
+                            completedTasks.push({
+                                task: { id: taskId, phase: phaseName, platform: 'x' },
+                                completedAt: info.completedAt,
+                            });
+                        }
+                    });
                 }
             });
-        });
+        }
 
         if (completedTasks.length === 0) return null;
 
