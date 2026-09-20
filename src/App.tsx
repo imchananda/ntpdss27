@@ -1201,10 +1201,10 @@ function App() {
             </div>
           </div>
 
-          {/* Phase Filters - Transparent Deep Indigo Theme (Normal Scroll) */}
+          {/* Phase Filters - Equal spacing across desktop, tablet, mobile */}
           {showPhaseFilter && (
-            <div className="bg-transparent mb-2">
-              <div className="w-full max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto px-1 pt-1 pb-1 grid grid-cols-4 gap-1.5">
+            <div className="bg-transparent mb-2.5">
+              <div className="w-full max-w-sm sm:max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto px-2 sm:px-4 py-1 grid grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                 {[
                   { id: 'all', icon: '✦', label: t('allLabel'), desc: t('sixteenDaysShort') },
                   { id: 'pre', icon: '✈️', label: t('preLabel'), desc: t('phasePreShort') },
@@ -1219,14 +1219,14 @@ function App() {
                         setActivePhase(phase.id as any);
                         setVisibleCount(30);
                       }}
-                      className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all group/btn ${isActive
-                        ? 'bg-[#121c21] text-white border-[#121c21] shadow-md scale-105 z-10 font-bold'
+                      className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl border transition-all duration-200 group/btn relative ${isActive
+                        ? 'bg-[#121c21] text-white border-[#121c21] shadow-md ring-2 ring-[#121c21]/30 font-bold z-10'
                         : 'bg-white/80 text-[#121c21] border-[#121c21]/40 hover:bg-[#601d23] hover:text-white hover:border-[#601d23] hover:shadow-md'
                         }`}
                     >
-                      <div className="text-[12px] sm:text-[14px] leading-none mb-1">{phase.icon}</div>
-                      <div className="text-[9px] sm:text-[10px] font-bold leading-none mb-0.5 whitespace-nowrap">{phase.label}</div>
-                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-white/90 font-semibold' : 'text-[#121c21]/70 group-hover/btn:text-white/90'}`}>{phase.desc}</div>
+                      <div className="text-[13px] sm:text-[15px] md:text-[16px] leading-none mb-1 transition-transform duration-200 group-hover/btn:scale-110">{phase.icon}</div>
+                      <div className="text-[9.5px] sm:text-[11px] md:text-[12px] font-bold leading-none mb-0.5 whitespace-nowrap">{phase.label}</div>
+                      <div className={`text-[7.5px] sm:text-[8.5px] md:text-[9.5px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-white/90 font-semibold' : 'text-[#121c21]/70 group-hover/btn:text-white/90'}`}>{phase.desc}</div>
                     </button>
                   )
                 })}
