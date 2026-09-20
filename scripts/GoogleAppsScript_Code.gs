@@ -165,8 +165,8 @@ function doPost(e) {
             sheet.getRange(existingRowIndex, colNum).setValue(data.url);
           } else if ((header === 'hashtag' || header === 'hashtags') && (data.hashtags !== undefined || data.hashtag !== undefined)) {
             sheet.getRange(existingRowIndex, colNum).setValue(data.hashtags || data.hashtag);
-          } else if (header === 'artist' && data.artist !== undefined) {
-            sheet.getRange(existingRowIndex, colNum).setValue(data.artist);
+          } else if ((header === 'artist' || header === 'category' || header === 'artist_category' || header === 'หมวดหมู่ศิลปิน' || header === 'หมวดหมู่') && (data.artist !== undefined || data.category !== undefined || data['หมวดหมู่ศิลปิน'] !== undefined || data['หมวดหมู่'] !== undefined)) {
+            sheet.getRange(existingRowIndex, colNum).setValue(data.artist || data.category || data['หมวดหมู่ศิลปิน'] || data['หมวดหมู่']);
           } else if (header === 'focus' && data.focus !== undefined) {
             sheet.getRange(existingRowIndex, colNum).setValue(data.focus);
           } else if (header === 'boost' && data.boost !== undefined) {
@@ -192,7 +192,7 @@ function doPost(e) {
         if (header === 'title' || header === 'note') return data.title || data.media || '';
         if (header === 'url') return data.url || '';
         if (header === 'hashtag' || header === 'hashtags') return data.hashtags || data.hashtag || '';
-        if (header === 'artist') return data.artist || 'namtan';
+        if (header === 'artist' || header === 'category' || header === 'artist_category' || header === 'หมวดหมู่ศิลปิน' || header === 'หมวดหมู่') return data.artist || data.category || data['หมวดหมู่ศิลปิน'] || data['หมวดหมู่'] || 'namtan';
         if (header === 'phase') return data.phase || 'pre';
         if (header === 'default_active_phase' || header === 'default_phase') return data.default_active_phase || data.default_phase || 'all';
         if (header === 'focus') return data.focus || (data.mark ? '1' : '0');
@@ -294,8 +294,8 @@ function doPost(e) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.url);
         } else if ((header === 'hashtag' || header === 'hashtags') && (data.hashtags !== undefined || data.hashtag !== undefined)) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.hashtags || data.hashtag);
-        } else if (header === 'artist' && data.artist !== undefined) {
-          sheet.getRange(foundRowIndex, colNum).setValue(data.artist);
+        } else if ((header === 'artist' || header === 'category' || header === 'artist_category' || header === 'หมวดหมู่ศิลปิน' || header === 'หมวดหมู่') && (data.artist !== undefined || data.category !== undefined || data['หมวดหมู่ศิลปิน'] !== undefined || data['หมวดหมู่'] !== undefined)) {
+          sheet.getRange(foundRowIndex, colNum).setValue(data.artist || data.category || data['หมวดหมู่ศิลปิน'] || data['หมวดหมู่']);
         } else if (header === 'phase' && data.phase !== undefined) {
           sheet.getRange(foundRowIndex, colNum).setValue(data.phase);
         } else if ((header === 'default_active_phase' || header === 'default_phase') && (data.default_active_phase !== undefined || data.default_phase !== undefined)) {
