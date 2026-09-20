@@ -103,13 +103,13 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8F4] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#e6e7e9] flex flex-col font-sans">
       {/* ── Sub Navigation Header for Admin ── */}
-      <div className="bg-[#2a2121] text-white border-b border-[#c4d2b1]/30 px-3 sm:px-4 py-2 sticky top-0 z-40 shadow-sm">
+      <div className="bg-[#102022] text-white border-b border-[#102022] px-3 sm:px-4 py-2 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
           {/* Left: Tab switch */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <span className="text-[11px] font-bold text-[#c4d2b1] uppercase tracking-widest mr-1 hidden lg:inline">
+            <span className="text-[11px] font-bold text-white uppercase tracking-widest mr-1 hidden lg:inline">
               Admin Hub:
             </span>
 
@@ -117,7 +117,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               onClick={() => handleTabChange('data')}
               className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === 'data'
-                  ? 'bg-[#c4d2b1] text-[#2a2121] shadow-sm'
+                  ? 'bg-[#47191e] text-white shadow-sm'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -130,7 +130,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               onClick={() => handleTabChange('calc')}
               className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === 'calc'
-                  ? 'bg-[#c4d2b1] text-[#2a2121] shadow-sm'
+                  ? 'bg-[#47191e] text-white shadow-sm'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >

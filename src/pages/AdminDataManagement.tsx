@@ -1389,9 +1389,9 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8F4] font-sans pb-16">
+    <div className="min-h-screen bg-[#e6e7e9] font-sans pb-16">
       {/* ── Top Header ── */}
-      <header className="bg-[#2a2121] text-white sticky top-0 z-30 shadow-md border-b border-[#c4d2b1]">
+      <header className="bg-[#102022] text-white sticky top-0 z-30 shadow-md border-b border-[#102022]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div>
@@ -1410,7 +1410,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 resetForm();
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 rounded-xl bg-[#c4d2b1] hover:bg-[#B40F28] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#c4d2b1]/25 transition-all active:scale-95 hover:scale-[1.02]"
+              className="px-4 py-2 rounded-xl bg-[#47191e] hover:bg-[#331215] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 hover:scale-[1.02]"
             >
               <FaPlus className="text-xs sm:text-sm" />
               <span>เพิ่มโพสต์</span>

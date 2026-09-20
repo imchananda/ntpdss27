@@ -1125,12 +1125,12 @@ function App() {
           {/* Hero Editorial Banner Layout (Top Banner - Normal Scroll) */}
           <div className="relative w-full overflow-hidden bg-transparent mb-1 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[200px] sm:min-h-[240px]">
             {/* Language Switcher (Top Right Absolute) */}
-            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#c4d2b1] bg-white/60 backdrop-blur-md shadow-sm">
+            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#102022] bg-white/60 backdrop-blur-md shadow-sm">
               <button
                 onClick={() => setLanguage('th')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'th'
-                  ? 'bg-[#c4d2b1] text-[#2a2121]'
-                  : 'text-[#2a2121]/70 hover:text-[#2a2121]'
+                  ? 'bg-[#102022] text-white'
+                  : 'text-[#121c21]/70 hover:text-[#121c21]'
                   }`}
               >
                 TH
@@ -1138,8 +1138,8 @@ function App() {
               <button
                 onClick={() => setLanguage('en')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'en'
-                  ? 'bg-[#c4d2b1] text-[#2a2121]'
-                  : 'text-[#2a2121]/70 hover:text-[#2a2121]'
+                  ? 'bg-[#102022] text-white'
+                  : 'text-[#121c21]/70 hover:text-[#121c21]'
                   }`}
               >
                 EN
@@ -1158,14 +1158,14 @@ function App() {
             {/* Typography Title & Subtitle - Archivo Black Uniform Style */}
             <div className="relative z-10 text-center flex flex-col items-center">
               <h1 className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap drop-shadow-sm font-archivo text-2xl sm:text-4xl leading-none uppercase tracking-tight">
-                <span className="text-[#2f2625]">
+                <span className="text-[#121c21]">
                   PRADA ×
                 </span>
-                <span className="text-[#c4d2b1]">
+                <span className="text-[#47191e]">
                   namtan
                 </span>
               </h1>
-              <p className="text-[11px] sm:text-[14px] font-light tracking-wider text-[#2f2625] mt-2 font-google">
+              <p className="text-[11px] sm:text-[14px] font-light tracking-wider text-[#121c21] mt-2 font-google">
                 Womenswear Spring/Summer 2027
               </p>
               {/* Brand Logo */}
@@ -1198,13 +1198,13 @@ function App() {
                         setVisibleCount(30);
                       }}
                       className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all ${isActive
-                        ? 'bg-[#c4d2b1] text-[#2a2121] border-[#c4d2b1] shadow-md scale-105 z-10 font-bold'
-                        : 'bg-white/80 text-[#2a2121] border-[#c4d2b1]/60 hover:bg-[#c4d2b1]/20'
+                        ? 'bg-[#102022] text-white border-[#102022] shadow-md scale-105 z-10 font-bold'
+                        : 'bg-white/80 text-[#121c21] border-[#102022]/40 hover:bg-[#102022]/10'
                         }`}
                     >
                       <div className="text-[12px] sm:text-[14px] leading-none mb-1">{phase.icon}</div>
                       <div className="text-[9px] sm:text-[10px] font-bold leading-none mb-0.5 whitespace-nowrap">{phase.label}</div>
-                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-[#2a2121]/90 font-semibold' : 'text-[#2a2121]/70'}`}>{phase.desc}</div>
+                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-white/90 font-semibold' : 'text-[#121c21]/70'}`}>{phase.desc}</div>
                     </button>
                   )
                 })}
@@ -1225,8 +1225,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
-                      ? 'bg-[#c4d2b1] text-[#2a2121] border-transparent shadow-[#c4d2b1]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#2a2121] border-[#c4d2b1] shadow-sm hover:bg-white shadow-[#c4d2b1]/10'
+                      ? 'bg-[#47191e] text-white border-transparent shadow-[#47191e]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'tasks' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1243,8 +1243,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
-                      ? 'bg-[#c4d2b1] text-[#2a2121] border-transparent shadow-[#c4d2b1]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#2a2121] border-[#c4d2b1] shadow-sm hover:bg-white shadow-[#c4d2b1]/10'
+                      ? 'bg-[#47191e] text-white border-transparent shadow-[#47191e]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'boost' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1261,8 +1261,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
-                      ? 'bg-[#c4d2b1] text-[#2a2121] border-transparent shadow-[#c4d2b1]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#2a2121] border-[#c4d2b1] shadow-sm hover:bg-white shadow-[#c4d2b1]/10'
+                      ? 'bg-[#47191e] text-white border-transparent shadow-[#47191e]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'important' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1369,11 +1369,11 @@ function App() {
                       return (
                         <>
                           {/* Summary Bar */}
-                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#c4d2b1]/10 mb-1">
+                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#102022]/10 mb-1">
                             <span className="text-[10px] text-prada-taupe/60">
                               {t('missionCount')}
                             </span>
-                            <span className="text-[11px] font-bold text-[#c4d2b1]">
+                            <span className="text-[11px] font-bold text-[#47191e]">
                               {featuredPosts.length} {t('missionCountUnit')}
                             </span>
                           </div>
@@ -1390,7 +1390,7 @@ function App() {
                                 className="flex shrink-0 bg-white rounded-2xl overflow-hidden border border-prada-warm/20 shadow-sm hover:shadow-lg hover:border-prada-gold/40 transition-all active:scale-[0.98] group/post cursor-pointer"
                               >
                                 {/* Left: Thumbnail panel */}
-                                <div className="w-28 sm:w-36 shrink-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#e4eccf] to-[#c4d2b1] relative overflow-hidden">
+                                <div className="w-28 sm:w-36 shrink-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#e6e7e9] to-[#d0d3d8] relative overflow-hidden">
                                   {post.image ? (
                                     <img
                                       src={post.image}
@@ -1431,7 +1431,7 @@ function App() {
                                 <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col gap-2">
                                   {/* Post Header */}
                                   <div className="flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-white border border-[#c4d2b1] text-[#2a2121] shadow-sm">
+                                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-white border border-[#102022]/30 text-[#121c21] shadow-sm">
                                       <div className="w-3.5 h-3.5 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{iconPlatform?.icon}</div>
                                     </div>
                                     <div className="flex flex-col min-w-0">
@@ -1485,7 +1485,7 @@ function App() {
                                   <div className="pt-1.5 border-t border-prada-warm/30 flex items-center justify-between">
                                     <span className="text-[9px] font-bold text-prada-charcoal/50 uppercase tracking-wider">{t('totalEngagementLabel')}</span>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-sm font-bold text-[#c4d2b1] tabular-nums">{totalEngagement.toLocaleString()}</span>
+                                      <span className="text-sm font-bold text-[#47191e] tabular-nums">{totalEngagement.toLocaleString()}</span>
                                       {(post.target ?? 0) > 0 && (
                                         <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/50'}`}>
                                           ({pct.toFixed(1)}%)
@@ -1522,21 +1522,21 @@ function App() {
                     {/* Title Row */}
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-[#c4d2b1] text-sm sm:text-base leading-none">✦</span>
-                        <h3 className="text-[10px] sm:text-xs font-bold text-[#c4d2b1] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
+                        <span className="text-[#47191e] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#47191e] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
                       </div>
                       {/* Minimize button — always visible top-right */}
                       <div className="flex flex-col items-center shrink-0">
                         <button
                           onClick={() => setActiveSection(null)}
-                          className="w-7 h-7 rounded-full bg-[#c4d2b1]/10 text-[#c4d2b1] border border-[#c4d2b1]/20 shadow-sm hover:bg-[#c4d2b1]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-full bg-[#47191e]/10 text-[#47191e] border border-[#47191e]/20 shadow-sm hover:bg-[#47191e]/20 active:scale-95 flex items-center justify-center transition-colors"
                           title={t('minimize')}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
-                        <span className="text-[6px] font-bold text-[#c4d2b1]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                        <span className="text-[6px] font-bold text-[#47191e]/60 tracking-wider mt-0.5 whitespace-nowrap">
                           {t('tapToHide')}
                         </span>
                       </div>
@@ -1547,8 +1547,8 @@ function App() {
                       <button
                         onClick={() => setFeaturedFilterPlatform(null)}
                         className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
-                          ? 'bg-[#c4d2b1] border-transparent text-[#2a2121]'
-                          : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:bg-[#c4d2b1]/10'
+                          ? 'bg-[#47191e] border-transparent text-white'
+                          : 'bg-white border-[#102022]/30 text-[#121c21]/70 hover:bg-[#47191e]/10'
                           }`}
                       >
                         {t('allLabel') || 'All'}
@@ -1560,8 +1560,8 @@ function App() {
                             key={p}
                             onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
                             className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                              ? 'bg-[#c4d2b1] border-[#c4d2b1] text-[#2a2121]'
-                              : 'bg-white border-[#c4d2b1] text-[#2a2121]/80 hover:border-[#c4d2b1] hover:text-[#2a2121]'
+                              ? 'bg-[#47191e] border-[#47191e] text-white'
+                              : 'bg-white border-[#102022]/30 text-[#121c21]/80 hover:border-[#47191e] hover:text-[#121c21]'
                               }`}
                           >
                             <div className="w-4 h-4 text-current flex items-center justify-center">

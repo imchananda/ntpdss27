@@ -12,23 +12,23 @@
   font-family: 'Ephesis', cursive;
 }
 
-/* ===== Theme: Namtan × Prada SS 2027 (#c4d2b1 & #2a2121) ===== */
+/* ===== Theme Palette: #e6e7e9 (BG), #121c21 (Text), #47191e (Red Buttons), #102022 (Green Bars/Buttons) ===== */
 :root {
-  --prada-offwhite: 247 249 245;   /* Soft sage ivory tint */
-  --prada-cream: 228 236 218;      /* Soft sage cream */
-  --prada-sage: 196 210 177;       /* #c4d2b1 Sage Green */
-  --prada-parchment: 196 210 177;  /* #c4d2b1 */
-  --prada-stone: 165 180 145;      /* Muted sage stone */
-  --prada-warm: 196 210 177;       /* Sage border accent */
-  --prada-taupe: 105 92 88;        /* Muted taupe text */
-  --prada-charcoal: 42 33 33;      /* #2a2121 Dark Espresso */
-  --prada-black: 25 18 18;         /* Luxury espresso black */
-  --prada-gold: 196 210 177;       /* #c4d2b1 Prada Sage Accent */
-  --prada-darkgold: 165 180 145;    /* Deep sage accent */
+  --prada-offwhite: 230 231 233;   /* #e6e7e9 ครีม พื้นหลัง */
+  --prada-cream: 220 222 225;      /* Soft gray tint */
+  --prada-sage: 16 32 34;          /* #102022 เขียว ปุ่ม/แถบ */
+  --prada-parchment: 71 25 30;     /* #47191e แดง ปุ่ม */
+  --prada-stone: 16 32 34;         /* #102022 */
+  --prada-warm: 71 25 30;          /* #47191e Accent border */
+  --prada-taupe: 70 80 85;         /* Muted text */
+  --prada-charcoal: 18 28 33;      /* #121c21 ดำ ตัวหนังสือ */
+  --prada-black: 18 28 33;         /* #121c21 */
+  --prada-gold: 71 25 30;          /* #47191e แดง ปุ่ม */
+  --prada-darkgold: 16 32 34;      /* #102022 เขียว ปุ่ม/แถบ */
 
   /* Luxury Accents */
-  --prada-red-light: 238 243 232;  /* Light sage tint */
-  --prada-red: 196 210 177;        /* Sage accent */
+  --prada-red-light: 245 235 236;  /* Light red tint */
+  --prada-red: 71 25 30;           /* #47191e แดง */
 }
 
 /* Performance & smooth rendering optimizations */
@@ -43,7 +43,8 @@ html {
 body {
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: rgb(var(--prada-offwhite));
+  background-color: #e6e7e9;
+  color: #121c21;
   overflow-x: hidden;
 }
 
@@ -82,11 +83,11 @@ body {
 
 /* Prada Gold Accent Badge Utility */
 .prada-gold-accent {
-  background-color: #c4d2b1;
-  color: #2a2121;
+  background-color: #47191e;
+  color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.12em;
-  box-shadow: 0 2px 8px rgba(196, 210, 177, 0.35);
+  box-shadow: 0 2px 8px rgba(71, 25, 30, 0.35);
 }
 
 /* Luxury Subtle Border */
