@@ -91,6 +91,7 @@ function doPost(e) {
       });
     } else if (sName !== 'followers' && sName !== 'follwer') {
       const postHeaders = [
+        'artist',
         'target_likes',
         'target_comments',
         'target_reposts',

@@ -930,6 +930,11 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         const focusVal = getVal(r, 'focus').toLowerCase().trim();
         const isMarked = markVal === '1' || markVal === 'true' || markVal === 'yes' || focusVal === '1' || focusVal === 'hot' || focusVal === '2';
 
+        const taskId = id || url || String(i);
+        const localImages = JSON.parse(localStorage.getItem('ntf_task_images') || '{}');
+        const localArtists = JSON.parse(localStorage.getItem('ntf_task_artists') || '{}');
+        const localPhases = JSON.parse(localStorage.getItem('ntf_task_phases') || '{}');
+
         let rawArtist = (
           getVal(r, 'artist') ||
           getVal(r, 'category') ||
@@ -938,7 +943,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           getVal(r, 'หมวดหมู่ศิลปิน') ||
           getVal(r, 'หมวดหมู่') ||
           getVal(r, 'ผู้โพสต์') ||
-          getVal(r, 'ประเภท')
+          getVal(r, 'ประเภท') ||
+          localArtists[taskId] ||
+          localArtists[url] ||
+          ''
         ).toLowerCase().trim();
 
         let artistVal = '';
@@ -959,9 +967,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           else artistVal = 'namtan';
         }
 
-        const taskId = id || url || String(i);
-        const localImages = JSON.parse(localStorage.getItem('ntf_task_images') || '{}');
         const taskImage = getVal(r, 'image') || getVal(r, 'img') || getVal(r, 'picture') || localImages[taskId] || localImages[url] || '';
+        const taskPhase = getVal(r, 'phase') || getVal(r, 'ช่วงเวลาแคมเปญ') || localPhases[taskId] || localPhases[url] || 'pre';
 
         parsed.push({
           id: taskId,
@@ -972,7 +979,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           url,
           hashtag: getVal(r, 'hashtag') || getVal(r, 'hashtags') || '',
           artist: artistVal,
-          phase: getVal(r, 'phase') || 'airport',
+          phase: taskPhase,
           boost: getVal(r, 'boost'),
           image: taskImage,
           likes: getVal(r, 'likes'),
@@ -1158,9 +1165,12 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         return;
       }
 
-      // Sync image to local cache for instant zero-latency rendering
+      // Sync image, artist & phase to local cache for instant zero-latency rendering & fallback
       const localImages = JSON.parse(localStorage.getItem('ntf_task_images') || '{}');
+      const localArtists = JSON.parse(localStorage.getItem('ntf_task_artists') || '{}');
+      const localPhases = JSON.parse(localStorage.getItem('ntf_task_phases') || '{}');
       const imgKey = postId || formData.url;
+
       if (formData.image) {
         localImages[imgKey] = formData.image;
         if (formData.url) localImages[formData.url] = formData.image;
@@ -1169,6 +1179,19 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         if (formData.url) delete localImages[formData.url];
       }
       localStorage.setItem('ntf_task_images', JSON.stringify(localImages));
+
+      if (formData.artist) {
+        localArtists[imgKey] = formData.artist;
+        if (formData.url) localArtists[formData.url] = formData.artist;
+        localStorage.setItem('ntf_task_artists', JSON.stringify(localArtists));
+      }
+
+      if (formData.phase) {
+        localPhases[imgKey] = formData.phase;
+        if (formData.url) localPhases[formData.url] = formData.phase;
+        localStorage.setItem('ntf_task_phases', JSON.stringify(localPhases));
+      }
+
       window.dispatchEvent(new CustomEvent('ntf_task_images_changed'));
 
       if (editingTaskId) {
@@ -1928,7 +1951,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     <th className="py-3 px-3 w-12 text-center whitespace-nowrap">ดาว</th>
                     <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Platform</th>
                     <th className="py-3 px-4 min-w-[340px]">สื่อ / รายละเอียดโพสต์</th>
-                    <th className="py-3 px-3.5 w-28 whitespace-nowrap">ศิลปิน</th>
+                    <th className="py-3 px-3.5 w-28 whitespace-nowrap">หมวดหมู่</th>
                     <th className="py-3 px-3.5 w-24 text-center whitespace-nowrap">URL</th>
                     <th className="py-3 px-4 text-right w-28 whitespace-nowrap">การจัดการ</th>
                   </tr>
@@ -2050,10 +2073,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             </div>
                           </td>
 
-                          {/* Artist Badge */}
+                          {/* Category Badge */}
                           <td className="py-3 px-3.5 whitespace-nowrap">
                             <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${artistBadge.badgeColor}`}>
-                              {artistBadge.label.split(' ')[1] || artistBadge.label}
+                              {artistBadge.label}
                             </span>
                           </td>
 
