@@ -1142,9 +1142,14 @@ function App() {
               </h1>
 
               {/* Subtitle */}
-              <p className="text-[11px] sm:text-[14px] font-light tracking-wider text-[#121c21] mt-2 font-google">
-                Womenswear Spring/Summer 2027
-              </p>
+              <div className="flex flex-col items-center mt-1.5 space-y-0.5">
+                <p className="text-[13px] sm:text-[16px] font-semibold tracking-wider text-[#121c21] font-google">
+                  Spring/Summer 2027
+                </p>
+                <p className="text-[10px] sm:text-[12px] font-light tracking-widest text-[#121c21]/80 font-google">
+                  Womenswear Fashion Show
+                </p>
+              </div>
             </div>
           </div>
 
