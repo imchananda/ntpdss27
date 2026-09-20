@@ -1037,7 +1037,7 @@ function App() {
           <div className="w-52 h-64 sm:w-64 sm:h-80 mb-6 relative group animate-in fade-in zoom-in duration-700">
             <div className="absolute inset-0 bg-white/30 rounded-2xl blur-xl group-hover:bg-white/40 transition-all duration-500 animate-pulse"></div>
             <img
-              src="/header2.png"
+              src="/header.png"
               alt="Namtan Tipnaree"
               className="w-full h-full object-contain relative z-10 drop-shadow-2xl animate-bounce [animation-duration:3s]"
             />
@@ -1116,7 +1116,7 @@ function App() {
             {/* Center Portrait */}
             <div className="relative z-10 w-64 h-80 sm:w-80 sm:h-[360px] md:w-[360px] md:h-[420px] mb-0 drop-shadow-lg transition-transform hover:scale-105 duration-300">
               <img
-                src="/header2.png"
+                src="/header.png"
                 alt="Namtan Tipnaree"
                 className="w-full h-full object-contain"
               />
