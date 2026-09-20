@@ -352,7 +352,8 @@ function App() {
 
   const isTaskCompleted = useCallback((task?: Task) => {
     if (!task) return false;
-    return !!(completed[task.phase] && completed[task.phase][task.id]);
+    if (completed[task.phase] && completed[task.phase][task.id]) return true;
+    return Object.values(completed).some(phaseMap => !!(phaseMap && phaseMap[task.id]));
   }, [completed]);
 
   // Create a flat list of all tasks for global calculations
@@ -431,13 +432,14 @@ function App() {
   }, [getPlatformStats, showPlatformSummaryModal]);
 
   const allTasksStats = useMemo(() => {
+    const completedTasks = tasks.filter(t => isTaskCompleted(t));
     return {
-      likes: tasks.reduce((s, t) => s + (t.likes || 0), 0),
-      comments: tasks.reduce((s, t) => s + (t.comments || 0), 0),
-      shares: tasks.reduce((s, t) => s + (t.shares || 0), 0),
-      reposts: tasks.reduce((s, t) => s + (t.reposts || 0), 0),
+      likes: completedTasks.reduce((s, t) => s + (t.likes || t.targetLikes || 0), 0),
+      comments: completedTasks.reduce((s, t) => s + (t.comments || t.targetComments || 0), 0),
+      shares: completedTasks.reduce((s, t) => s + (t.shares || t.targetShares || 0), 0),
+      reposts: completedTasks.reduce((s, t) => s + (t.reposts || t.targetReposts || 0), 0),
     };
-  }, [tasks]);
+  }, [tasks, isTaskCompleted]);
 
   // Mark as loaded after first render
   useEffect(() => {
