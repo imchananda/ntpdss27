@@ -1879,16 +1879,17 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-[#9BB6D6]/40 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            {/* Scrollable Table Container */}
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
+              <table className="min-w-[920px] w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-[#F7F8F4] border-b border-gray-200 text-[#2a2121] font-bold text-[11px] uppercase tracking-wider">
-                    <th className="py-3 px-3 w-10 text-center">ดาว</th>
-                    <th className="py-3 px-3 w-14 text-center">Platform</th>
-                    <th className="py-3 px-3">สื่อ</th>
-                    <th className="py-3 px-3 w-28">ศิลปิน</th>
-                    <th className="py-3 px-3 w-20 text-center">URL</th>
-                    <th className="py-3 px-3 text-right w-28">การจัดการ</th>
+                    <th className="py-3 px-3 w-12 text-center whitespace-nowrap">ดาว</th>
+                    <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Platform</th>
+                    <th className="py-3 px-4 min-w-[340px]">สื่อ / รายละเอียดโพสต์</th>
+                    <th className="py-3 px-3.5 w-28 whitespace-nowrap">ศิลปิน</th>
+                    <th className="py-3 px-3.5 w-24 text-center whitespace-nowrap">URL</th>
+                    <th className="py-3 px-4 text-right w-28 whitespace-nowrap">การจัดการ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -1905,23 +1906,23 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       <React.Fragment key={task.id || idx}>
                         <tr className={`hover:bg-sky-50/40 transition-colors group ${isExpanded ? 'bg-indigo-50/20' : ''}`}>
                           {/* Star Toggle */}
-                          <td className="py-3 px-3 text-center">
+                          <td className="py-3 px-3 text-center whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => handleToggleMark(task)}
-                              className="p-1 rounded-md hover:bg-amber-100/60 transition-colors inline-flex items-center justify-center cursor-pointer"
+                              className="p-1.5 rounded-md hover:bg-amber-100/60 transition-colors inline-flex items-center justify-center cursor-pointer"
                               title={task.mark ? 'คลิกเพื่อเอาดาวออก' : 'คลิกเพื่อติดดาวสนใจพิเศษ'}
                             >
                               {task.mark ? (
-                                <FaStar className="text-amber-500 text-sm drop-shadow-xs" />
+                                <FaStar className="text-amber-500 text-base drop-shadow-xs" />
                               ) : (
-                                <span className="text-gray-300 text-sm hover:text-amber-400 transition-colors">☆</span>
+                                <span className="text-gray-300 text-base hover:text-amber-400 transition-colors">☆</span>
                               )}
                             </button>
                           </td>
 
                           {/* Platform Icon Only */}
-                          <td className="py-3 px-3 text-center">
+                          <td className="py-3 px-3 text-center whitespace-nowrap">
                             <span
                               title={task.platform}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 border border-gray-200/80 shadow-2xs"
@@ -1930,82 +1931,93 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             </span>
                           </td>
 
-                          {/* Media / Title */}
-                          <td className="py-3 px-3 font-medium text-gray-800">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-[#2a2121]">{task.media || 'ไม่มีชื่อสื่อ'}</span>
-                              {task.boost && (task.boost.includes('1') || task.boost.toLowerCase() === 'x' || task.boost.toLowerCase() === 'yes') && (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-amber-500/15 text-amber-700 border border-amber-500/30" title="Boost Carousel">
-                                  🚀
-                                </span>
-                              )}
-                              {task.boost && task.boost.includes('2') && (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-purple-500/15 text-purple-700 border border-purple-500/30" title="Media (สื่อสำคัญ)">
-                                  🎬
-                                </span>
-                              )}
-                              {task.boost && (task.boost.includes('3') || task.boost.toLowerCase().includes('pin')) && (
-                                <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#f6db6a] text-[#2a2121] border border-[#f6db6a]/60 shadow-2xs" title="ปักหมุด (Pinned)">
-                                  📌 ปักหมุด
-                                </span>
-                              )}
-                              {task.image && (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200" title="มีรูปภาพ">
-                                  🖼️
-                                </span>
-                              )}
-                              {task.target && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30" title={`เป้าหมาย: ${task.target}`}>
-                                  🎯 {task.target}
-                                </span>
-                              )}
+                          {/* Media / Title & Badges */}
+                          <td className="py-3 px-4 font-medium text-gray-800 min-w-[340px]">
+                            <div className="flex flex-col gap-1.5 py-0.5">
+                              {/* Top Line: Media Name & Post Title */}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-[13px] text-[#2a2121] tracking-tight">{task.media || 'ไม่มีชื่อสื่อ'}</span>
+                                {task.title && task.title !== task.media && (
+                                  <span className="text-[11px] text-gray-500 font-normal truncate max-w-[220px]">({task.title})</span>
+                                )}
+                              </div>
 
-                              {/* 24-Hour Update Reminder Badge */}
-                              {(() => {
-                                const updateStatus = getPostUpdateStatus(task.last_updated);
-                                return (
-                                  <span
-                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold border transition-all ${
-                                      updateStatus.isStale
-                                        ? 'bg-rose-500/15 text-rose-700 border-rose-500/30 animate-pulse'
-                                        : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
-                                    }`}
-                                    title={`เวลาอัปเดตล่าสุด: ${task.last_updated ? new Date(task.last_updated).toLocaleString('th-TH') : 'ยังไม่เคยบันทึกเวลา'}`}
-                                  >
-                                    <span>{updateStatus.isStale ? '⏰' : '✓'}</span>
-                                    <span>{updateStatus.label}</span>
+                              {/* Bottom Line: Status Badges */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {task.boost && (task.boost.includes('1') || task.boost.toLowerCase() === 'x' || task.boost.toLowerCase() === 'yes') && (
+                                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30 whitespace-nowrap" title="Boost Carousel">
+                                    🚀 Boost
                                   </span>
-                                );
-                              })()}
+                                )}
+                                {task.boost && task.boost.includes('2') && (
+                                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-800 border border-purple-500/30 whitespace-nowrap" title="Media (สื่อสำคัญ)">
+                                    🎬 สื่อสำคัญ
+                                  </span>
+                                )}
+                                {task.boost && (task.boost.includes('3') || task.boost.toLowerCase().includes('pin')) && (
+                                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#f6db6a] text-[#2a2121] border border-[#f6db6a]/60 shadow-2xs whitespace-nowrap" title="ปักหมุด (Pinned)">
+                                    📌 ปักหมุด
+                                  </span>
+                                )}
+                                {task.image && (
+                                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0" title="มีรูปภาพ">
+                                    🖼️
+                                  </span>
+                                )}
+                                {task.target && (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 text-emerald-800 border border-emerald-500/30 whitespace-nowrap" title={`เป้าหมาย: ${task.target}`}>
+                                    🎯 {task.target}
+                                  </span>
+                                )}
 
-                              {/* Engagement Dropdown Trigger Button (Icon Only - No Text) */}
-                              {hasEngagement && (
-                                <button
-                                  type="button"
-                                  onClick={() => toggleEngagementDropdown(task.id)}
-                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
-                                    isExpanded
-                                      ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs'
-                                      : 'bg-indigo-50/90 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300'
-                                  }`}
-                                  title={isExpanded ? 'ย่อซ่อนสถิติ Engagement' : 'ดูรายละเอียด Engagement และเป้าหมาย'}
-                                >
-                                  <FaChartBar className="text-[10px]" />
-                                  <FaChevronDown className={`text-[8px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                                </button>
-                              )}
+                                {/* 24-Hour Update Reminder Badge */}
+                                {(() => {
+                                  const updateStatus = getPostUpdateStatus(task.last_updated);
+                                  return (
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] font-bold border whitespace-nowrap transition-all ${
+                                        updateStatus.isStale
+                                          ? 'bg-rose-500/15 text-rose-700 border-rose-500/30 animate-pulse'
+                                          : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+                                      }`}
+                                      title={`เวลาอัปเดตล่าสุด: ${task.last_updated ? new Date(task.last_updated).toLocaleString('th-TH') : 'ยังไม่เคยบันทึกเวลา'}`}
+                                    >
+                                      <span>{updateStatus.isStale ? '⏰' : '✓'}</span>
+                                      <span>{updateStatus.label}</span>
+                                    </span>
+                                  );
+                                })()}
+
+                                {/* Engagement Dropdown Trigger Button */}
+                                {hasEngagement && (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleEngagementDropdown(task.id)}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                                      isExpanded
+                                        ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs'
+                                        : 'bg-indigo-50/90 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300'
+                                    }`}
+                                    title={isExpanded ? 'ย่อซ่อนสถิติ Engagement' : 'ดูรายละเอียด Engagement และเป้าหมาย'}
+                                  >
+                                    <FaChartBar className="text-[10px]" />
+                                    <span>สถิติ</span>
+                                    <FaChevronDown className={`text-[8px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </td>
 
                           {/* Artist Badge */}
-                          <td className="py-3 px-3">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${artistBadge.badgeColor}`}>
+                          <td className="py-3 px-3.5 whitespace-nowrap">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${artistBadge.badgeColor}`}>
                               {artistBadge.label.split(' ')[1] || artistBadge.label}
                             </span>
                           </td>
 
-                          {/* URL + Copy (Icon Only) */}
-                          <td className="py-3 px-3 text-center">
+                          {/* URL + Copy */}
+                          <td className="py-3 px-3.5 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-1">
                               <a
                                 href={task.url}
@@ -2028,7 +2040,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                           </td>
 
                           {/* Actions (Edit + Delete) */}
-                          <td className="py-3 px-3 text-right">
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
