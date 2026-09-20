@@ -158,39 +158,81 @@ function uploadImageDevPlugin(catboxUserhash = ''): Plugin {
                   ? new File([buffer], safeName, { type: mimeType })
                   : new Blob([buffer], { type: mimeType });
 
-                // Upload exclusively to Catbox Main Server (https://catbox.moe/user/api.php)
-                // to ensure permanent storage on https://files.catbox.moe
-                let lastError = '';
                 const userhash = catboxUserhash || process.env.CATBOX_USERHASH || '';
 
-                for (let attempt = 1; attempt <= 3; attempt++) {
-                  try {
-                    const fd = new FormData();
-                    fd.append('reqtype', 'fileupload');
-                    if (userhash) fd.append('userhash', userhash);
-                    fd.append('fileToUpload', fileObj, safeName);
+                // Provider 1: Catbox Main (https://catbox.moe/user/api.php)
+                try {
+                  const fd = new FormData();
+                  fd.append('reqtype', 'fileupload');
+                  if (userhash) fd.append('userhash', userhash);
+                  fd.append('fileToUpload', fileObj, safeName);
 
-                    const catboxRes = await fetch('https://catbox.moe/user/api.php', {
-                      method: 'POST',
-                      headers: customHeaders,
-                      body: fd,
-                    });
+                  const catboxRes = await fetch('https://catbox.moe/user/api.php', {
+                    method: 'POST',
+                    headers: customHeaders,
+                    body: fd,
+                  });
 
-                    const directUrl = (await catboxRes.text()).trim();
-                    if (catboxRes.ok && directUrl.startsWith('http')) {
-                      res.statusCode = 200;
-                      res.end(JSON.stringify({ ok: true, url: directUrl, provider: 'catbox' }));
-                      return;
-                    }
-                    lastError = directUrl || `HTTP ${catboxRes.status}`;
-                  } catch (catboxErr: any) {
-                    lastError = catboxErr.message;
+                  const directUrl = (await catboxRes.text()).trim();
+                  if (catboxRes.ok && directUrl.startsWith('http')) {
+                    res.statusCode = 200;
+                    res.end(JSON.stringify({ ok: true, url: directUrl, provider: 'catbox' }));
+                    return;
                   }
-                  if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
+                } catch (catboxErr: any) {
+                  console.warn('Dev Catbox upload error:', catboxErr.message);
                 }
 
-                res.statusCode = 500;
-                res.end(JSON.stringify({ ok: false, error: `Failed to upload to permanent Catbox CDN (files.catbox.moe): ${lastError}` }));
+                // Provider 2: Litterbox Backup (https://litterbox.catbox.moe/resources/internals/api.php)
+                try {
+                  const fd = new FormData();
+                  fd.append('reqtype', 'fileupload');
+                  fd.append('time', '72h');
+                  fd.append('fileToUpload', fileObj, safeName);
+
+                  const litterboxRes = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+                    method: 'POST',
+                    headers: customHeaders,
+                    body: fd,
+                  });
+
+                  const litterUrl = (await litterboxRes.text()).trim();
+                  if (litterboxRes.ok && litterUrl.startsWith('http')) {
+                    res.statusCode = 200;
+                    res.end(JSON.stringify({ ok: true, url: litterUrl, provider: 'litterbox' }));
+                    return;
+                  }
+                } catch (litterErr: any) {
+                  console.warn('Dev Litterbox upload error:', litterErr.message);
+                }
+
+                // Provider 3: FreeImage.host API
+                try {
+                  const fd = new FormData();
+                  fd.append('key', '6d207e02198a847aa98d0a2a901485a5');
+                  fd.append('action', 'upload');
+                  fd.append('source', base64Data);
+                  fd.append('format', 'json');
+
+                  const freeImgRes = await fetch('https://freeimage.host/api/1/upload', {
+                    method: 'POST',
+                    body: fd,
+                  });
+
+                  const freeJson: any = await freeImgRes.json();
+                  if (freeImgRes.ok && freeJson?.image?.url) {
+                    res.statusCode = 200;
+                    res.end(JSON.stringify({ ok: true, url: freeJson.image.url, provider: 'freeimage' }));
+                    return;
+                  }
+                } catch (freeErr: any) {
+                  console.warn('Dev FreeImage upload error:', freeErr.message);
+                }
+
+                // Fallback: Return compressed Data URL directly if external providers fail
+                const dataUrl = image.startsWith('data:') ? image : `data:${mimeType};base64,${base64Data}`;
+                res.statusCode = 200;
+                res.end(JSON.stringify({ ok: true, url: dataUrl, provider: 'base64_fallback' }));
               } catch (err: any) {
                 res.statusCode = 500;
                 res.end(JSON.stringify({ ok: false, error: err.message }));
