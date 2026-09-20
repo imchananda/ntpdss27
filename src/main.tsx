@@ -4,7 +4,6 @@ import './index.css'
 import App from './App.tsx'
 import { LanguageProvider } from './i18n/LanguageContext'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
-import PasswordGate from './components/PasswordGate.tsx'
 
 const AdminHub = lazy(() => import('./pages/AdminHub.tsx'))
 const AdminLogin = lazy(() => import('./pages/AdminLogin.tsx'))
@@ -63,15 +62,13 @@ function Root() {
     )
   }
 
-  // ─── Public Fan Portal Route ──────────────────────────────────────────────
+  // ─── Public Fan Portal Route (Open Access for All Users) ──────────────────
   return (
-    <PasswordGate>
-      <ErrorBoundary>
-        <LanguageProvider>
-          <App />
-        </LanguageProvider>
-      </ErrorBoundary>
-    </PasswordGate>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
+    </ErrorBoundary>
   )
 }
 
