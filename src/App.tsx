@@ -1146,8 +1146,11 @@ function App() {
                 <p className="text-[13px] sm:text-[16px] font-semibold tracking-wider text-[#121c21] font-google">
                   Spring/Summer 2027
                 </p>
-                <p className="text-[10px] sm:text-[12px] font-light tracking-widest text-[#121c21]/80 font-google">
+                <p className="text-[10.5px] sm:text-[12.5px] font-light tracking-widest text-[#121c21]/80 font-google">
                   Womenswear Fashion Show
+                </p>
+                <p className="text-[9.5px] sm:text-[11.5px] font-medium tracking-widest text-[#601d23] font-google">
+                  Milan, September 22nd.
                 </p>
               </div>
             </div>
