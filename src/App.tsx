@@ -1057,21 +1057,21 @@ function App() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-prada-offwhite overflow-hidden">
-      {/* Responsive Fullscreen Background Images with smooth transition */}
-      {/* Desktop BG */}
+      {/* Responsive Fullscreen Background Images */}
+      {/* Desktop BG (>= 1024px) */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-left bg-no-repeat opacity-0 lg:opacity-[0.10] transition-opacity duration-700 ease-in-out pointer-events-none"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat hidden lg:block opacity-[0.15] transition-opacity duration-500 pointer-events-none"
         style={{ backgroundImage: `url('/BG.jpg')` }}
       />
-      {/* Tablet BG */}
+      {/* Tablet BG (768px - 1023px) */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-left bg-no-repeat opacity-0 md:opacity-[0.10] lg:opacity-0 transition-opacity duration-700 ease-in-out pointer-events-none"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat hidden md:block lg:hidden opacity-[0.15] transition-opacity duration-500 pointer-events-none"
         style={{ backgroundImage: `url('/tablet.jpg')` }}
       />
-      {/* Mobile BG */}
+      {/* Mobile BG (< 768px) */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-left bg-no-repeat opacity-[0.10] md:opacity-0 transition-opacity duration-700 ease-in-out pointer-events-none"
-        style={{ backgroundImage: `url('/moblie.jpg')` }}
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat block md:hidden opacity-[0.15] transition-opacity duration-500 pointer-events-none"
+        style={{ backgroundImage: `url('/mobile.jpg')` }}
       />
 
 
