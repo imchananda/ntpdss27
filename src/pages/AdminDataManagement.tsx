@@ -609,8 +609,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     title: '',
     url: '',
     hashtag: globalHashtags,
-    artist: 'namtan',
-    phase: 'airport',
+    artist: '',
+    phase: '',
     boost: '',
     image: '',
     likes: '',
@@ -636,8 +636,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       title: '',
       url: '',
       hashtag: globalHashtags,
-      artist: 'namtan',
-      phase: 'airport',
+      artist: '',
+      phase: '',
       boost: '',
       image: '',
       likes: '',
@@ -1026,7 +1026,12 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   // ─── Submit Post to Sheet ───────────────────────────────────────────────────
   const handleSubmitPost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || !formData.url.trim()) return;
+    if (isSubmitting || !formData.url.trim() || !formData.artist.trim() || !formData.phase.trim()) {
+      if (!formData.artist.trim() || !formData.phase.trim()) {
+        alert('⚠️ ไม่สามารถบันทึกได้: กรุณาเลือก "หมวดหมู่ศิลปิน" และ "ช่วงเวลาแคมเปญ (Phase)" ก่อนบันทึก');
+      }
+      return;
+    }
 
     if (isUrlDuplicate) {
       alert('⚠️ ไม่สามารถบันทึกได้: พบ URL นี้ในระบบแล้ว');
@@ -1210,8 +1215,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       title: task.title,
       url: task.url,
       hashtag: getEffectiveHashtags(task),
-      artist: task.artist || 'namtan',
-      phase: task.phase || 'airport',
+      artist: task.artist || '',
+      phase: task.phase || '',
       boost: task.boost || '',
       image: task.image || '',
       likes: task.likes || '',
@@ -1391,7 +1396,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   return (
     <div className="min-h-screen bg-[#e6e7e9] font-sans pb-16">
       {/* ── Top Header ── */}
-      <header className="bg-[#102022] text-white sticky top-0 z-30 shadow-md border-b border-[#102022]">
+      <header className="bg-[#121c21] text-white sticky top-0 z-30 shadow-md border-b border-[#121c21]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div>
@@ -1410,7 +1415,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 resetForm();
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 rounded-xl bg-[#5f171d] hover:bg-[#331215] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 hover:scale-[1.02]"
+              className="px-4 py-2 rounded-xl bg-[#601d23] hover:bg-[#331215] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 hover:scale-[1.02]"
             >
               <FaPlus className="text-xs sm:text-sm" />
               <span>เพิ่มโพสต์</span>
@@ -2222,9 +2227,12 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">หมวดหมู่ศิลปิน</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    หมวดหมู่ศิลปิน <span className="text-red-500">*</span>
+                  </label>
                   <select
                     value={formData.artist}
+                    required
                     onChange={e => {
                       const newArtist = e.target.value;
                       if (!editingTaskId) {
@@ -2243,28 +2251,42 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                         setFormData(prev => ({ ...prev, artist: newArtist }));
                       }
                     }}
-                    className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
+                    className={`w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border transition-all ${
+                      !formData.artist ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#2a2121]'
+                    }`}
                   >
+                    <option value="" disabled hidden>-- กรุณาเลือกหมวดหมู่ศิลปิน --</option>
                     {ARTIST_CATEGORIES.map(cat => (
                       <option key={cat.id} value={cat.id}>
                         {cat.label}
                       </option>
                     ))}
                   </select>
+                  {!formData.artist && (
+                    <p className="text-red-500 text-[10px] font-bold mt-1">⚠️ กรุณาเลือกหมวดหมู่ศิลปิน</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">ช่วงเวลาแคมเปญ (Phase)</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ช่วงเวลาแคมเปญ (Phase) <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    value={formData.phase || 'pre'}
+                    value={formData.phase}
+                    required
                     onChange={e => setFormData({ ...formData, phase: e.target.value })}
-                    className="w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121]"
+                    className={`w-full bg-[#F7F8F4] rounded-xl px-3 py-2 text-xs outline-none border transition-all ${
+                      !formData.phase ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-[#2a2121]'
+                    }`}
                   >
-                    <option value="all">✦ ทั้งหมด (All)</option>
+                    <option value="" disabled hidden>-- กรุณาเลือกช่วงเวลาแคมเปญ --</option>
                     <option value="pre">✈️ Pre (20-21 Sep)</option>
                     <option value="show">👠 Show (22 Sep)</option>
                     <option value="afterglow">🥂 Afterglow (23 Sep - 06 Oct)</option>
                   </select>
+                  {!formData.phase && (
+                    <p className="text-red-500 text-[10px] font-bold mt-1">⚠️ กรุณาเลือกช่วงเวลาแคมเปญ</p>
+                  )}
                 </div>
               </div>
 
@@ -2397,7 +2419,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting || isUrlDuplicate || !formData.url.trim()}
+                  disabled={isSubmitting || isUrlDuplicate || !formData.url.trim() || !formData.artist.trim() || !formData.phase.trim()}
                   className="px-5 py-2 rounded-xl text-xs font-bold bg-[#2a2121] hover:bg-[#0D0D0D] text-white shadow transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isSubmitting ? (
@@ -2463,7 +2485,32 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <div className="p-4 pt-2 border-t border-amber-200/60 space-y-3.5 bg-white/70 animate-in fade-in duration-200">
                     {/* Interactive Checkmark Cards Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                      {/* 1. Boost Carousel */}
+                      {/* 1. Star / Focus Mission */}
+                      <label
+                        className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                          formData.mark
+                            ? 'bg-[#c4d2b1]/15 border-[#c4d2b1] text-red-950 ring-1 ring-[#c4d2b1] shadow-2xs'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 mt-0.5 text-[#c4d2b1] rounded accent-[#c4d2b1] shrink-0"
+                          checked={formData.mark}
+                          onChange={e => setFormData({ ...formData, mark: e.target.checked })}
+                        />
+                        <div className="min-w-0">
+                          <div className="font-bold text-xs flex items-center gap-1">
+                            <FaStar className="text-amber-500 text-[11px]" />
+                            <span>ภารกิจสำคัญ (Focus)</span>
+                          </div>
+                          <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
+                            ภารกิจที่ต้องโฟกัสก่อน
+                          </div>
+                        </div>
+                      </label>
+
+                      {/* 2. Boost Carousel */}
                       <label
                         className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
                           Boolean(formData.boost && (formData.boost.includes('1') || formData.boost.toLowerCase() === 'x' || formData.boost.toLowerCase() === 'yes'))
@@ -2492,12 +2539,12 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             <span>Boost Carousel</span>
                           </div>
                           <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                            แสดงการ์ดเด่นแถบสไลด์หน้าแรก
+                            เน้นบูสสื่อหลักของnamtan และ prada
                           </div>
                         </div>
                       </label>
 
-                      {/* 2. Important Media */}
+                      {/* 3. Important Media */}
                       <label
                         className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
                           Boolean(formData.boost && formData.boost.includes('2'))
@@ -2526,32 +2573,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             <span>สื่อสำคัญ (Media)</span>
                           </div>
                           <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                            ติดแท็กสื่อไฮไลต์ของแคมเปญ
-                          </div>
-                        </div>
-                      </label>
-
-                      {/* 3. Star / Focus Mission */}
-                      <label
-                        className={`p-2.5 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
-                          formData.mark
-                            ? 'bg-[#c4d2b1]/10 border-[#c4d2b1]/40 text-red-950 ring-1 ring-[#c4d2b1]/30 shadow-2xs'
-                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 mt-0.5 text-[#c4d2b1] rounded accent-[#c4d2b1] shrink-0"
-                          checked={formData.mark}
-                          onChange={e => setFormData({ ...formData, mark: e.target.checked })}
-                        />
-                        <div className="min-w-0">
-                          <div className="font-bold text-xs flex items-center gap-1">
-                            <FaStar className="text-amber-500 text-[11px]" />
-                            <span>ภารกิจสำคัญ (Focus)</span>
-                          </div>
-                          <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                            ติดดาวโฟกัสอันดับต้นๆ
+                            เน้นสื่อแฟชั่นหลัก vogue elle L'Officiel www Mint etc.
                           </div>
                         </div>
                       </label>
@@ -2585,7 +2607,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             <span>ปักหมุด (Pinned)</span>
                           </div>
                           <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                            แสดงหน้าภารกิจทั้งหมดแต่อยู่บนสุดเสมอ
+                            ปักหมุดสำคัญอยู่บนสุด
                           </div>
                         </div>
                       </label>

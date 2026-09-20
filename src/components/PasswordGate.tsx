@@ -144,21 +144,6 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
     setLoading(true)
     setError('')
 
-    const envUserPwd = (import.meta as any).env?.VITE_USER_PASSWORD || (import.meta as any).env?.VITE_SITE_PASSWORD || ''
-    const isBuiltInMatch =
-      password === 'prada2027' ||
-      password === 'engagement07NTF' ||
-      password === 'admin' ||
-      password === 'prada' ||
-      (envUserPwd && password === envUserPwd)
-
-    if (isBuiltInMatch) {
-      sessionStorage.setItem(SESSION_KEY, `ntf-${Date.now()}`)
-      setAuthed(true)
-      setLoading(false)
-      return
-    }
-
     try {
       const res = await fetch('/api/verify-password', {
         method: 'POST',
@@ -168,7 +153,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
 
       if (res.ok) {
         const { token } = await res.json()
-        sessionStorage.setItem(SESSION_KEY, token)
+        sessionStorage.setItem(SESSION_KEY, token || `ntf-${Date.now()}`)
         setAuthed(true)
       } else {
         setError('รหัสผ่านไม่ถูกต้อง')
@@ -178,7 +163,7 @@ export default function PasswordGate({ children }: { children: React.ReactNode }
         inputRef.current?.focus()
       }
     } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง')
+      setError('เกิดข้อผิดพลาดในการตรวจสอบ กรุณาลองใหม่อีกครั้ง')
     } finally {
       setLoading(false)
     }

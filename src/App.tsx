@@ -3,40 +3,7 @@ import { useLanguage } from './i18n/LanguageContext';
 import StatsCardModal from './components/StatsCardModal';
 import NameSubmitModal, { hasSubmittedCredits } from './components/NameSubmitModal';
 import EndCreditsModal from './components/EndCreditsModal';
-
-
-// Types
-interface Task {
-  id: string;
-  phase: 'all' | 'pre' | 'airport' | 'show' | 'afterglow' | 'aftermath' | 'aftermath2' | string;
-  platform: 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'threads';
-  url: string;
-  hashtags: string;
-  title: string;
-  focus: 0 | 1 | 2; // 0 = none, 1 = focus (⭐), 2 = hot (🔥)
-  likes: number;
-  comments: number;
-  shares: number;
-  reposts: number;
-  views?: number;
-  saves?: number;
-  target?: number; // total goal
-  targetLikes?: number;
-  targetComments?: number;
-  targetShares?: number;
-  targetReposts?: number;
-  targetSaves?: number;
-  targetViews?: number;
-  image?: string;
-  imageFileId?: string;
-  boost?: number[]; // [] or [1]=boost, [2]=focus-media
-}
-
-interface CompletedState {
-  [taskId: string]: {
-    completedAt: string;
-  };
-}
+import { Task, CompletedState } from './types/campaign';
 
 // SVG Icons for social platforms
 const XIcon = () => (
@@ -1125,11 +1092,11 @@ function App() {
           {/* Hero Editorial Banner Layout (Top Banner - Normal Scroll) */}
           <div className="relative w-full overflow-hidden bg-transparent mb-1 p-4 sm:p-6 flex flex-col items-center justify-center min-h-[200px] sm:min-h-[240px]">
             {/* Language Switcher (Top Right Absolute) */}
-            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#102022] bg-white/60 backdrop-blur-md shadow-sm">
+            <div className="absolute top-2 right-2 z-20 flex rounded-full overflow-hidden border border-[#121c21] bg-white/60 backdrop-blur-md shadow-sm">
               <button
                 onClick={() => setLanguage('th')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'th'
-                  ? 'bg-[#102022] text-white'
+                  ? 'bg-[#121c21] text-white'
                   : 'text-[#121c21]/70 hover:text-[#121c21]'
                   }`}
               >
@@ -1138,7 +1105,7 @@ function App() {
               <button
                 onClick={() => setLanguage('en')}
                 className={`px-2.5 py-1 text-[10px] font-bold transition-all ${language === 'en'
-                  ? 'bg-[#102022] text-white'
+                  ? 'bg-[#121c21] text-white'
                   : 'text-[#121c21]/70 hover:text-[#121c21]'
                   }`}
               >
@@ -1147,7 +1114,7 @@ function App() {
             </div>
 
             {/* Center Portrait */}
-            <div className="relative z-10 w-48 h-60 sm:w-60 sm:h-72 mb-3 drop-shadow-md transition-transform hover:scale-105 duration-300">
+            <div className="relative z-10 w-64 h-80 sm:w-80 sm:h-[360px] md:w-[360px] md:h-[420px] mb-0 drop-shadow-lg transition-transform hover:scale-105 duration-300">
               <img
                 src="/header.png"
                 alt="Namtan Tipnaree"
@@ -1155,27 +1122,29 @@ function App() {
               />
             </div>
 
-            {/* Typography Title & Subtitle - Archivo Black Uniform Style */}
+            {/* Typography Title & Subtitle */}
             <div className="relative z-10 text-center flex flex-col items-center">
-              <h1 className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap drop-shadow-sm font-archivo text-2xl sm:text-4xl leading-none uppercase tracking-tight">
-                <span className="text-[#121c21]">
-                  PRADA ×
+              {/* Title Row: Brand Logo × namtan */}
+              <h1 className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap font-archivo text-2xl sm:text-4xl leading-none uppercase tracking-tight drop-shadow-sm">
+                <div className="h-6 sm:h-8 flex items-center justify-center">
+                  <img
+                    src="/prada-logo.png"
+                    alt="Prada Logo"
+                    className="h-full w-auto object-contain opacity-95"
+                  />
+                </div>
+                <span className="text-[#121c21] font-light">
+                  ×
                 </span>
-                <span className="text-[#5f171d]">
+                <span className="text-[#601d23] font-bold">
                   namtan
                 </span>
               </h1>
+
+              {/* Subtitle */}
               <p className="text-[11px] sm:text-[14px] font-light tracking-wider text-[#121c21] mt-2 font-google">
                 Womenswear Spring/Summer 2027
               </p>
-              {/* Brand Logo */}
-              <div className="mt-2 h-4 sm:h-5 flex items-center justify-center">
-                <img
-                  src="/prada-logo.png"
-                  alt="Brand Logo"
-                  className="h-full w-auto object-contain drop-shadow-sm opacity-90"
-                />
-              </div>
             </div>
           </div>
 
@@ -1197,14 +1166,14 @@ function App() {
                         setActivePhase(phase.id as any);
                         setVisibleCount(30);
                       }}
-                      className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all ${isActive
-                        ? 'bg-[#102022] text-white border-[#102022] shadow-md scale-105 z-10 font-bold'
-                        : 'bg-white/80 text-[#121c21] border-[#102022]/40 hover:bg-[#102022]/10'
+                      className={`flex flex-col items-center justify-center py-2 px-0.5 rounded-xl border transition-all group/btn ${isActive
+                        ? 'bg-[#121c21] text-white border-[#121c21] shadow-md scale-105 z-10 font-bold'
+                        : 'bg-white/80 text-[#121c21] border-[#121c21]/40 hover:bg-[#601d23] hover:text-white hover:border-[#601d23] hover:shadow-md'
                         }`}
                     >
                       <div className="text-[12px] sm:text-[14px] leading-none mb-1">{phase.icon}</div>
                       <div className="text-[9px] sm:text-[10px] font-bold leading-none mb-0.5 whitespace-nowrap">{phase.label}</div>
-                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-white/90 font-semibold' : 'text-[#121c21]/70'}`}>{phase.desc}</div>
+                      <div className={`text-[7px] sm:text-[8px] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 text-center ${isActive ? 'text-white/90 font-semibold' : 'text-[#121c21]/70 group-hover/btn:text-white/90'}`}>{phase.desc}</div>
                     </button>
                   )
                 })}
@@ -1225,8 +1194,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
-                      ? 'bg-[#5f171d] text-white border-transparent shadow-[#5f171d]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
+                      ? 'bg-[#601d23] text-white border-transparent shadow-[#601d23]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#121c21]/40 shadow-sm hover:bg-[#601d23] hover:text-white hover:border-[#601d23]'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'tasks' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1243,8 +1212,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
-                      ? 'bg-[#5f171d] text-white border-transparent shadow-[#5f171d]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
+                      ? 'bg-[#601d23] text-white border-transparent shadow-[#601d23]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#121c21]/40 shadow-sm hover:bg-[#601d23] hover:text-white hover:border-[#601d23]'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'boost' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1261,8 +1230,8 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
-                      ? 'bg-[#5f171d] text-white border-transparent shadow-[#5f171d]/20'
-                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
+                      ? 'bg-[#601d23] text-white border-transparent shadow-[#601d23]/20'
+                      : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#121c21]/40 shadow-sm hover:bg-[#601d23] hover:text-white hover:border-[#601d23]'
                       }`}
                   >
                     <span className={`text-[10px] ${activeSection === 'important' ? 'animate-pulse' : ''} transition-transform`}>
@@ -1290,21 +1259,21 @@ function App() {
                     {/* Title Row */}
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-[#c4d2b1] text-sm sm:text-base leading-none">✦</span>
-                        <h3 className="text-[10px] sm:text-xs font-bold text-[#c4d2b1] uppercase tracking-[0.15em] whitespace-nowrap">{t('featuredEngagementTitle') || 'Featured Engagement'}</h3>
+                        <span className="text-[#121c21] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#121c21] uppercase tracking-[0.15em] whitespace-nowrap">{t('featuredEngagementTitle') || 'Featured Engagement'}</h3>
                       </div>
                       {/* Minimize button — always visible top-right */}
                       <div className="flex flex-col items-center shrink-0">
                         <button
                           onClick={() => setActiveSection(null)}
-                          className="w-7 h-7 rounded-full bg-[#c4d2b1]/10 text-[#2a2121] border border-[#c4d2b1]/30 shadow-sm hover:bg-[#c4d2b1]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-full bg-[#121c21]/10 text-[#121c21] border border-[#121c21]/20 shadow-sm hover:bg-[#121c21]/20 active:scale-95 flex items-center justify-center transition-colors"
                           title={t('minimize')}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
-                        <span className="text-[6px] font-bold text-[#2a2121]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                        <span className="text-[6px] font-bold text-[#121c21]/60 tracking-wider mt-0.5 whitespace-nowrap">
                           {t('tapToHide')}
                         </span>
                       </div>
@@ -1315,8 +1284,8 @@ function App() {
                       <button
                         onClick={() => setFeaturedFilterPlatform(null)}
                         className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
-                          ? 'bg-[#c4d2b1] border-transparent text-[#2a2121]'
-                          : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:bg-[#c4d2b1]/10'
+                          ? 'bg-[#121c21] border-transparent text-white'
+                          : 'bg-white border-[#121c21]/30 text-[#121c21]/70 hover:bg-[#121c21]/10'
                           }`}
                       >
                         {t('allLabel') || 'All'}
@@ -1328,8 +1297,8 @@ function App() {
                             key={p}
                             onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
                             className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                              ? 'bg-[#c4d2b1] border-[#c4d2b1] text-[#2a2121]'
-                              : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:border-[#c4d2b1] hover:text-[#2a2121]'
+                              ? 'bg-[#121c21] border-[#121c21] text-white'
+                              : 'bg-white border-[#121c21]/30 text-[#121c21]/70 hover:border-[#121c21] hover:text-[#121c21]'
                               }`}
                           >
                             <div className="w-4 h-4 text-current flex items-center justify-center">
@@ -1369,11 +1338,11 @@ function App() {
                       return (
                         <>
                           {/* Summary Bar */}
-                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#102022]/10 mb-1">
+                          <div className="flex items-center justify-between px-1 pb-1 border-b border-[#121c21]/10 mb-1">
                             <span className="text-[10px] text-prada-taupe/60">
                               {t('missionCount')}
                             </span>
-                            <span className="text-[11px] font-bold text-[#5f171d]">
+                            <span className="text-[11px] font-bold text-[#601d23]">
                               {featuredPosts.length} {t('missionCountUnit')}
                             </span>
                           </div>
@@ -1431,7 +1400,7 @@ function App() {
                                 <div className="flex-1 min-w-0 p-3 sm:p-4 flex flex-col gap-2">
                                   {/* Post Header */}
                                   <div className="flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-white border border-[#102022]/30 text-[#121c21] shadow-sm">
+                                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-white border border-[#121c21]/30 text-[#121c21] shadow-sm">
                                       <div className="w-3.5 h-3.5 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">{iconPlatform?.icon}</div>
                                     </div>
                                     <div className="flex flex-col min-w-0">
@@ -1471,7 +1440,7 @@ function App() {
                                           {tgt > 0 && (
                                             <div className="h-1 w-full bg-prada-warm/30 rounded-full overflow-hidden">
                                               <div
-                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#f5df7a] via-[#c4d2b1] to-[#9cb082]"
+                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#121c21] to-[#47191e]"
                                                 style={{ width: `${mPct}%` }}
                                               />
                                             </div>
@@ -1485,7 +1454,7 @@ function App() {
                                   <div className="pt-1.5 border-t border-prada-warm/30 flex items-center justify-between">
                                     <span className="text-[9px] font-bold text-prada-charcoal/50 uppercase tracking-wider">{t('totalEngagementLabel')}</span>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-sm font-bold text-[#5f171d] tabular-nums">{totalEngagement.toLocaleString()}</span>
+                                      <span className="text-sm font-bold text-[#601d23] tabular-nums">{totalEngagement.toLocaleString()}</span>
                                       {(post.target ?? 0) > 0 && (
                                         <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/50'}`}>
                                           ({pct.toFixed(1)}%)
@@ -1522,21 +1491,21 @@ function App() {
                     {/* Title Row */}
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-[#5f171d] text-sm sm:text-base leading-none">✦</span>
-                        <h3 className="text-[10px] sm:text-xs font-bold text-[#5f171d] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
+                        <span className="text-[#601d23] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#601d23] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
                       </div>
                       {/* Minimize button — always visible top-right */}
                       <div className="flex flex-col items-center shrink-0">
                         <button
                           onClick={() => setActiveSection(null)}
-                          className="w-7 h-7 rounded-full bg-[#5f171d]/10 text-[#5f171d] border border-[#5f171d]/20 shadow-sm hover:bg-[#5f171d]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-full bg-[#601d23]/10 text-[#601d23] border border-[#601d23]/20 shadow-sm hover:bg-[#601d23]/20 active:scale-95 flex items-center justify-center transition-colors"
                           title={t('minimize')}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
-                        <span className="text-[6px] font-bold text-[#5f171d]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                        <span className="text-[6px] font-bold text-[#601d23]/60 tracking-wider mt-0.5 whitespace-nowrap">
                           {t('tapToHide')}
                         </span>
                       </div>
@@ -1547,8 +1516,8 @@ function App() {
                       <button
                         onClick={() => setFeaturedFilterPlatform(null)}
                         className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
-                          ? 'bg-[#5f171d] border-transparent text-white'
-                          : 'bg-white border-[#102022]/30 text-[#121c21]/70 hover:bg-[#5f171d]/10'
+                          ? 'bg-[#601d23] border-transparent text-white'
+                          : 'bg-white border-[#121c21]/30 text-[#121c21]/70 hover:bg-[#601d23]/10'
                           }`}
                       >
                         {t('allLabel') || 'All'}
@@ -1560,8 +1529,8 @@ function App() {
                             key={p}
                             onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
                             className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                              ? 'bg-[#5f171d] border-[#5f171d] text-white'
-                              : 'bg-white border-[#102022]/30 text-[#121c21]/80 hover:border-[#5f171d] hover:text-[#121c21]'
+                              ? 'bg-[#601d23] border-[#601d23] text-white'
+                              : 'bg-white border-[#121c21]/30 text-[#121c21]/80 hover:border-[#601d23] hover:text-[#121c21]'
                               }`}
                           >
                             <div className="w-4 h-4 text-current flex items-center justify-center">
@@ -1665,9 +1634,9 @@ function App() {
                                             </div>
                                           </div>
                                           {tgt > 0 && (
-                                            <div className="h-1 w-full bg-[#c4d2b1]/30 rounded-full overflow-hidden">
+                                            <div className="h-1 w-full bg-[#121c21]/10 rounded-full overflow-hidden">
                                               <div
-                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#f5df7a] via-[#c4d2b1] to-[#9cb082]"
+                                                className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#121c21] to-[#47191e]"
                                                 style={{ width: `${mPct}%` }}
                                               />
                                             </div>
@@ -1712,27 +1681,27 @@ function App() {
 
           {/* Tasks List Header & Wrap */}
           {totalTasksList.length > 0 && !loading && !error && activeSection === 'tasks' && (
-            <div className="mb-4 bg-white/80 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#c4d2b1]/20 shadow-2xl shadow-black/5 mt-2 animate-in fade-in zoom-in-95 duration-500">
+            <div className="mb-4 bg-white/80 backdrop-blur-md rounded-[24px] p-4 sm:p-5 border border-[#121c21]/20 shadow-2xl shadow-black/5 mt-2 animate-in fade-in zoom-in-95 duration-500">
               {/* Header with Title and Minimize */}
               <div className="flex flex-col gap-2 w-full mb-3">
                 {/* Title Row */}
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-1 sm:gap-1.5">
-                    <span className="text-[#c4d2b1] text-sm sm:text-base leading-none">✦</span>
-                    <h3 className="text-[10px] sm:text-xs font-bold text-[#c4d2b1] uppercase tracking-[0.15em] whitespace-nowrap">{t('tasks') || 'ALL MISSIONS'}</h3>
+                    <span className="text-[#121c21] text-sm sm:text-base leading-none">✦</span>
+                    <h3 className="text-[10px] sm:text-xs font-bold text-[#121c21] uppercase tracking-[0.15em] whitespace-nowrap">{t('tasks') || 'ALL MISSIONS'}</h3>
                   </div>
                   {/* Minimize button */}
                   <div className="flex flex-col items-center shrink-0">
                     <button
                       onClick={() => setActiveSection(null)}
-                      className="w-7 h-7 rounded-full bg-[#c4d2b1]/10 text-[#c4d2b1] border border-[#c4d2b1]/20 shadow-sm hover:bg-[#c4d2b1]/20 active:scale-95 flex items-center justify-center transition-colors"
+                      className="w-7 h-7 rounded-full bg-[#121c21]/10 text-[#121c21] border border-[#121c21]/20 shadow-sm hover:bg-[#121c21]/20 active:scale-95 flex items-center justify-center transition-colors"
                       title={t('minimize')}
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                       </svg>
                     </button>
-                    <span className="text-[6px] font-bold text-[#c4d2b1]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                    <span className="text-[6px] font-bold text-[#121c21]/60 tracking-wider mt-0.5 whitespace-nowrap">
                       {t('tapToHide')}
                     </span>
                   </div>
@@ -1743,8 +1712,8 @@ function App() {
                   <button
                     onClick={() => setTaskFilterPlatform(null)}
                     className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!taskFilterPlatform
-                      ? 'bg-[#c4d2b1] border-transparent text-[#2a2121]'
-                      : 'bg-white border-[#c4d2b1] text-[#2a2121]/70 hover:bg-[#c4d2b1]/10'
+                      ? 'bg-[#121c21] border-transparent text-white'
+                      : 'bg-white border-[#121c21]/30 text-[#121c21]/70 hover:bg-[#121c21]/10'
                       }`}
                   >
                     {t('allLabel') || 'All'}
@@ -1756,8 +1725,8 @@ function App() {
                         key={p}
                         onClick={() => setTaskFilterPlatform(isActive ? null : p)}
                         className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                          ? 'bg-[#c4d2b1] border-[#c4d2b1] text-[#2a2121]'
-                          : 'bg-white border-[#c4d2b1] text-[#2a2121]/80 hover:border-[#c4d2b1] hover:text-[#2a2121]'
+                          ? 'bg-[#121c21] border-[#121c21] text-white'
+                          : 'bg-white border-[#121c21]/30 text-[#121c21]/80 hover:border-[#121c21] hover:text-[#121c21]'
                           }`}
                       >
                         <div className="w-4 h-4 text-current flex items-center justify-center">
@@ -1815,7 +1784,7 @@ function App() {
                               </span>
                             )}
                             {task.focus === 2 && !isTaskCompleted(task) && !isTaskPinned(task) && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#c4d2b1] text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-[#c4d2b1]/30">
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#121c21] text-white rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-[#121c21]/30">
                                 {t('hotBadge')}
                               </span>
                             )}
@@ -1829,7 +1798,7 @@ function App() {
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                             {(task.likes > 0 || (task.targetLikes ?? 0) > 0) && (
                               <span className="flex items-center gap-0.5 text-[10px] text-slate-600 font-medium">
-                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#c4d2b1]"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-[11px] h-[11px] text-[#121c21]"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
                                 <span>{task.likes.toLocaleString()}</span>
                                 {(task.targetLikes ?? 0) > 0 && <span className="opacity-60 text-[9px]">/ {(task.targetLikes ?? 0).toLocaleString()}</span>}
                               </span>
@@ -1889,7 +1858,7 @@ function App() {
                         ) : (
                           <button
                             onClick={(e) => handleQuickComplete(task, e)}
-                            className="bg-[#c4d2b1]/10 border border-[#c4d2b1]/30 text-[#c4d2b1] text-xs px-2.5 py-1 rounded-lg font-bold hover:bg-[#c4d2b1] hover:text-white transition-colors"
+                            className="bg-[#121c21]/10 border border-[#121c21]/30 text-[#121c21] text-xs px-2.5 py-1 rounded-lg font-bold hover:bg-[#121c21] hover:text-white transition-colors"
                           >
                             ✓
                           </button>
@@ -1927,66 +1896,66 @@ function App() {
       </main >
 
       {/* Bottom Bar Container (Fixed at bottom, transparent) */}
-      < footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2" >
+      <footer className="relative z-40 flex-shrink-0 bg-transparent pt-2 pb-2">
         <div className="max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto relative px-4">
-          {/* Stats Bar - Prada Sage Theme */}
-          <div className="bg-prada-sage/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl border border-prada-stone/40 w-full shadow-black/10">
+          {/* Stats Bar - Dark Theme (#121c21) */}
+          <div className="bg-[#121c21]/95 backdrop-blur-xl rounded-full px-5 py-2.5 flex items-center justify-between shadow-xl border border-[#121c21] w-full shadow-black/20 text-white">
             <button
               onClick={() => setShowPlatformSummaryModal(true)}
-              className="flex items-center gap-1.5 hover:opacity-70 transition-opacity flex-shrink-0"
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity flex-shrink-0"
             >
-              <span className="text-[12px] font-bold text-prada-charcoal whitespace-nowrap">✦ {t('summary')}</span>
+              <span className="text-[12px] font-bold text-white whitespace-nowrap">✦ {t('summary')}</span>
             </button>
 
-            <div className="w-px h-6 bg-prada-charcoal/15" />
+            <div className="w-px h-6 bg-white/20" />
 
             <button
               onClick={() => setShowStatsCard(true)}
-              className="flex flex-col items-center min-w-[45px] hover:opacity-70 transition-opacity"
+              className="flex flex-col items-center min-w-[45px] hover:opacity-80 transition-opacity"
             >
-              <div className="text-[13px] font-bold text-prada-charcoal shadow-sm leading-none mb-0.5">
+              <div className="text-[13px] font-bold text-white shadow-sm leading-none mb-0.5">
                 📊
               </div>
-              <div className="text-[7.5px] text-prada-charcoal/80 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{language === 'th' ? 'สถิติของฉัน' : 'MY STATS'}</div>
+              <div className="text-[7.5px] text-white/80 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{language === 'th' ? 'สถิติของฉัน' : 'MY STATS'}</div>
             </button>
 
-            <div className="w-px h-6 bg-prada-charcoal/15" />
+            <div className="w-px h-6 bg-white/20" />
 
             <div className="flex flex-col items-center min-w-[45px]">
-              <div className="text-[11px] font-bold text-prada-charcoal flex items-baseline leading-none mb-0.5 whitespace-nowrap">
-                {pendingCount} <span className="text-[9px] font-normal text-prada-charcoal/60 ml-1">/ {totalTasksList.length}</span>
+              <div className="text-[11px] font-bold text-white flex items-baseline leading-none mb-0.5 whitespace-nowrap">
+                {pendingCount} <span className="text-[9px] font-normal text-white/70 ml-1">/ {totalTasksList.length}</span>
               </div>
-              <div className="text-[7.5px] text-prada-charcoal/70 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{t('pending')}</div>
+              <div className="text-[7.5px] text-white/80 uppercase tracking-widest whitespace-nowrap font-bold leading-none">{t('pending')}</div>
             </div>
 
-            <div className="w-px h-6 bg-prada-charcoal/15" />
+            <div className="w-px h-6 bg-white/20" />
 
             <div className="flex flex-col items-center min-w-[45px]">
-              <div className="text-[13px] font-bold text-prada-charcoal leading-none mb-0.5">
+              <div className="text-[13px] font-bold text-white leading-none mb-0.5">
                 {totalTasksList.length
                   ? (totalCompletedCount === totalTasksList.length
                     ? 100
                     : Math.floor((totalCompletedCount / totalTasksList.length) * 100))
                   : 0}%
               </div>
-              <div className="text-[7.5px] text-prada-charcoal/70 uppercase tracking-widest font-bold leading-none">{t('totalLabel')}</div>
+              <div className="text-[7.5px] text-white/80 uppercase tracking-widest font-bold leading-none">{t('totalLabel')}</div>
             </div>
 
-            <div className="w-px h-6 bg-prada-charcoal/15" />
+            <div className="w-px h-6 bg-white/20" />
 
             {/* Refresh Button */}
             <button
               onClick={() => fetchAllData(true)}
               disabled={refreshing}
-              className={`flex-shrink-0 p-1.5 rounded-full border border-prada-charcoal/20 bg-prada-charcoal/10 hover:bg-prada-charcoal/20 transition-all ${refreshing ? 'animate-spin opacity-50' : ''}`}
+              className={`flex-shrink-0 p-1.5 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 transition-all ${refreshing ? 'animate-spin opacity-50' : ''}`}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3.5 h-3.5 text-prada-charcoal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3.5 h-3.5 text-white">
                 <path d="M4 4v5h5M20 20v-5h-5M20 9A9 9 0 0 0 5.64 5.64L4 9M4 15a9 9 0 0 0 14.36 3.36L20 15" />
               </svg>
             </button>
           </div>
         </div>
-      </footer >
+      </footer>
 
       {/* Stats Bottom Sheet Modal */}
       {
@@ -2089,13 +2058,13 @@ function App() {
               <div className="w-12 h-1.5 bg-prada-warm rounded-full mx-auto mt-3 mb-2 sm:hidden" />
 
               {/* Header */}
-              <div className="px-5 pt-3.5 pb-4 flex items-center justify-between bg-prada-sage shrink-0 shadow-sm border-b border-prada-stone/30">
-                <h3 className="text-lg font-bold text-prada-charcoal flex items-center gap-2">
-                  <span className="text-prada-charcoal font-serif">✦</span> {t('summary')}
+              <div className="px-5 pt-3.5 pb-4 flex items-center justify-between bg-prada-sage shrink-0 shadow-sm border-b border-white/10">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <span className="text-white/80 font-serif">✦</span> {t('summary')}
                 </h3>
                 <button
                   onClick={() => setShowPlatformSummaryModal(false)}
-                  className="w-8 h-8 rounded-full bg-prada-charcoal/10 hover:bg-prada-charcoal/20 flex items-center justify-center text-prada-charcoal transition-colors border border-prada-charcoal/10 font-bold"
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors border border-white/20 font-bold"
                 >
                   ✕
                 </button>
@@ -2323,12 +2292,12 @@ function App() {
               <div className="absolute inset-0 bg-prada-charcoal/40 backdrop-blur-sm animate-in fade-in duration-200" />
 
               <div
-                className="relative w-full max-w-[380px] bg-prada-offwhite rounded-[24px] shadow-2xl border border-prada-warm/50 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+                className="relative w-full max-w-[380px] bg-prada-offwhite rounded-[24px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}
               >
 
                 {/* Header */}
-                <div className="px-4 py-3 pb-2.5 flex items-center justify-between border-b border-prada-warm/60 bg-white/40">
+                <div className="px-4 py-3 pb-2.5 flex items-center justify-between bg-white/40">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${config.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
                       {config.icon}
@@ -2340,7 +2309,7 @@ function App() {
                     {/* Close Button */}
                     <button
                       onClick={() => setSelectedTask(null)}
-                      className="w-8 h-8 rounded-full bg-prada-cream/50 hover:bg-prada-warm flex items-center justify-center text-prada-taupe transition-colors"
+                      className="w-8 h-8 rounded-full bg-prada-cream/50 hover:bg-prada-cream flex items-center justify-center text-prada-taupe transition-colors"
                     >
                       ✕
                     </button>
@@ -2349,7 +2318,7 @@ function App() {
 
                 {/* Image Banner if available */}
                 {selectedTask.image && (
-                  <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-black/5 shrink-0 border-b border-prada-warm/40">
+                  <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-black/5 shrink-0">
                     <img
                       src={selectedTask.image}
                       alt={selectedTask.title || 'Task Image'}
@@ -2362,7 +2331,7 @@ function App() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                     {selectedTask.boost && selectedTask.boost.includes(1) && (
-                      <span className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#c4d2b1] text-white shadow-sm flex items-center gap-1">
+                      <span className="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#121c21] text-white shadow-sm flex items-center gap-1">
                         🚀 Featured Boost
                       </span>
                     )}
@@ -2374,15 +2343,15 @@ function App() {
 
                   {/* 1. Hashtags */}
                   {hasHashtags && (
-                    <div className="relative bg-white border border-prada-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm">
+                    <div className="relative bg-white rounded-[16px] p-3 pt-2.5 shadow-sm">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[10px] font-bold text-prada-taupe/80 uppercase tracking-widest">{t('sectionHashtags')}</span>
                         {/* Copy Button */}
                         <button
                           onClick={() => handleCopyHashtags(selectedTask)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border shadow-sm ${copiedType === 'hashtags'
-                            ? 'text-white bg-emerald-500 border-emerald-600'
-                            : 'text-prada-charcoal bg-prada-cream/40 border-prada-warm hover:bg-prada-cream hover:border-prada-taupe/40'
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${copiedType === 'hashtags'
+                            ? 'text-white bg-emerald-500'
+                            : 'text-prada-charcoal bg-prada-cream/40 hover:bg-prada-cream'
                             }`}
                         >
                           {copiedType === 'hashtags' ? (
@@ -2402,7 +2371,7 @@ function App() {
                   )}
 
                   {/* 2. Generated Message */}
-                  <div className="relative bg-white border border-prada-warm/60 rounded-[16px] p-3 pt-2.5 shadow-sm flex flex-col">
+                  <div className="relative bg-white rounded-[16px] p-3 pt-2.5 shadow-sm flex flex-col">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[10px] font-bold text-prada-taupe/80 uppercase tracking-widest">{t('sectionMessage')}</span>
                       <div className="flex items-center gap-1.5">
@@ -2410,7 +2379,7 @@ function App() {
                         {generatedMessage && msgReady && (
                           <button
                             onClick={generateRandomMessage}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-prada-charcoal bg-prada-cream/40 border border-prada-warm hover:bg-prada-cream hover:border-prada-taupe/40 transition-all shadow-sm"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-prada-charcoal bg-prada-cream/40 hover:bg-prada-cream transition-all shadow-sm"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                             {t('regenerate')}
@@ -2420,9 +2389,9 @@ function App() {
                         {generatedMessage && (
                           <button
                             onClick={handleCopyMessage}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all border shadow-sm ${copiedType === 'message'
-                              ? 'text-white bg-emerald-500 border-emerald-600'
-                              : 'text-prada-charcoal bg-prada-cream/40 border-prada-warm hover:bg-prada-cream hover:border-prada-taupe/40'
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all shadow-sm ${copiedType === 'message'
+                              ? 'text-white bg-emerald-500'
+                              : 'text-prada-charcoal bg-prada-cream/40 hover:bg-prada-cream'
                               }`}
                           >
                             {copiedType === 'message' ? (
@@ -2443,8 +2412,8 @@ function App() {
                         onClick={generateRandomMessage}
                         disabled={!msgReady}
                         className={`w-full py-4 rounded-xl text-[13px] font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${msgReady
-                          ? 'bg-prada-cream/80 hover:bg-prada-cream text-prada-charcoal border border-prada-warm'
-                          : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                          ? 'bg-prada-cream/80 hover:bg-prada-cream text-prada-charcoal'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           }`}
                       >
                         {msgReady ? (
@@ -2464,9 +2433,9 @@ function App() {
                     {!isFacebook && generatedMessage && hasHashtags && (
                       <button
                         onClick={() => handleCopyBoth(selectedTask)}
-                        className={`w-full py-3 rounded-[14px] text-[12.5px] font-bold transition-all shadow-sm border flex items-center justify-center gap-1.5 ${copiedType === 'both'
-                          ? 'bg-emerald-500 text-white border-emerald-600'
-                          : 'bg-prada-cream/60 hover:bg-prada-cream text-prada-charcoal border-prada-warm hover:border-prada-taupe/40'
+                        className={`w-full py-3 rounded-[14px] text-[12.5px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 ${copiedType === 'both'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-prada-cream/80 hover:bg-prada-cream text-prada-charcoal'
                           }`}
                       >
                         {copiedType === 'both' ? (

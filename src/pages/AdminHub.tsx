@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import AdminDataManagement from './AdminDataManagement';
-import AdminCalculator from './AdminCalculator';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { FaDatabase, FaCalculator, FaSignOutAlt, FaHome, FaCog, FaSync } from 'react-icons/fa';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+
+const AdminDataManagement = lazy(() => import('./AdminDataManagement'));
+const AdminCalculator = lazy(() => import('./AdminCalculator'));
 
 interface AdminHubProps {
   initialTab?: 'data' | 'calc';
@@ -18,7 +20,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [privateAccessEnabled, setPrivateAccessEnabled] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('ntf_private_access_enabled') !== 'false';
+      return localStorage.getItem(STORAGE_KEYS.PRIVATE_ACCESS_ENABLED) !== 'false';
     } catch {
       return true;
     }
@@ -86,11 +88,9 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
   };
 
   const handleOpenConfigModal = () => {
-    // If we're not on data tab, switch to it first
     if (activeTab !== 'data') {
       handleTabChange('data');
     }
-    // Dispatch event to open config modal in AdminDataManagement
     window.dispatchEvent(new CustomEvent('ntf_open_config_modal'));
   };
 
@@ -104,10 +104,9 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
 
   return (
     <div className="min-h-screen bg-[#e6e7e9] flex flex-col font-sans">
-      {/* ── Sub Navigation Header for Admin ── */}
-      <div className="bg-[#102022] text-white border-b border-[#102022] px-3 sm:px-4 py-2 sticky top-0 z-40 shadow-sm">
+      {/* Sub Navigation Header */}
+      <div className="bg-[#121c21] text-white border-b border-[#121c21] px-3 sm:px-4 py-2 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
-          {/* Left: Tab switch */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <span className="text-[11px] font-bold text-white uppercase tracking-widest mr-1 hidden lg:inline">
               Admin Hub:
@@ -117,7 +116,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               onClick={() => handleTabChange('data')}
               className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === 'data'
-                  ? 'bg-[#5f171d] text-white shadow-sm'
+                  ? 'bg-[#601d23] text-white shadow-sm'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -130,7 +129,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               onClick={() => handleTabChange('calc')}
               className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === 'calc'
-                  ? 'bg-[#5f171d] text-white shadow-sm'
+                  ? 'bg-[#601d23] text-white shadow-sm'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -140,11 +139,8 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
             </button>
           </div>
 
-          {/* Right: Status badges + Icon Action Buttons + Home + Logout */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Status Badges: Fan Site & Phase */}
             <div className="hidden sm:flex items-center gap-1.5">
-              {/* Fan Site Status */}
               <span
                 className={`text-[10px] px-2 py-1 rounded-md font-bold border flex items-center gap-1 transition-all ${
                   !privateAccessEnabled
@@ -156,7 +152,6 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
                 <span>{privateAccessEnabled ? '🔒 Fan: Private' : '🌐 Fan: Public'}</span>
               </span>
 
-              {/* Phase Status */}
               <span
                 className={`text-[10px] px-2 py-1 rounded-md font-bold border flex items-center gap-1 transition-all ${
                   showPhaseFilter
@@ -169,7 +164,6 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               </span>
             </div>
 
-            {/* Minimal Icon Button 1: Campaign Config */}
             <button
               onClick={handleOpenConfigModal}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white flex items-center justify-center transition-all active:scale-95"
@@ -179,7 +173,6 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               <FaCog className="text-xs sm:text-sm" />
             </button>
 
-            {/* Minimal Icon Button 2: Refresh Data */}
             <button
               onClick={handleTriggerRefresh}
               disabled={isRefreshing}
@@ -192,7 +185,6 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
 
             <div className="w-px h-5 bg-white/20 mx-0.5 hidden xs:block" />
 
-            {/* Back to Home Page Button */}
             <a
               href="#/"
               className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
@@ -202,7 +194,6 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               <span className="hidden md:inline font-medium">หน้าหลัก</span>
             </a>
 
-            {/* Logout Button */}
             {onLogout && (
               <button
                 onClick={onLogout}
@@ -217,13 +208,22 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
         </div>
       </div>
 
-      {/* ── Active Admin Section ── */}
+      {/* Active Admin Section with Suspense */}
       <div className="flex-1">
-        {activeTab === 'data' ? (
-          <AdminDataManagement onBackToApp={() => { window.location.hash = '#/'; }} />
-        ) : (
-          <AdminCalculator />
-        )}
+        <Suspense
+          fallback={
+            <div className="p-12 text-center text-gray-600 font-bold flex items-center justify-center gap-2">
+              <span className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+              กำลังโหลดแท็บแอดมิน...
+            </div>
+          }
+        >
+          {activeTab === 'data' ? (
+            <AdminDataManagement onBackToApp={() => { window.location.hash = '#/'; }} />
+          ) : (
+            <AdminCalculator />
+          )}
+        </Suspense>
       </div>
     </div>
   );

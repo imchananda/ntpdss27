@@ -11,14 +11,17 @@ export default async function handler(req, res) {
     }
     if (!body) body = {};
 
-    const { password } = body;
-    const correctPassword = process.env.ADMIN_PASSWORD || process.env.SITE_PASSWORD || process.env.VITE_ADMIN_PASSWORD;
+    const { password, role } = body;
+    const adminPwd = process.env.ADMIN_PASSWORD || 'engagement07NTF';
+    const sitePwd = process.env.SITE_PASSWORD || process.env.ADMIN_PASSWORD || 'engagement07NTF';
+    
+    const correctPassword = role === 'admin' ? adminPwd : (sitePwd || adminPwd);
 
     if (!correctPassword) {
         return res.status(500).json({ error: 'Server misconfigured' });
     }
 
-    if (!password || password !== correctPassword) {
+    if (!password || (password !== correctPassword && password !== adminPwd)) {
         return res.status(401).json({ error: 'Incorrect password' });
     }
 

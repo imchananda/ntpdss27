@@ -12,23 +12,23 @@
   font-family: 'Ephesis', cursive;
 }
 
-/* ===== Theme Palette: #e6e7e9 (BG), #121c21 (Text), #5f171d (Burgundy Red Buttons), #102022 (Green Bars/Buttons) ===== */
+/* ===== Theme Palette: #e6e7e9 (BG), #121c21 (Text), #601d23 (Burgundy Red Buttons), #121c21 (Dark Bars/Buttons) ===== */
 :root {
   --prada-offwhite: 230 231 233;   /* #e6e7e9 ครีม พื้นหลัง */
   --prada-cream: 220 222 225;      /* Soft gray tint */
-  --prada-sage: 16 32 34;          /* #102022 เขียว ปุ่ม/แถบ */
-  --prada-parchment: 95 23 29;     /* #5f171d แดง ปุ่ม */
-  --prada-stone: 16 32 34;         /* #102022 */
-  --prada-warm: 95 23 29;          /* #5f171d Accent border */
+  --prada-sage: 18 28 33;          /* #121c21 ปุ่ม/แถบ */
+  --prada-parchment: 96 29 35;     /* #601d23 แดง ปุ่ม */
+  --prada-stone: 18 28 33;         /* #121c21 */
+  --prada-warm: 18 28 33;          /* #121c21 Accent border */
   --prada-taupe: 70 80 85;         /* Muted text */
   --prada-charcoal: 18 28 33;      /* #121c21 ดำ ตัวหนังสือ */
   --prada-black: 18 28 33;         /* #121c21 */
-  --prada-gold: 95 23 29;          /* #5f171d แดง ปุ่ม */
-  --prada-darkgold: 16 32 34;      /* #102022 เขียว ปุ่ม/แถบ */
+  --prada-gold: 96 29 35;          /* #601d23 แดง ปุ่ม */
+  --prada-darkgold: 18 28 33;      /* #121c21 ปุ่ม/แถบ */
 
   /* Luxury Accents */
   --prada-red-light: 245 235 236;  /* Light red tint */
-  --prada-red: 95 23 29;           /* #5f171d แดง */
+  --prada-red: 96 29 35;           /* #601d23 แดง */
 }
 
 /* Performance & smooth rendering optimizations */
@@ -83,11 +83,11 @@ body {
 
 /* Prada Gold Accent Badge Utility */
 .prada-gold-accent {
-  background-color: #5f171d;
+  background-color: #601d23;
   color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.12em;
-  box-shadow: 0 2px 8px rgba(95, 23, 29, 0.35);
+  box-shadow: 0 2px 8px rgba(96, 29, 35, 0.35);
 }
 
 /* Luxury Subtle Border */

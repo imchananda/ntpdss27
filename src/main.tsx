@@ -1,12 +1,13 @@
-import { StrictMode, useState, useEffect } from 'react'
+import { StrictMode, useState, useEffect, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import AdminHub from './pages/AdminHub.tsx'
-import AdminLogin from './pages/AdminLogin.tsx'
 import { LanguageProvider } from './i18n/LanguageContext'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import PasswordGate from './components/PasswordGate.tsx'
+
+const AdminHub = lazy(() => import('./pages/AdminHub.tsx'))
+const AdminLogin = lazy(() => import('./pages/AdminLogin.tsx'))
 
 const ADMIN_AUTH_KEY = 'ntf_admin_auth'
 
@@ -33,26 +34,32 @@ function Root() {
 
   // ─── Admin Route Handling ─────────────────────────────────────────────────
   if (isAdminRoute(hash)) {
-    if (!isAdminAuth) {
-      return (
-        <AdminLogin
-          onLoginSuccess={() => {
-            sessionStorage.setItem(ADMIN_AUTH_KEY, 'true')
-            setIsAdminAuth(true)
-          }}
-        />
-      )
-    }
-
-    const initialTab = hash.includes('calc') ? 'calc' : 'data'
     return (
-      <AdminHub
-        initialTab={initialTab}
-        onLogout={() => {
-          sessionStorage.removeItem(ADMIN_AUTH_KEY)
-          setIsAdminAuth(false)
-        }}
-      />
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#121c21] flex items-center justify-center text-white text-sm font-bold gap-3">
+            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            กำลังโหลดระบบแอดมิน...
+          </div>
+        }
+      >
+        {!isAdminAuth ? (
+          <AdminLogin
+            onLoginSuccess={() => {
+              sessionStorage.setItem(ADMIN_AUTH_KEY, 'true')
+              setIsAdminAuth(true)
+            }}
+          />
+        ) : (
+          <AdminHub
+            initialTab={hash.includes('calc') ? 'calc' : 'data'}
+            onLogout={() => {
+              sessionStorage.removeItem(ADMIN_AUTH_KEY)
+              setIsAdminAuth(false)
+            }}
+          />
+        )}
+      </Suspense>
     )
   }
 

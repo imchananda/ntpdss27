@@ -17,15 +17,6 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     setLoading(true);
     setError('');
 
-    // Check env variable first if configured
-    const envAdminPassword = (import.meta as any).env?.VITE_ADMIN_PASSWORD;
-    if (envAdminPassword && password === envAdminPassword) {
-      setLoading(false);
-      onLoginSuccess();
-      return;
-    }
-
-    // Otherwise check server API
     try {
       const res = await fetch('/api/verify-password', {
         method: 'POST',
@@ -41,14 +32,9 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         setTimeout(() => setShaking(false), 600);
       }
     } catch {
-      // Fallback
-      if (password === 'admin' || password === 'prada2027') {
-        onLoginSuccess();
-      } else {
-        setError('เกิดข้อผิดพลาดในการตรวจสอบ กรุณาลองใหม่อีกครั้ง');
-        setShaking(true);
-        setTimeout(() => setShaking(false), 600);
-      }
+      setError('เกิดข้อผิดพลาดในการตรวจสอบ กรุณาลองใหม่อีกครั้ง');
+      setShaking(true);
+      setTimeout(() => setShaking(false), 600);
     } finally {
       setLoading(false);
     }
