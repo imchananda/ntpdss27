@@ -1161,7 +1161,7 @@ function App() {
                 <span className="text-[#121c21]">
                   PRADA ×
                 </span>
-                <span className="text-[#47191e]">
+                <span className="text-[#5f171d]">
                   namtan
                 </span>
               </h1>
@@ -1225,7 +1225,7 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'tasks'
-                      ? 'bg-[#47191e] text-white border-transparent shadow-[#47191e]/20'
+                      ? 'bg-[#5f171d] text-white border-transparent shadow-[#5f171d]/20'
                       : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
                       }`}
                   >
@@ -1243,7 +1243,7 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'boost'
-                      ? 'bg-[#47191e] text-white border-transparent shadow-[#47191e]/20'
+                      ? 'bg-[#5f171d] text-white border-transparent shadow-[#5f171d]/20'
                       : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
                       }`}
                   >
@@ -1261,7 +1261,7 @@ function App() {
                       }
                     }}
                     className={`px-3 sm:px-4 h-8 rounded-full flex items-center gap-1.5 shadow-lg shadow-black/5 transition-all hover:scale-105 active:scale-95 group relative z-50 flex-shrink-0 border ${activeSection === 'important'
-                      ? 'bg-[#47191e] text-white border-transparent shadow-[#47191e]/20'
+                      ? 'bg-[#5f171d] text-white border-transparent shadow-[#5f171d]/20'
                       : 'bg-white/90 backdrop-blur-md text-[#121c21] border-[#102022]/40 shadow-sm hover:bg-white'
                       }`}
                   >
@@ -1373,7 +1373,7 @@ function App() {
                             <span className="text-[10px] text-prada-taupe/60">
                               {t('missionCount')}
                             </span>
-                            <span className="text-[11px] font-bold text-[#47191e]">
+                            <span className="text-[11px] font-bold text-[#5f171d]">
                               {featuredPosts.length} {t('missionCountUnit')}
                             </span>
                           </div>
@@ -1485,7 +1485,7 @@ function App() {
                                   <div className="pt-1.5 border-t border-prada-warm/30 flex items-center justify-between">
                                     <span className="text-[9px] font-bold text-prada-charcoal/50 uppercase tracking-wider">{t('totalEngagementLabel')}</span>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-sm font-bold text-[#47191e] tabular-nums">{totalEngagement.toLocaleString()}</span>
+                                      <span className="text-sm font-bold text-[#5f171d] tabular-nums">{totalEngagement.toLocaleString()}</span>
                                       {(post.target ?? 0) > 0 && (
                                         <span className={`text-[9px] font-bold ${pct >= 100 ? 'text-emerald-500' : 'text-prada-taupe/50'}`}>
                                           ({pct.toFixed(1)}%)
@@ -1522,21 +1522,21 @@ function App() {
                     {/* Title Row */}
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-1 sm:gap-1.5">
-                        <span className="text-[#47191e] text-sm sm:text-base leading-none">✦</span>
-                        <h3 className="text-[10px] sm:text-xs font-bold text-[#47191e] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
+                        <span className="text-[#5f171d] text-sm sm:text-base leading-none">✦</span>
+                        <h3 className="text-[10px] sm:text-xs font-bold text-[#5f171d] uppercase tracking-[0.15em] whitespace-nowrap">{t('importantMediaTitle') || 'Important Media'}</h3>
                       </div>
                       {/* Minimize button — always visible top-right */}
                       <div className="flex flex-col items-center shrink-0">
                         <button
                           onClick={() => setActiveSection(null)}
-                          className="w-7 h-7 rounded-full bg-[#47191e]/10 text-[#47191e] border border-[#47191e]/20 shadow-sm hover:bg-[#47191e]/20 active:scale-95 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-full bg-[#5f171d]/10 text-[#5f171d] border border-[#5f171d]/20 shadow-sm hover:bg-[#5f171d]/20 active:scale-95 flex items-center justify-center transition-colors"
                           title={t('minimize')}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
-                        <span className="text-[6px] font-bold text-[#47191e]/60 tracking-wider mt-0.5 whitespace-nowrap">
+                        <span className="text-[6px] font-bold text-[#5f171d]/60 tracking-wider mt-0.5 whitespace-nowrap">
                           {t('tapToHide')}
                         </span>
                       </div>
@@ -1547,8 +1547,8 @@ function App() {
                       <button
                         onClick={() => setFeaturedFilterPlatform(null)}
                         className={`px-3 h-7 rounded-full flex-shrink-0 text-[10px] font-bold border transition-colors flex items-center justify-center shadow-sm ${!featuredFilterPlatform
-                          ? 'bg-[#47191e] border-transparent text-white'
-                          : 'bg-white border-[#102022]/30 text-[#121c21]/70 hover:bg-[#47191e]/10'
+                          ? 'bg-[#5f171d] border-transparent text-white'
+                          : 'bg-white border-[#102022]/30 text-[#121c21]/70 hover:bg-[#5f171d]/10'
                           }`}
                       >
                         {t('allLabel') || 'All'}
@@ -1560,8 +1560,8 @@ function App() {
                             key={p}
                             onClick={() => setFeaturedFilterPlatform(isActive ? null : p)}
                             className={`w-7 h-7 rounded-full flex-shrink-0 border transition-colors flex items-center justify-center shadow-sm ${isActive
-                              ? 'bg-[#47191e] border-[#47191e] text-white'
-                              : 'bg-white border-[#102022]/30 text-[#121c21]/80 hover:border-[#47191e] hover:text-[#121c21]'
+                              ? 'bg-[#5f171d] border-[#5f171d] text-white'
+                              : 'bg-white border-[#102022]/30 text-[#121c21]/80 hover:border-[#5f171d] hover:text-[#121c21]'
                               }`}
                           >
                             <div className="w-4 h-4 text-current flex items-center justify-center">

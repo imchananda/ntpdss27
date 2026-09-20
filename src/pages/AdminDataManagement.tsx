@@ -1410,7 +1410,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 resetForm();
                 setShowAddModal(true);
               }}
-              className="px-4 py-2 rounded-xl bg-[#47191e] hover:bg-[#331215] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 hover:scale-[1.02]"
+              className="px-4 py-2 rounded-xl bg-[#5f171d] hover:bg-[#331215] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 hover:scale-[1.02]"
             >
               <FaPlus className="text-xs sm:text-sm" />
               <span>เพิ่มโพสต์</span>

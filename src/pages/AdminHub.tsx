@@ -117,7 +117,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               onClick={() => handleTabChange('data')}
               className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === 'data'
-                  ? 'bg-[#47191e] text-white shadow-sm'
+                  ? 'bg-[#5f171d] text-white shadow-sm'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -130,7 +130,7 @@ export default function AdminHub({ initialTab = 'data', onLogout }: AdminHubProp
               onClick={() => handleTabChange('calc')}
               className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === 'calc'
-                  ? 'bg-[#47191e] text-white shadow-sm'
+                  ? 'bg-[#5f171d] text-white shadow-sm'
                   : 'text-gray-300 hover:text-white hover:bg-white/10'
               }`}
             >
