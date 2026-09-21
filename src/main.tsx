@@ -21,9 +21,16 @@ function isAdminRoute(hash: string): boolean {
 
 function Root() {
   const [hash, setHash] = useState(() => window.location.hash)
-  const [isAdminAuth, setIsAdminAuth] = useState(
-    () => sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true'
-  )
+  const [isAdminAuth, setIsAdminAuth] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(ADMIN_AUTH_KEY) === 'true' ||
+        sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true'
+      )
+    } catch {
+      return false
+    }
+  })
 
   useEffect(() => {
     const onHashChange = () => setHash(window.location.hash)
@@ -45,7 +52,10 @@ function Root() {
         {!isAdminAuth ? (
           <AdminLogin
             onLoginSuccess={() => {
-              sessionStorage.setItem(ADMIN_AUTH_KEY, 'true')
+              try {
+                localStorage.setItem(ADMIN_AUTH_KEY, 'true')
+                sessionStorage.setItem(ADMIN_AUTH_KEY, 'true')
+              } catch { /* ignore */ }
               setIsAdminAuth(true)
             }}
           />
@@ -53,7 +63,10 @@ function Root() {
           <AdminHub
             initialTab={hash.includes('calc') ? 'calc' : 'data'}
             onLogout={() => {
-              sessionStorage.removeItem(ADMIN_AUTH_KEY)
+              try {
+                localStorage.removeItem(ADMIN_AUTH_KEY)
+                sessionStorage.removeItem(ADMIN_AUTH_KEY)
+              } catch { /* ignore */ }
               setIsAdminAuth(false)
             }}
           />
