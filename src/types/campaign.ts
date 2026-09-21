@@ -73,6 +73,17 @@ export interface CompletedState {
   };
 }
 
+export const DEFAULT_PLATFORM_HANDLES: Record<string, string> = {
+  x: '',
+  instagram: '',
+  tiktok: '',
+  threads: '',
+  facebook: '',
+  youtube: '',
+  weibo: '',
+  red: '',
+};
+
 export interface GlobalSetting {
   id: string;
   privateAccess: boolean;
@@ -82,6 +93,7 @@ export interface GlobalSetting {
   defaultSection: string;
   showEndCredits: boolean;
   defaultTargetsJson?: string;
+  platformHandlesJson?: string;
 }
 
 export interface FollowerStats {

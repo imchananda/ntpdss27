@@ -80,7 +80,9 @@ function doPost(e) {
         'default_section',
         'show_end_credits',
         'default_targets_json',
-        'default_targets'
+        'default_targets',
+        'platform_handles_json',
+        'platform_handles'
       ];
       globalHeaders.forEach(function (th) {
         if (headers.indexOf(th) === -1) {

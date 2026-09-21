@@ -37,6 +37,7 @@ import {
 import { FaXTwitter, FaThreads } from 'react-icons/fa6';
 import { SiXiaohongshu } from 'react-icons/si';
 import { uploadImageToCatbox, normalizeImageUrl } from '../utils/imageUpload';
+import { DEFAULT_PLATFORM_HANDLES } from '../types/campaign';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface AdminSheetTask {
@@ -134,6 +135,28 @@ const PLATFORM_OPTIONS = [
   { id: 'weibo', label: 'Weibo', icon: <FaWeibo className="text-yellow-600" /> },
   { id: 'red', label: 'RED (小红书)', icon: <SiXiaohongshu className="text-rose-600" /> },
 ];
+
+export const CAMPAIGN_PHASE_OPTIONS = [
+  { id: 'all', label: 'ทั้งหมด (All Phase)', badge: '🗓️' },
+  { id: 'pre', label: '✈️ Pre (20-21 Sep)', badge: '✈️' },
+  { id: 'show', label: '👠 Show (22 Sep)', badge: '👠' },
+  { id: 'afterglow', label: '🥂 Afterglow (23 Sep - 06 Oct)', badge: '🥂' },
+];
+
+export const SORT_OPTIONS = [
+  { id: 'created_desc', label: '🆕 การสร้าง: ใหม่ > เก่า' },
+  { id: 'created_asc', label: '📜 การสร้าง: เก่า > ใหม่' },
+  { id: 'updated_desc', label: '⚡ อัปเดตเอนเกจ: ล่าสุด > นานสุด' },
+  { id: 'updated_asc', label: '⏳ อัปเดตเอนเกจ: นานสุด > ล่าสุด' },
+];
+
+export function getNormalizedPhase(rawPhase?: string): string {
+  if (!rawPhase) return 'pre';
+  const p = rawPhase.toLowerCase().trim();
+  if (p === 'airport') return 'pre';
+  if (p === 'aftermath' || p === 'aftermath2') return 'afterglow';
+  return p;
+}
 
 export const ARTIST_CATEGORIES = [
   { id: 'namtan', label: '🤍 Namtan', badgeColor: 'bg-[#c4d2b1] text-[#2a2121]' },
@@ -274,8 +297,14 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   const [filterArtist, setFilterArtist] = useState(() => {
     try { return localStorage.getItem('ntf_admin_filter_artist') || 'all'; } catch { return 'all'; }
   });
+  const [filterPhase, setFilterPhase] = useState<'all' | 'pre' | 'show' | 'afterglow'>(() => {
+    try { return (localStorage.getItem('ntf_admin_filter_phase') as any) || 'all'; } catch { return 'all'; }
+  });
   const [filterBoost, setFilterBoost] = useState<'all' | 'boost' | 'media' | 'pinned' | 'marked' | 'stale'>(() => {
     try { return (localStorage.getItem('ntf_admin_filter_boost') as any) || 'all'; } catch { return 'all'; }
+  });
+  const [sortBy, setSortBy] = useState<'created_desc' | 'created_asc' | 'updated_desc' | 'updated_asc'>(() => {
+    try { return (localStorage.getItem('ntf_admin_sort_by') as any) || 'created_desc'; } catch { return 'created_desc'; }
   });
   const [globalHashtags, setGlobalHashtags] = useState<string>(() => {
     try {
@@ -283,6 +312,18 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
       if (saved) return saved;
     } catch { /* ignore */ }
     return DEFAULT_PRADA_HASHTAGS;
+  });
+  const [platformHandles, setPlatformHandles] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('ntf_platform_handles');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_PLATFORM_HANDLES, ...parsed };
+        }
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_PLATFORM_HANDLES;
   });
   const [syncToAllPosts, setSyncToAllPosts] = useState(false);
 
@@ -368,6 +409,17 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     return task.hashtag;
   }, [globalHashtags, isOldDefaultHashtags]);
 
+  // Helper to append platform-specific @mentions if not present
+  const getEffectiveHashtagsWithMentions = useCallback((baseHashtagsStr: string, platform: string, customHandles?: Record<string, string>): string => {
+    const cleanBase = (baseHashtagsStr || '').trim();
+    const handles = customHandles || platformHandles || DEFAULT_PLATFORM_HANDLES;
+    const platKey = (platform || 'x').toLowerCase().trim();
+    const handleStr = handles[platKey] || DEFAULT_PLATFORM_HANDLES[platKey] || '';
+    if (!handleStr) return cleanBase;
+    if (cleanBase.toLowerCase().includes(handleStr.toLowerCase())) return cleanBase;
+    return cleanBase ? `${cleanBase}\n${handleStr}` : handleStr;
+  }, [platformHandles]);
+
   const [privateAccessEnabled, setPrivateAccessEnabled] = useState<boolean>(() => {
     try {
       return localStorage.getItem('ntf_private_access_enabled') !== 'false';
@@ -422,8 +474,20 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   }, [filterArtist]);
 
   useEffect(() => {
+    try { localStorage.setItem('ntf_admin_filter_phase', filterPhase); } catch { /* ignore */ }
+  }, [filterPhase]);
+
+  useEffect(() => {
     try { localStorage.setItem('ntf_admin_filter_boost', filterBoost); } catch { /* ignore */ }
   }, [filterBoost]);
+
+  useEffect(() => {
+    try { localStorage.setItem('ntf_admin_sort_by', sortBy); } catch { /* ignore */ }
+  }, [sortBy]);
+
+  useEffect(() => {
+    try { localStorage.setItem('ntf_platform_handles', JSON.stringify(platformHandles)); } catch { /* ignore */ }
+  }, [platformHandles]);
 
   // Admin Scroll Position Persistence
   useEffect(() => {
@@ -678,13 +742,14 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
   });
 
   const resetForm = useCallback(() => {
+    const initPlat = 'instagram';
     setFormData({
       mark: false,
-      platform: 'instagram',
+      platform: initPlat,
       media: '',
       title: '',
       url: '',
-      hashtag: globalHashtags,
+      hashtag: getEffectiveHashtagsWithMentions(globalHashtags, initPlat),
       artist: '',
       phase: '',
       boost: '',
@@ -709,7 +774,7 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     setImageUploadError(null);
     setShowBoostSection(false);
     setShowEngagementSection(false);
-  }, [globalHashtags]);
+  }, [globalHashtags, getEffectiveHashtagsWithMentions]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -894,6 +959,18 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 console.warn('Could not parse default_targets_json from dedicated sheet:', eParse);
               }
             }
+            const handlesRaw = getGVal(r, 'platform_handles_json') || getGVal(r, 'platform_handles');
+            if (handlesRaw) {
+              try {
+                const pHandles = JSON.parse(handlesRaw);
+                if (pHandles && typeof pHandles === 'object') {
+                  setPlatformHandles(prev => ({ ...prev, ...pHandles }));
+                  localStorage.setItem('ntf_platform_handles', JSON.stringify(pHandles));
+                }
+              } catch (eParse) {
+                console.warn('Could not parse platform_handles_json from dedicated sheet:', eParse);
+              }
+            }
           }
         }
       } catch (errG) {
@@ -1071,10 +1148,10 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     };
   }, [fetchData, testGoogleConnections]);
 
-  // ─── Filter & Search ────────────────────────────────────────────────────────
+  // ─── Filter & Search & Sort ──────────────────────────────────────────────────
   const filteredTasks = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    return tasks.filter(task => {
+    const result = tasks.filter(task => {
       const matchSearch =
         !q ||
         task.media.toLowerCase().includes(q) ||
@@ -1084,6 +1161,9 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
 
       const matchPlatform = filterPlatform === 'all' || task.platform === filterPlatform;
       const matchArtist = filterArtist === 'all' || task.artist === filterArtist;
+
+      const normPhase = getNormalizedPhase(task.phase);
+      const matchPhase = filterPhase === 'all' || normPhase === filterPhase;
 
       const isBoosted = Boolean(task.boost && (task.boost.includes('1') || task.boost.toLowerCase() === 'x' || task.boost.toLowerCase() === 'yes'));
       const isMedia = Boolean(task.boost && task.boost.includes('2'));
@@ -1096,9 +1176,37 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         (filterBoost === 'marked' && task.mark) ||
         (filterBoost === 'stale' && getPostUpdateStatus(task.last_updated).isStale);
 
-      return matchSearch && matchPlatform && matchArtist && matchBoost;
+      return matchSearch && matchPlatform && matchArtist && matchPhase && matchBoost;
     });
-  }, [tasks, searchTerm, filterPlatform, filterArtist, filterBoost]);
+
+    return result.sort((a, b) => {
+      if (sortBy === 'created_asc') {
+        const idxA = tasks.indexOf(a);
+        const idxB = tasks.indexOf(b);
+        return idxB - idxA;
+      }
+      if (sortBy === 'updated_desc') {
+        const timeA = a.last_updated ? new Date(a.last_updated).getTime() : 0;
+        const timeB = b.last_updated ? new Date(b.last_updated).getTime() : 0;
+        const validA = isNaN(timeA) ? 0 : timeA;
+        const validB = isNaN(timeB) ? 0 : timeB;
+        if (validB !== validA) return validB - validA;
+        return tasks.indexOf(a) - tasks.indexOf(b);
+      }
+      if (sortBy === 'updated_asc') {
+        const timeA = a.last_updated ? new Date(a.last_updated).getTime() : 0;
+        const timeB = b.last_updated ? new Date(b.last_updated).getTime() : 0;
+        const validA = isNaN(timeA) ? 0 : timeA;
+        const validB = isNaN(timeB) ? 0 : timeB;
+        if (validA !== validB) return validA - validB;
+        return tasks.indexOf(a) - tasks.indexOf(b);
+      }
+      // Default: created_desc (Newest -> Oldest, index 0 is newest)
+      const idxA = tasks.indexOf(a);
+      const idxB = tasks.indexOf(b);
+      return idxA - idxB;
+    });
+  }, [tasks, searchTerm, filterPlatform, filterArtist, filterPhase, filterBoost, sortBy]);
 
   // ─── Submit Post to Sheet ───────────────────────────────────────────────────
   const handleSubmitPost = async (e: React.FormEvent) => {
@@ -1361,7 +1469,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
 
   // ─── Copy Hashtags ──────────────────────────────────────────────────────────
   const handleCopyHashtags = (task: AdminSheetTask) => {
-    const text = getEffectiveHashtags(task);
+    const rawTags = getEffectiveHashtags(task);
+    const text = getEffectiveHashtagsWithMentions(rawTags, task.platform);
     navigator.clipboard.writeText(text);
     setCopiedId(task.id);
     setTimeout(() => setCopiedId(null), 1500);
@@ -1434,6 +1543,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         enable_end_credits: showEndCreditsToggle ? '1' : '0',
         default_targets_json: JSON.stringify(categoryDefaultTargets),
         default_targets: JSON.stringify(categoryDefaultTargets),
+        platform_handles_json: JSON.stringify(platformHandles),
+        platform_handles: JSON.stringify(platformHandles),
       };
 
       try {
@@ -1782,8 +1893,39 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
               </div>
             </div>
 
-            {/* 2-Column Grid: Artist & Special Status on Mobile */}
+            {/* 2x2 Grid for Phase, Artist, Boost, Sort */}
             <div className="grid grid-cols-2 gap-2">
+              {/* Campaign Phase Dropdown */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-[#2a2121] truncate">
+                    <span>🗓️</span>
+                    <span>ช่วงแคมเปญ</span>
+                  </span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={filterPhase}
+                    onChange={e => setFilterPhase(e.target.value as any)}
+                    className="w-full appearance-none bg-[#F7F8F4] border border-[#9BB6D6]/40 rounded-xl px-3 pr-7 py-2 text-xs font-bold text-[#2a2121] outline-none focus:bg-white focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-xs truncate"
+                  >
+                    {CAMPAIGN_PHASE_OPTIONS.map(p => {
+                      const count = p.id === 'all'
+                        ? tasks.length
+                        : tasks.filter(t => getNormalizedPhase(t.phase) === p.id).length;
+                      return (
+                        <option key={p.id} value={p.id}>
+                          {p.label} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <FaChevronDown className="text-[10px]" />
+                  </div>
+                </div>
+              </div>
+
               {/* Artist Category Dropdown */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-600 mb-1 flex items-center justify-between">
@@ -1841,6 +1983,33 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     <option value="marked">
                       ⭐ เฉพาะติดดาว ({tasks.filter(t => t.mark).length})
                     </option>
+                    <option value="stale">
+                      ⏰ ต้องอัปเดต (&gt;24 ชม.) ({tasks.filter(t => getPostUpdateStatus(t.last_updated).isStale).length})
+                    </option>
+                  </select>
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <FaChevronDown className="text-[10px]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sort Order Dropdown */}
+              <div>
+                <label className="block text-[11px] font-bold text-gray-600 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1 text-[#2a2121] truncate">
+                    <span>🔃</span>
+                    <span>เรียงลำดับ</span>
+                  </span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as any)}
+                    className="w-full appearance-none bg-[#F7F8F4] border border-[#9BB6D6]/40 rounded-xl px-2.5 pr-7 py-2 text-xs font-bold text-[#2a2121] outline-none focus:bg-white focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-xs truncate"
+                  >
+                    {SORT_OPTIONS.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
                   </select>
                   <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                     <FaChevronDown className="text-[10px]" />
@@ -1883,6 +2052,28 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200/70 text-gray-500'}`}>
                       {count}
                     </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Campaign Phase filter pills */}
+            <div ref={attachScrollHandlers} className="flex items-center gap-1.5 overflow-x-auto pt-1 border-t border-gray-100 no-scrollbar select-none cursor-grab active:cursor-grabbing">
+              <span className="text-[11px] font-bold text-gray-400 whitespace-nowrap mr-1">ช่วงแคมเปญ:</span>
+              {CAMPAIGN_PHASE_OPTIONS.map(p => {
+                const count = p.id === 'all'
+                  ? tasks.length
+                  : tasks.filter(t => getNormalizedPhase(t.phase) === p.id).length;
+                const isActive = filterPhase === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setFilterPhase(p.id as any)}
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
+                      isActive ? 'bg-[#2a2121] text-white border-[#2a2121] shadow-xs' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span>{p.label}</span> ({count})
                   </button>
                 );
               })}
@@ -1990,6 +2181,38 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-[#9BB6D6]/40 shadow-sm overflow-hidden">
+            {/* Top Results Bar with Count & Sorting Options */}
+            <div className="bg-[#F7F8F4] px-4 py-2.5 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-bold text-gray-700 flex items-center gap-1.5 flex-wrap">
+                <span>📊 แสดง <span className="text-[#2a2121] font-black">{filteredTasks.length}</span> จาก {tasks.length} รายการ</span>
+                {(filterPlatform !== 'all' || filterArtist !== 'all' || filterPhase !== 'all' || filterBoost !== 'all' || searchTerm) && (
+                  <span className="text-[10px] font-normal text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    (กำลังเปิดใช้งานตัวกรอง)
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-gray-600 flex items-center gap-1 whitespace-nowrap">
+                  <span>🔃 เรียงตาม:</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as any)}
+                    className="appearance-none bg-white border border-[#9BB6D6]/50 rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-[#2a2121] outline-none focus:border-[#2a2121] focus:ring-1 focus:ring-[#2a2121] transition-all shadow-2xs cursor-pointer"
+                  >
+                    {SORT_OPTIONS.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <FaChevronDown className="text-[10px]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Scrollable Table Container */}
             <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
               <table className="min-w-[920px] w-full text-left border-collapse text-xs">
@@ -2055,6 +2278,16 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
 
                               {/* Bottom Line: Status Badges */}
                               <div className="flex items-center gap-1.5 flex-wrap">
+                                {task.phase && (
+                                  <span
+                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap"
+                                    title={`ช่วงแคมเปญ: ${getNormalizedPhase(task.phase)}`}
+                                  >
+                                    {getNormalizedPhase(task.phase) === 'pre' && '✈️ Pre'}
+                                    {getNormalizedPhase(task.phase) === 'show' && '👠 Show'}
+                                    {getNormalizedPhase(task.phase) === 'afterglow' && '🥂 Afterglow'}
+                                  </span>
+                                )}
                                 {task.boost && (task.boost.includes('1') || task.boost.toLowerCase() === 'x' || task.boost.toLowerCase() === 'yes') && (
                                   <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 border border-amber-500/30 whitespace-nowrap" title="Boost Carousel">
                                     🚀 Boost
@@ -2282,10 +2515,12 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                     
                     if (!editingTaskId) {
                       const targets = getPresetTargets(formData.artist, normPlat, newUrl, isReels);
+                      const autoTag = getEffectiveHashtagsWithMentions(globalHashtags, normPlat);
                       setFormData(prev => ({
                         ...prev,
                         url: newUrl,
                         platform: normPlat,
+                        hashtag: autoTag,
                         target_likes: targets.likes || '',
                         target_reposts: targets.reposts || '',
                         target_comments: targets.comments || '',
@@ -2325,9 +2560,11 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       const newPlat = e.target.value;
                       if (!editingTaskId) {
                         const targets = getPresetTargets(formData.artist, newPlat, formData.url);
+                        const autoTag = getEffectiveHashtagsWithMentions(globalHashtags, newPlat);
                         setFormData(prev => ({
                           ...prev,
                           platform: newPlat,
+                          hashtag: autoTag,
                           target_likes: targets.likes || '',
                           target_reposts: targets.reposts || '',
                           target_comments: targets.comments || '',
@@ -2518,12 +2755,25 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
 
               {/* Hashtags (Right after Media Name) */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">แฮชแท็กที่ใช้ (Hashtags)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-gray-700">แฮชแท็กที่ใช้ (Hashtags)</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const autoTag = getEffectiveHashtagsWithMentions(globalHashtags, formData.platform);
+                      setFormData(prev => ({ ...prev, hashtag: autoTag }));
+                    }}
+                    className="text-[10px] font-bold text-[#2a2121] bg-[#c4d2b1]/40 hover:bg-[#c4d2b1] px-2 py-0.5 rounded-md transition-all flex items-center gap-1 cursor-pointer"
+                    title={`โหลดแฮชแท็กหลัก + @mention ของ ${formData.platform}`}
+                  >
+                    <span>⚡ โหลดแฮชแท็ก + @mention ({formData.platform})</span>
+                  </button>
+                </div>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={formData.hashtag}
                   onChange={e => setFormData({ ...formData, hashtag: e.target.value })}
-                  placeholder="#NamtanxPrada #PradaSS27"
+                  placeholder="#NamtanxPrada #PradaSS27 @prada"
                   className="w-full bg-[#F7F8F4] rounded-xl px-3.5 py-2 text-xs outline-none border border-gray-200 focus:border-[#2a2121] font-mono leading-relaxed"
                 />
               </div>
@@ -3204,6 +3454,43 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                       </p>
                     </div>
                   </label>
+                </div>
+              </div>
+
+              {/* Platform Official Handles Mapping Editor */}
+              <div className="pt-3 border-t border-gray-100">
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  🏷️ ตั้งค่า @Mentions ประจำแพลตฟอร์ม (Platform Handles Mapping)
+                </label>
+                <p className="text-[10px] text-gray-500 mb-2.5 leading-relaxed">
+                  กำหนดแอคเคานต์ทางการ (@mentions) แยกตามแต่ละโซเชียลมีเดีย ระบบจะนำไปต่อท้ายแฮชแท็กหลักให้อัตโนมัติเมื่อเพิ่มโพสต์หรือคัดลอก
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                  {[
+                    { id: 'x', label: '🐦 X (Twitter)', placeholder: '@prada @NamtanTipnaree' },
+                    { id: 'instagram', label: '📸 Instagram (IG)', placeholder: '@prada @namtan.tipnaree' },
+                    { id: 'tiktok', label: '🎵 TikTok', placeholder: '@prada @namtantipnaree' },
+                    { id: 'threads', label: '🧵 Threads', placeholder: '@prada @namtan.tipnaree' },
+                    { id: 'facebook', label: '📘 Facebook', placeholder: '@prada @NamtanTipnaree' },
+                    { id: 'youtube', label: '▶️ YouTube', placeholder: '@prada' },
+                    { id: 'weibo', label: '🟡 Weibo', placeholder: '@Prada普拉达' },
+                    { id: 'red', label: '📕 RED (小红书)', placeholder: '@Prada普拉达' },
+                  ].map(item => (
+                    <div key={item.id} className="bg-gray-50 p-2 rounded-xl border border-gray-200">
+                      <label className="block text-[10.5px] font-bold text-gray-700 mb-1">{item.label}</label>
+                      <input
+                        type="text"
+                        value={platformHandles[item.id] || ''}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setPlatformHandles(prev => ({ ...prev, [item.id]: val }));
+                        }}
+                        placeholder={item.placeholder}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-mono outline-none focus:border-[#2a2121]"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 

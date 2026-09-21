@@ -247,6 +247,54 @@ function uploadImageDevPlugin(catboxUserhash = ''): Plugin {
   };
 }
 
+// Custom dev middleware for /api/verify-password
+function verifyPasswordDevPlugin(adminPwd = 'engagement07NTF'): Plugin {
+  return {
+    name: 'verify-password-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url && req.url.startsWith('/api/verify-password')) {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 200;
+            res.end();
+            return;
+          }
+
+          if (req.method === 'POST') {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            const chunks: Buffer[] = [];
+            req.on('data', chunk => { chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)); });
+            req.on('end', async () => {
+              try {
+                const bodyStr = Buffer.concat(chunks).toString('utf-8');
+                const payload = JSON.parse(bodyStr || '{}');
+                const { password } = payload;
+                const expected = process.env.ADMIN_PASSWORD || adminPwd;
+                if (password === expected) {
+                  res.statusCode = 200;
+                  res.end(JSON.stringify({ token: `ntf-${Date.now()}` }));
+                } else {
+                  res.statusCode = 401;
+                  res.end(JSON.stringify({ error: 'Incorrect password' }));
+                }
+              } catch (err: any) {
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: err.message }));
+              }
+            });
+            return;
+          }
+        }
+        next();
+      });
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // @ts-expect-error process is defined in the Node environment where Vite runs
@@ -259,7 +307,8 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       adminSheetDevPlugin(gasUrl),
-      uploadImageDevPlugin(env.CATBOX_USERHASH || process.env.CATBOX_USERHASH || '')
+      uploadImageDevPlugin(env.CATBOX_USERHASH || process.env.CATBOX_USERHASH || ''),
+      verifyPasswordDevPlugin(env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || 'engagement07NTF')
     ],
     base: './', // For GitHub Pages deployment
     server: {
