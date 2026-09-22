@@ -87,21 +87,21 @@ const platformConfig = {
   },
   weibo: {
     name: 'Weibo',
-    icon: <FaWeibo className="w-4 h-4 text-[#e6162d]" />,
-    color: 'from-amber-500 to-red-600',
-    hoverColor: 'hover:from-amber-400 hover:to-red-500',
+    icon: <FaWeibo className="w-4 h-4" />,
+    color: 'from-amber-600 to-red-700',
+    hoverColor: 'hover:from-amber-500 hover:to-red-600',
   },
   red: {
     name: 'RED',
-    icon: <SiXiaohongshu className="w-4 h-4 text-[#ff2442]" />,
-    color: 'from-red-500 to-rose-600',
-    hoverColor: 'hover:from-red-400 hover:to-rose-500',
+    icon: <SiXiaohongshu className="w-4 h-4" />,
+    color: 'from-red-600 to-rose-700',
+    hoverColor: 'hover:from-red-500 hover:to-rose-600',
   },
   xiaohongshu: {
     name: 'RED',
-    icon: <SiXiaohongshu className="w-4 h-4 text-[#ff2442]" />,
-    color: 'from-red-500 to-rose-600',
-    hoverColor: 'hover:from-red-400 hover:to-rose-500',
+    icon: <SiXiaohongshu className="w-4 h-4" />,
+    color: 'from-red-600 to-rose-700',
+    hoverColor: 'hover:from-red-500 hover:to-rose-600',
   },
 };
 
