@@ -1,4 +1,4 @@
-export type SocialPlatform = 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'threads' | 'weibo' | 'xiaohongshu';
+export type SocialPlatform = 'x' | 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'threads' | 'weibo' | 'xiaohongshu' | 'red';
 export type CampaignPhase = 'all' | 'pre' | 'show' | 'afterglow' | string;
 
 export function normalizePhase(rawPhase?: string): CampaignPhase {
@@ -74,14 +74,14 @@ export interface CompletedState {
 }
 
 export const DEFAULT_PLATFORM_HANDLES: Record<string, string> = {
-  x: '',
-  instagram: '',
-  tiktok: '',
-  threads: '',
-  facebook: '',
-  youtube: '',
-  weibo: '',
-  red: '',
+  x: '@prada @NamtanTipnaree',
+  instagram: '@prada @namtan.tipnaree',
+  tiktok: '@prada @namtantipnaree',
+  threads: '@prada @namtan.tipnaree',
+  facebook: '@prada @NamtanTipnaree',
+  youtube: '@prada',
+  weibo: '@Prada普拉达',
+  red: '@Prada普拉达',
 };
 
 export interface GlobalSetting {

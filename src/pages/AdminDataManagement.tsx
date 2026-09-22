@@ -409,15 +409,54 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
     return task.hashtag;
   }, [globalHashtags, isOldDefaultHashtags]);
 
-  // Helper to append platform-specific @mentions if not present
-  const getEffectiveHashtagsWithMentions = useCallback((baseHashtagsStr: string, platform: string, customHandles?: Record<string, string>): string => {
+  // Helper to append platform-specific & existing post @mentions if not present
+  const getEffectiveHashtagsWithMentions = useCallback((baseHashtagsStr: string, platform: string, customHandles?: Record<string, string>, existingPostHashtag?: string): string => {
     const cleanBase = (baseHashtagsStr || '').trim();
     const handles = customHandles || platformHandles || DEFAULT_PLATFORM_HANDLES;
-    const platKey = (platform || 'x').toLowerCase().trim();
+    let platKey = (platform || 'x').toLowerCase().trim();
+    if (['ig', 'instagram', 'insta'].includes(platKey)) platKey = 'instagram';
+    else if (['fb', 'facebook'].includes(platKey)) platKey = 'facebook';
+    else if (['tt', 'tiktok'].includes(platKey)) platKey = 'tiktok';
+    else if (['yt', 'youtube'].includes(platKey)) platKey = 'youtube';
+    else if (['threads', 'thread', 'th'].includes(platKey)) platKey = 'threads';
+    else if (['xhs', 'xiaohongshu', 'red'].includes(platKey)) platKey = 'red';
+    else if (['wb', 'weibo'].includes(platKey)) platKey = 'weibo';
+    else if (['twitter', 'x'].includes(platKey)) platKey = 'x';
+
     const handleStr = handles[platKey] || DEFAULT_PLATFORM_HANDLES[platKey] || '';
-    if (!handleStr) return cleanBase;
-    if (cleanBase.toLowerCase().includes(handleStr.toLowerCase())) return cleanBase;
-    return cleanBase ? `${cleanBase}\n${handleStr}` : handleStr;
+
+    // Extract existing mentions from post
+    const existingMentions: string[] = [];
+    if (existingPostHashtag) {
+      const matches = existingPostHashtag.match(/@[\w\.\-\u0E00-\u0E7F\u4e00-\u9fa5]+/g) || [];
+      matches.forEach(m => {
+        if (!existingMentions.some(em => em.toLowerCase() === m.toLowerCase())) {
+          existingMentions.push(m);
+        }
+      });
+    }
+
+    // Add configured platform handles
+    if (handleStr) {
+      const handleMatches = handleStr.match(/@[\w\.\-\u0E00-\u0E7F\u4e00-\u9fa5]+/g) || [handleStr];
+      handleMatches.forEach(hm => {
+        if (!existingMentions.some(em => em.toLowerCase() === hm.toLowerCase())) {
+          existingMentions.push(hm);
+        }
+      });
+    }
+
+    if (existingMentions.length === 0) return cleanBase;
+
+    // Filter out mentions already present in cleanBase
+    const newMentionsToAppend = existingMentions.filter(
+      m => !cleanBase.toLowerCase().includes(m.toLowerCase())
+    );
+
+    if (newMentionsToAppend.length === 0) return cleanBase;
+
+    const mentionStr = newMentionsToAppend.join(' ');
+    return cleanBase ? `${cleanBase}\n${mentionStr}` : mentionStr;
   }, [platformHandles]);
 
   const [privateAccessEnabled, setPrivateAccessEnabled] = useState<boolean>(() => {
@@ -1575,10 +1614,15 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
         console.warn('Failed to save to global_setting sheet:', errGlobal);
       }
 
-      // 2. If syncToAllPosts is selected, update all existing posts in state and in sheet
+      // 2. If syncToAllPosts is selected, update all existing posts in state and in sheet with new Official Hashtags + Platform @Mentions
       if (syncToAllPosts && tasks.length > 0) {
-        setTasks(prev => prev.map(t => ({ ...t, hashtag: globalHashtags })));
-        for (const t of tasks) {
+        const updatedTasks = tasks.map(t => {
+          const effectiveHashtag = getEffectiveHashtagsWithMentions(globalHashtags, t.platform, platformHandles, t.hashtag);
+          return { ...t, hashtag: effectiveHashtag };
+        });
+        setTasks(updatedTasks);
+
+        for (const t of updatedTasks) {
           try {
             await fetch('/api/admin-sheet', {
               method: 'POST',
@@ -1589,8 +1633,8 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                 data: {
                   id: t.id,
                   url: t.url,
-                  hashtag: globalHashtags,
-                  hashtags: globalHashtags,
+                  hashtag: t.hashtag,
+                  hashtags: t.hashtag,
                 },
               }),
             });
