@@ -160,6 +160,8 @@ export const translations = {
         threadsLabel: 'Threads',
         fbLabel: 'Facebook',
         ytLabel: 'YouTube/Short',
+        weiboLabel: 'Weibo',
+        redLabel: 'RED (小红书)',
     },
     en: {
         // Header
@@ -320,6 +322,8 @@ export const translations = {
         threadsLabel: 'Threads',
         fbLabel: 'Facebook',
         ytLabel: 'YouTube/Short',
+        weiboLabel: 'Weibo',
+        redLabel: 'RED (小红书)',
     },
 } as const;
 

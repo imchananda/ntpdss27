@@ -416,10 +416,26 @@ function App() {
   }, [allFocusTasksDone, showNameSubmit]);
 
 
+  const matchesPlatform = useCallback((taskPlat?: string, targetPlat?: string): boolean => {
+    const p1 = (taskPlat || '').toLowerCase().trim();
+    const p2 = (targetPlat || '').toLowerCase().trim();
+    if (!p1 || !p2) return false;
+    if (p1 === p2) return true;
+    if (['ig', 'instagram', 'insta'].includes(p1) && ['ig', 'instagram', 'insta'].includes(p2)) return true;
+    if (['fb', 'facebook'].includes(p1) && ['fb', 'facebook'].includes(p2)) return true;
+    if (['tt', 'tiktok'].includes(p1) && ['tt', 'tiktok'].includes(p2)) return true;
+    if (['yt', 'youtube'].includes(p1) && ['yt', 'youtube'].includes(p2)) return true;
+    if (['threads', 'thread', 'th'].includes(p1) && ['threads', 'thread', 'th'].includes(p2)) return true;
+    if (['wb', 'weibo'].includes(p1) && ['wb', 'weibo'].includes(p2)) return true;
+    if (['red', 'xhs', 'xiaohongshu'].includes(p1) && ['red', 'xhs', 'xiaohongshu'].includes(p2)) return true;
+    if (['x', 'twitter'].includes(p1) && ['x', 'twitter'].includes(p2)) return true;
+    return false;
+  }, []);
+
   // Calculate platform-specific engagement stats
   const getPlatformStats = useCallback((platform?: string, period: 'emv' | 'miv' = statsPeriod) => {
     // Filter by platform using activePhase-filtered tasks
-    let pTasks = platform ? tasks.filter(t => t.platform === platform) : tasks;
+    let pTasks = platform ? tasks.filter(t => matchesPlatform(t.platform, platform)) : tasks;
 
     // Filter by period
     // MIV = all sheets; EMV = only airport + show + aftermath (excludes pre & aftermath2)
@@ -435,7 +451,7 @@ function App() {
       views: pTasks.reduce((s, t) => s + (t.views || 0), 0),
       saves: pTasks.reduce((s, t) => s + (t.saves || 0), 0)
     };
-  }, [tasks, statsPeriod]);
+  }, [tasks, statsPeriod, matchesPlatform]);
 
   // Memoize global stats to prevent recalculation on every render (e.g. during scroll)
   const dashboardStats = useMemo(() => getPlatformStats(), [getPlatformStats]);
@@ -444,13 +460,16 @@ function App() {
   const platformStatsMap = useMemo(() => {
     const map: Record<string, ReturnType<typeof getPlatformStats>> = {};
     if (!showPlatformSummaryModal) return map;
-    map['total'] = getPlatformStats();
+    map['total'] = dashboardStats;
     map['instagram'] = getPlatformStats('instagram');
     map['tiktok'] = getPlatformStats('tiktok');
     map['x'] = getPlatformStats('x');
     map['threads'] = getPlatformStats('threads');
     map['facebook'] = getPlatformStats('facebook');
     map['youtube'] = getPlatformStats('youtube');
+    map['weibo'] = getPlatformStats('weibo');
+    map['red'] = getPlatformStats('red');
+    map['xiaohongshu'] = getPlatformStats('xiaohongshu');
     return map;
   }, [getPlatformStats, showPlatformSummaryModal]);
 
@@ -2257,17 +2276,19 @@ function App() {
                     { id: 'threads', label: t('threadsLabel'), icon: <ThreadsIcon />, color: 'from-zinc-800 to-black' },
                     { id: 'facebook', label: t('fbLabel'), icon: <FacebookIcon />, color: 'from-blue-500 to-blue-700' },
                     { id: 'youtube', label: t('ytLabel'), icon: <YouTubeIcon />, color: 'from-red-500 to-red-700' },
+                    { id: 'weibo', label: t('weiboLabel') || 'Weibo', icon: <FaWeibo className="w-3.5 h-3.5" />, color: 'from-amber-600 to-red-700' },
+                    { id: 'red', label: t('redLabel') || 'RED (小红书)', icon: <SiXiaohongshu className="w-3.5 h-3.5" />, color: 'from-red-600 to-rose-700' },
                   ].map(p => {
-                    const stats = platformStatsMap[p.id] || dashboardStats;
+                    const stats = platformStatsMap[p.id] || { likes: 0, comments: 0, shares: 0, reposts: 0, views: 0, saves: 0 };
 
                     // Base Icons
-                    const likeIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>;
-                    const commentIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>;
-                    const shareIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" /></svg>;
-                    const repostIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" /></svg>;
-                    const viewIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>;
-                    const sendIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>;
-                    const saveIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mb-1"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" /></svg>;
+                    const likeIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>;
+                    const commentIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>;
+                    const shareIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" /></svg>;
+                    const repostIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" /></svg>;
+                    const viewIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" /></svg>;
+                    const sendIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>;
+                    const saveIcon = <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" /></svg>;
 
                     let metrics: { label: string, value: number, color: string, icon: any }[] = [];
 
@@ -2277,6 +2298,7 @@ function App() {
                         { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('reposts'), value: stats.reposts, color: 'text-purple-400', icon: repostIcon },
                         { label: t('sends'), value: stats.shares, color: 'text-indigo-400', icon: sendIcon },
+                        { label: t('saves'), value: stats.saves, color: 'text-amber-500', icon: saveIcon },
                         { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
                       ];
                     } else if (p.id === 'tiktok') {
@@ -2285,49 +2307,84 @@ function App() {
                         { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('saves'), value: stats.saves, color: 'text-amber-500', icon: saveIcon },
                         { label: t('shares'), value: stats.shares, color: 'text-prada-charcoal/70', icon: shareIcon },
+                        { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
                       ];
                     } else if (p.id === 'x') {
                       metrics = [
                         { label: t('likes'), value: stats.likes, color: 'text-rose-400', icon: likeIcon },
                         { label: t('replies'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('reposts'), value: stats.reposts, color: 'text-purple-400', icon: repostIcon },
+                        { label: t('saves'), value: stats.saves, color: 'text-amber-500', icon: saveIcon },
+                        { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
                       ];
                     } else if (p.id === 'facebook') {
                       metrics = [
                         { label: t('likes'), value: stats.likes, color: 'text-blue-500', icon: likeIcon },
                         { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('shares'), value: stats.shares, color: 'text-prada-charcoal/70', icon: shareIcon },
+                        { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
                       ];
                     } else if (p.id === 'youtube') {
                       metrics = [
                         { label: t('likes'), value: stats.likes, color: 'text-rose-500', icon: likeIcon },
                         { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
+                        { label: t('shares'), value: stats.shares, color: 'text-prada-charcoal/70', icon: shareIcon },
                       ];
                     } else if (p.id === 'threads') {
                       metrics = [
                         { label: t('likes'), value: stats.likes, color: 'text-rose-400', icon: likeIcon },
                         { label: t('replies'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
                         { label: t('reposts'), value: stats.reposts, color: 'text-purple-400', icon: repostIcon },
+                        { label: t('shares'), value: stats.shares, color: 'text-indigo-400', icon: sendIcon },
+                        { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
+                      ];
+                    } else if (p.id === 'weibo') {
+                      metrics = [
+                        { label: t('likes'), value: stats.likes, color: 'text-rose-400', icon: likeIcon },
+                        { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
+                        { label: t('reposts'), value: stats.reposts, color: 'text-purple-400', icon: repostIcon },
+                        { label: t('saves'), value: stats.saves, color: 'text-amber-500', icon: saveIcon },
+                        { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
+                      ];
+                    } else if (p.id === 'red' || p.id === 'xiaohongshu') {
+                      metrics = [
+                        { label: t('likes'), value: stats.likes, color: 'text-rose-400', icon: likeIcon },
+                        { label: t('comments'), value: stats.comments, color: 'text-blue-400', icon: commentIcon },
+                        { label: t('saves'), value: stats.saves, color: 'text-amber-500', icon: saveIcon },
+                        { label: t('shares'), value: stats.shares, color: 'text-prada-charcoal/70', icon: shareIcon },
+                        { label: t('view'), value: stats.views, color: 'text-emerald-500', icon: viewIcon },
                       ];
                     }
 
                     return (
-                      <div key={p.id} className="bg-white/80 backdrop-blur-md rounded-xl p-4 border border-prada-warm/30 shadow-sm flex flex-col gap-3">
-                        <div className="flex items-center gap-2 border-b border-prada-warm/50 pb-2">
-                          {p.icon && (
-                            <div className={`w-6 h-6 rounded-md bg-gradient-to-br ${p.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
-                              <div className="scale-75">{p.icon}</div>
-                            </div>
-                          )}
-                          <span className="font-bold text-prada-charcoal text-[13px]">{p.label}</span>
+                      <div key={p.id} className="bg-white/90 backdrop-blur-md rounded-2xl p-4 border border-prada-warm/30 shadow-sm flex flex-col gap-2">
+                        {/* Header */}
+                        <div className="flex items-center justify-between border-b border-prada-warm/30 pb-2.5 mb-1">
+                          <div className="flex items-center gap-2">
+                            {p.icon && (
+                              <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${p.color} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                                <div className="scale-75">{p.icon}</div>
+                              </div>
+                            )}
+                            <span className="font-bold text-prada-charcoal text-[13px]">{p.label}</span>
+                          </div>
+                          <span className="text-[10px] font-bold text-prada-charcoal/60 bg-prada-cream/40 px-2.5 py-0.5 rounded-full border border-prada-warm/20">
+                            Total: {((stats.likes || 0) + (stats.comments || 0) + (stats.shares || 0) + (stats.reposts || 0) + (stats.views || 0) + (stats.saves || 0)).toLocaleString()}
+                          </span>
                         </div>
-                        <div className="flex flex-wrap justify-center gap-2">
+
+                        {/* Minimal Row-by-Row Metrics List */}
+                        <div className="flex flex-col divide-y divide-prada-warm/15">
                           {metrics.map((m, idx) => (
-                            <div key={idx} className={`flex flex-col items-center min-w-[56px] ${metrics.length === 4 ? 'w-[22%]' : 'w-[30%]'} overflow-hidden`}>
-                              <span className={m.color}>{m.icon}</span>
-                              <span className="text-[9px] uppercase font-bold text-prada-charcoal/50 mb-0.5 tracking-wider text-center whitespace-nowrap w-full truncate">{m.label}</span>
-                              <span className="text-[11px] sm:text-xs font-bold text-prada-charcoal tabular-nums w-full text-center truncate" title={m.value.toLocaleString()}>{m.value.toLocaleString()}</span>
+                            <div key={idx} className="flex items-center justify-between py-1.5 px-1 hover:bg-prada-cream/20 rounded-lg transition-colors">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className={`shrink-0 ${m.color}`}>{m.icon}</span>
+                                <span className="text-xs font-medium text-prada-charcoal/70 truncate">{m.label}</span>
+                              </div>
+                              <span className="text-xs sm:text-sm font-bold text-prada-charcoal tabular-nums shrink-0 ml-2">
+                                {(m.value || 0).toLocaleString()}
+                              </span>
                             </div>
                           ))}
                         </div>
