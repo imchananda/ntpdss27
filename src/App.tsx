@@ -576,8 +576,18 @@ function App() {
   // Fetch data from Google Sheets (Fetch all on mount)
   const fetchAllData = useCallback(async (isRefresh = false) => {
     try {
-      if (isRefresh) setRefreshing(true);
-      else setLoading(true);
+      const hasCachedTasks = (() => {
+        try {
+          const cached = localStorage.getItem('social-tracker-tasks-cache-v3');
+          return !!(cached && Object.keys(JSON.parse(cached)).length > 0);
+        } catch { return false; }
+      })();
+
+      if (isRefresh || hasCachedTasks) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
       const results: Record<string, Task[]> = {};
 
@@ -616,7 +626,9 @@ function App() {
                 const defSec = (getVal('default_section') || getVal('active_section')).toLowerCase().trim();
                 if (defSec && ['boost', 'tasks', 'important', 'none'].includes(defSec)) {
                   localStorage.setItem('ntf_default_start_section', defSec);
-                  setActiveSection(defSec === 'none' ? null : (defSec as any));
+                  if (!hasLoaded) {
+                    setActiveSection(defSec === 'none' ? null : (defSec as any));
+                  }
                 }
                 const endCreditsVal = (getVal('show_end_credits') || getVal('enable_end_credits') || getVal('end_credits')).toLowerCase().trim();
                 if (endCreditsVal) {
@@ -752,7 +764,9 @@ function App() {
               const defSec = (getGVal('default_section') || getGVal('active_section')).toLowerCase().trim();
               if (defSec && ['boost', 'tasks', 'important', 'none'].includes(defSec)) {
                 localStorage.setItem('ntf_default_start_section', defSec);
-                setActiveSection(defSec === 'none' ? null : (defSec as any));
+                if (!hasLoaded) {
+                  setActiveSection(defSec === 'none' ? null : (defSec as any));
+                }
               }
               const phaseVal = (getGVal('show_phase_filter') || getGVal('phase_filter')).toLowerCase().trim();
               if (phaseVal) {
@@ -764,7 +778,10 @@ function App() {
               if (defaultPhaseVal && ['all', 'pre', 'airport', 'show', 'afterglow', 'aftermath'].includes(defaultPhaseVal)) {
                 const normPhase = defaultPhaseVal === 'aftermath' ? 'afterglow' : defaultPhaseVal;
                 localStorage.setItem('ntf_default_active_phase', normPhase);
-                setActivePhase(normPhase as any);
+                const userSelectedPhase = localStorage.getItem('ntf_user_active_phase');
+                if (!userSelectedPhase && !hasLoaded) {
+                  setActivePhase(normPhase as any);
+                }
               }
               const endCreditsVal = (getGVal('show_end_credits') || getGVal('enable_end_credits') || getGVal('end_credits')).toLowerCase().trim();
               if (endCreditsVal) {
@@ -803,8 +820,9 @@ function App() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setHasLoaded(true);
     }
-  }, [parseCSV]);
+  }, [parseCSV, hasLoaded]);
 
   // Fetch positive messages from separate Word Randomizer Google Sheet
   // Sheet: VITE_MSG_SHEET_ID — Column E = "Completed Text"
