@@ -211,16 +211,18 @@ export default function DigitalPassCard({
               src={activeTheme.bgImage}
               alt={activeTheme.name}
               style={{ filter: activeFilter.cssFilter }}
-              className="w-full h-full object-cover object-center transition-all duration-500 opacity-40 mix-blend-overlay"
+              className={`w-full h-full object-cover object-center transition-all duration-500 mix-blend-overlay ${
+                activeTheme.isDarkTheme ? 'opacity-45 brightness-90' : 'opacity-40'
+              }`}
             />
-            {/* Soft Overlay of /tablet.jpg with subtle contrast */}
+            {/* Overlay of /tablet.jpg with rich deep dark intensity */}
             <img
               src="/tablet.jpg"
               alt="Tablet Texture Overlay"
               style={{ filter: activeFilter.cssFilter }}
               className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 pointer-events-none ${
                 activeTheme.isDarkTheme
-                  ? 'opacity-40 mix-blend-soft-light'
+                  ? 'opacity-48 mix-blend-overlay contrast-125'
                   : 'opacity-45 mix-blend-multiply'
               }`}
             />
