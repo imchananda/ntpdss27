@@ -643,8 +643,21 @@ function App() {
               else if (['red', 'xhs', 'xiaohongshu'].includes(rawPlatform)) rawPlatform = 'red';
               else if (!['x', 'instagram', 'facebook', 'tiktok', 'youtube', 'threads', 'weibo', 'red', 'xiaohongshu'].includes(rawPlatform)) rawPlatform = 'x';
 
-              const rawTaskPhase = (getVal('phase') || '').toLowerCase().trim();
-              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all') ? rawTaskPhase : (sheet.phase !== 'all' ? sheet.phase : 'pre');
+              const rawTaskPhase = (
+                getVal('phase') ||
+                getVal('campaign_phase') ||
+                getVal('period') ||
+                getVal('stage') ||
+                getVal('campaign') ||
+                ''
+              ).toLowerCase().trim();
+
+              const boostVal = (getVal('boost') || getVal('featured') || getVal('highlight') || '').trim();
+              const inferredPhaseFromBoost = boostVal.includes('2') ? 'show' : (boostVal.includes('3') ? 'aftermath' : 'pre');
+
+              const taskPhase = (rawTaskPhase && rawTaskPhase !== 'all')
+                ? rawTaskPhase
+                : (sheet.phase !== 'all' ? sheet.phase : inferredPhaseFromBoost);
 
               const task: Task = {
                 id: getVal('id') || getVal('url') || String(i),

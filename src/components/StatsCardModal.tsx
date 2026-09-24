@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
+import DigitalPassCard from './DigitalPassCard';
 
 interface Task {
     id: string;
     phase: string;
     platform: string;
+    boost?: number[];
 }
 
 interface CompletedState {
@@ -59,6 +61,92 @@ function timeDiff(start: string, end: string, language: string): string {
 
 export default function StatsCardModal({ isOpen, onClose, completed, allTasks, totalTasksCount }: StatsCardModalProps) {
     const { language } = useLanguage();
+
+    const phaseInfos = useMemo(() => {
+        const allTaskList = Object.values(allTasks).flat();
+        if (allTaskList.length === 0) return [];
+
+        const isTaskDone = (t: Task) => {
+            if (!t) return false;
+            if (completed[t.phase] && completed[t.phase][t.id]) return true;
+            return Object.values(completed).some(phaseMap => !!(phaseMap && phaseMap[t.id]));
+        };
+
+        const p1: Task[] = [];
+        const p2: Task[] = [];
+        const p3: Task[] = [];
+
+        allTaskList.forEach(t => {
+            const p = (t.phase || '').toLowerCase().trim();
+            const a = ((t as any).artist || '').toLowerCase().trim();
+
+            // 1. Check explicit phase/stage tags (Highest Priority)
+            if (
+                p === 'aftermath' || p === 'afterglow' || p === 'aftermath2' ||
+                p === 'phase3' || p === '3' || a === 'aftermath' || a === 'afterglow'
+            ) {
+                p3.push(t);
+            } else if (
+                p === 'show' || p === 'fashion' || p === 'phase2' ||
+                p === '2' || a === 'show' || a === 'fashion'
+            ) {
+                p2.push(t);
+            } else if (
+                p === 'pre' || p === 'airport' || p === 'phase1' ||
+                p === '1' || a === 'pre' || a === 'airport'
+            ) {
+                p1.push(t);
+            } else {
+                // 2. Secondary check: check boost array tags if phase is not explicitly specified
+                const hasB1 = Array.isArray(t.boost) && t.boost.includes(1);
+                const hasB2 = Array.isArray(t.boost) && t.boost.includes(2);
+                const hasB3 = Array.isArray(t.boost) && t.boost.includes(3);
+
+                if (hasB3) p3.push(t);
+                else if (hasB2) p2.push(t);
+                else if (hasB1) p1.push(t);
+                else p1.push(t); // Default fallback to Phase 1
+            }
+        });
+
+        // Fallback: If p2 and p3 are completely empty (e.g. single sheet without any phase tags), split list into 3 equal parts
+        if (p1.length > 0 && p2.length === 0 && p3.length === 0) {
+            const third = Math.ceil(p1.length / 3);
+            const fullList = [...p1];
+            p1.length = 0;
+            p1.push(...fullList.slice(0, third));
+            p2.push(...fullList.slice(third, third * 2));
+            p3.push(...fullList.slice(third * 2));
+        }
+
+        const p1Done = p1.filter(isTaskDone).length;
+        const p2Done = p2.filter(isTaskDone).length;
+        const p3Done = p3.filter(isTaskDone).length;
+
+        return [
+            {
+                phaseKey: 'Boost Focus',
+                titleKey: 'stampPhase1Title',
+                completedCount: p1Done,
+                totalCount: p1.length,
+                isUnlocked: p1.length > 0 && p1Done === p1.length,
+            },
+            {
+                phaseKey: 'Fashion Media',
+                titleKey: 'stampPhase2Title',
+                completedCount: p2Done,
+                totalCount: p2.length,
+                isUnlocked: p2.length > 0 && p2Done === p2.length,
+            },
+            {
+                phaseKey: 'Aftermath',
+                titleKey: 'stampPhase3Title',
+                completedCount: p3Done,
+                totalCount: p3.length,
+                isUnlocked: p3.length > 0 && p3Done === p3.length,
+            },
+        ];
+    }, [allTasks, completed]);
 
     const stats = useMemo(() => {
         // Collect all completed tasks with timestamps
@@ -152,38 +240,6 @@ export default function StatsCardModal({ isOpen, onClose, completed, allTasks, t
 
     if (!isOpen) return null;
 
-
-
-    const shareText = stats
-        ? language === 'th'
-            ? `Namtan × Prada’s 👖✨\n\n` +
-            `สถิติของฉัน\n` +
-            `✅ ทำแล้ว ${stats.completedCount}/${stats.totalCount} ภารกิจ (${stats.pct}%)\n` +
-            `📸 Platform หลัก: ${PLATFORM_NAME[stats.topPlatform || ''] || stats.topPlatform}\n` +
-            `⚡ เฉลี่ย ${stats.tasksPerDay} ภารกิจ/วัน\n` +
-            `📅 เริ่มตั้งแต่: ${formatDate(stats.firstDate, 'th')} (${stats.duration})\n\n` +
-            `#NamtanxPrada #PradaSS27 #PradaThailand\n#น้ำตาลฟิล์ม #Namtan`
-            : `Namtan × Prada’s 👖✨\n\n` +
-            `My Stats\n` +
-            `✅ Completed ${stats.completedCount}/${stats.totalCount} missions (${stats.pct}%)\n` +
-            `📸 Top Platform: ${PLATFORM_NAME[stats.topPlatform || ''] || stats.topPlatform}\n` +
-            `⚡ Avg ${stats.tasksPerDay} tasks/day\n` +
-            `📅 Started: ${formatDate(stats.firstDate, 'en')} (${stats.duration})\n\n` +
-            `#NamtanxPrada #PradaSS27 #PradaThailand\n#Namtan`
-        : '';
-
-    const handleShareX = () => {
-        window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
-    };
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(shareText);
-        } catch { /* ignore */ }
-    };
-
-
-
     return (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
             {/* Backdrop */}
@@ -203,20 +259,28 @@ export default function StatsCardModal({ isOpen, onClose, completed, allTasks, t
                         {/* Close */}
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-prada-charcoal/10 hover:bg-prada-charcoal/20 flex items-center justify-center text-prada-charcoal/50 hover:text-prada-charcoal transition-colors"
+                            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-prada-charcoal/10 hover:bg-prada-charcoal/20 flex items-center justify-center text-prada-charcoal/50 hover:text-prada-charcoal transition-colors"
                         >
                             ✕
                         </button>
 
                         {/* Header */}
-                        <div className="text-center mb-5">
-                            <div className="text-4xl mb-2">📊</div>
-                            <h2 className="text-xl font-bold text-prada-charcoal tracking-wider">
-                                {language === 'th' ? 'สถิติของฉัน' : 'My Stats'}
+                        <div className="text-center mb-4">
+                            <h2 className="text-lg font-bold text-prada-charcoal tracking-wider">
+                                {language === 'th' ? 'บัตรสะสม & สถิติของฉัน' : 'My Pass & Stats'}
                             </h2>
-                            <p className="text-prada-charcoal/40 text-xs mt-1 uppercase tracking-widest">
-                                Namtan × Prada’s Mission
+                            <p className="text-prada-charcoal/40 text-[10px] uppercase tracking-widest">
+                                Namtan × Prada’s SS27
                             </p>
+                        </div>
+
+                        {/* 💳 Digital Pass Card */}
+                        <div className="mb-4">
+                            <DigitalPassCard
+                                phaseInfos={phaseInfos}
+                                totalMissionsCompleted={stats?.completedCount || 0}
+                                totalMissionsCount={totalTasksCount}
+                            />
                         </div>
 
                         {!stats ? (
@@ -230,123 +294,71 @@ export default function StatsCardModal({ isOpen, onClose, completed, allTasks, t
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3">
-
-                                {/* Big progress circle */}
-                                <div className="flex items-center justify-center gap-5 bg-prada-charcoal/5 rounded-2xl p-4 border border-prada-warm/20">
-                                    <div className="relative w-20 h-20">
-                                        <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                                            <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="2.5" />
-                                            <circle
-                                                cx="18" cy="18" r="15.9"
-                                                fill="none"
-                                                stroke="url(#statsGold)"
-                                                strokeWidth="2.5"
-                                                strokeDasharray={`${stats.pct} ${100 - stats.pct}`}
-                                                strokeLinecap="round"
-                                            />
-                                            <defs>
-                                                <linearGradient id="statsGold" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                    <stop offset="0%" stopColor="#B8986E" />
-                                                    <stop offset="100%" stopColor="#D4C8B8" />
-                                                </linearGradient>
-                                            </defs>
-                                        </svg>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-xl font-bold text-prada-charcoal leading-none">{stats.pct}%</span>
+                                {/* Stats — Luxury Elegant Design matching Prada Pass Card */}
+                                <div className="flex flex-col gap-2.5">
+                                    {/* Platform หลัก — Featured Card */}
+                                    <div className="bg-white/90 backdrop-blur-md rounded-2xl px-4 py-3.5 border border-slate-200 shadow-sm flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-lg shadow-sm">
+                                                {PLATFORM_EMOJI[stats.topPlatform || ''] || '📱'}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-slate-400 text-[9.5px] font-extrabold uppercase tracking-widest">
+                                                    {language === 'th' ? 'PLATFORM หลัก' : 'TOP PLATFORM'}
+                                                </span>
+                                                <span className="text-slate-900 text-sm font-black tracking-tight">
+                                                    {PLATFORM_NAME[stats.topPlatform || ''] || stats.topPlatform || '—'}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-3xl font-bold text-prada-gold leading-none">{stats.completedCount}</div>
-                                        <div className="text-prada-charcoal/40 text-xs mt-0.5">
-                                            {language === 'th' ? `จาก ${stats.totalCount} ภารกิจ` : `of ${stats.totalCount} missions`}
-                                        </div>
-                                        <div className="text-prada-charcoal font-semibold text-sm mt-1">
-                                            {stats.pct === 100
-                                                ? '🏆 ' + (language === 'th' ? 'ครบ 100%!' : 'All done!')
-                                                : stats.pct >= 50
-                                                    ? '🔥 ' + (language === 'th' ? 'เยี่ยมมาก!' : 'Great job!')
-                                                    : '💪 ' + (language === 'th' ? 'สู้ต่อไป!' : 'Keep going!')
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                                {/* Stats — compact elegant design */}
-                                <div className="flex flex-col gap-2">
-
-                                    {/* Platform — featured */}
-                                    <div className="bg-prada-charcoal/5 rounded-2xl px-4 py-3 border border-prada-warm/20 flex items-center gap-3">
-                                        <span className="text-xl shrink-0">{PLATFORM_EMOJI[stats.topPlatform || ''] || '📱'}</span>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-prada-charcoal/40 text-[9px] uppercase tracking-widest leading-none mb-0.5">
-                                                {language === 'th' ? 'Platform หลัก' : 'Top Platform'}
-                                            </p>
-                                            <p className="text-prada-charcoal text-sm font-bold leading-tight truncate">
-                                                {PLATFORM_NAME[stats.topPlatform || ''] || stats.topPlatform || '—'}
-                                            </p>
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            <p className="text-prada-gold text-xs font-semibold">{stats.topPlatformCount}</p>
-                                            <p className="text-prada-charcoal/30 text-[9px]">{language === 'th' ? 'ภารกิจ' : 'tasks'}</p>
+                                        <div className="text-right">
+                                            <span className="text-amber-700 text-base font-black font-mono">{stats.topPlatformCount}</span>
+                                            <span className="text-slate-400 text-[10px] font-bold block">{language === 'th' ? 'ภารกิจ' : 'tasks'}</span>
                                         </div>
                                     </div>
 
-                                    {/* 3 compact row stats */}
-                                    <div className="bg-prada-charcoal/5 rounded-2xl border border-prada-warm/20 divide-y divide-prada-warm/15">
+                                    {/* Compact Detail Stats List */}
+                                    <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-sm divide-y divide-slate-100 overflow-hidden">
                                         {/* Avg/day */}
-                                        <div className="flex items-center gap-3 px-4 py-2.5">
-                                            <span className="text-base shrink-0">⚡</span>
-                                            <p className="flex-1 text-prada-charcoal/50 text-xs">
-                                                {language === 'th' ? 'เฉลี่ย/วัน' : 'Avg per day'}
-                                            </p>
-                                            <p className="text-prada-charcoal text-sm font-bold">
-                                                {stats.tasksPerDay}
-                                                <span className="text-prada-charcoal/30 text-[10px] font-normal ml-1">
+                                        <div className="flex items-center justify-between px-4 py-3">
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="text-amber-500 text-base">⚡</span>
+                                                <span className="text-slate-600 text-xs font-bold">
+                                                    {language === 'th' ? 'เฉลี่ย/วัน' : 'Avg per day'}
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-slate-900 text-sm font-black font-mono">{stats.tasksPerDay}</span>
+                                                <span className="text-slate-400 text-[10px] font-semibold ml-1">
                                                     {language === 'th' ? 'ภารกิจ' : 'tasks'}
                                                 </span>
-                                            </p>
+                                            </div>
                                         </div>
+
                                         {/* Started */}
-                                        <div className="flex items-center gap-3 px-4 py-2.5">
-                                            <span className="text-base shrink-0">🚀</span>
-                                            <p className="flex-1 text-prada-charcoal/50 text-xs">
-                                                {language === 'th' ? 'เริ่มทำตั้งแต่' : 'Started'}
-                                            </p>
-                                            <p className="text-prada-charcoal text-xs font-semibold">
+                                        <div className="flex items-center justify-between px-4 py-3">
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="text-rose-500 text-base">🚀</span>
+                                                <span className="text-slate-600 text-xs font-bold">
+                                                    {language === 'th' ? 'เริ่มทำตั้งแต่' : 'Started'}
+                                                </span>
+                                            </div>
+                                            <span className="text-slate-900 text-xs font-black">
                                                 {formatDate(stats.firstDate, language)}
-                                            </p>
+                                            </span>
                                         </div>
+
                                         {/* Duration */}
-                                        <div className="flex items-center gap-3 px-4 py-2.5">
-                                            <span className="text-base shrink-0">⏱️</span>
-                                            <p className="flex-1 text-prada-charcoal/50 text-xs">
-                                                {language === 'th' ? 'ระยะเวลา' : 'Duration'}
-                                            </p>
-                                            <p className="text-prada-charcoal text-sm font-bold">{stats.duration}</p>
+                                        <div className="flex items-center justify-between px-4 py-3">
+                                            <div className="flex items-center gap-2.5">
+                                                <span className="text-indigo-500 text-base">⏱️</span>
+                                                <span className="text-slate-600 text-xs font-bold">
+                                                    {language === 'th' ? 'ระยะเวลา' : 'Duration'}
+                                                </span>
+                                            </div>
+                                            <span className="text-slate-900 text-xs font-black font-mono">{stats.duration}</span>
                                         </div>
                                     </div>
-
-                                </div>
-
-                                {/* Share Buttons */}
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={handleShareX}
-                                        className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-prada-charcoal hover:bg-prada-black text-prada-offwhite transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                        </svg>
-                                        <span>{language === 'th' ? 'แชร์ไป X' : 'Share to X'}</span>
-                                    </button>
-                                    <button
-                                        onClick={handleCopy}
-                                        className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-prada-gold to-prada-warm hover:opacity-90 text-prada-charcoal transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <span>📋</span>
-                                        <span>{language === 'th' ? 'คัดลอก' : 'Copy'}</span>
-                                    </button>
                                 </div>
                             </div>
                         )}

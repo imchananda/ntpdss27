@@ -153,6 +153,24 @@ export const translations = {
         replies: 'ตอบกลับ',
         view: 'ชม',
 
+        // Pass Card & Stamps
+        cardPassTitle: 'บัตรสะสมแคมเปญ Prada VIP 👖✨',
+        cardThemeLabel: 'เลือกดีไซน์การ์ด',
+        editNameBtn: '✏️ แก้ไขชื่อ',
+        saveNameBtn: 'บันทึก',
+        namePlaceholder: 'ใส่ชื่อของคุณ...',
+        stampsTitle: 'ตราสะสม 3 ช่วงแคมเปญ',
+        stampStatusLabel: 'สะสมแล้ว',
+        stampPhase1Title: 'ช่วงที่ 1: Boost Focus',
+        stampPhase2Title: 'ช่วงที่ 2: Fashion Media',
+        stampPhase3Title: 'ช่วงที่ 3: Aftermath',
+        stampUnlocked: '✓ สำเร็จ 100%',
+        stampLocked: 'ยังไม่ครบ 100%',
+        masterBadge: '🏆 PRADA CAMPAIGN MASTER',
+        defaultCardName: 'Prada VIP Fan',
+        downloadCardBtn: '⬇️ ดาวน์โหลดการ์ดสะสม (PNG)',
+        downloadingCard: '⏳ กำลังสร้างรูปการ์ด...',
+
         // Platforms
         igLabel: 'Instagram/Reels',
         ttLabel: 'TikTok',
@@ -324,6 +342,24 @@ export const translations = {
         ytLabel: 'YouTube/Short',
         weiboLabel: 'Weibo',
         redLabel: 'RED (小红书)',
+
+        // Pass Card & Stamps
+        cardPassTitle: 'Prada VIP Collectible Pass 👖✨',
+        cardThemeLabel: 'Card Theme',
+        editNameBtn: '✏️ Edit Name',
+        saveNameBtn: 'Save',
+        namePlaceholder: 'Enter your name...',
+        stampsTitle: '3-Phase Campaign Stamps',
+        stampStatusLabel: 'Stamps',
+        stampPhase1Title: 'Phase 1: Boost Focus',
+        stampPhase2Title: 'Phase 2: Fashion Media',
+        stampPhase3Title: 'Phase 3: Aftermath',
+        stampUnlocked: '✓ 100% Completed',
+        stampLocked: 'In Progress',
+        masterBadge: '🏆 PRADA CAMPAIGN MASTER',
+        defaultCardName: 'Prada VIP Fan',
+        downloadCardBtn: '⬇️ Download Collectible Pass (PNG)',
+        downloadingCard: '⏳ Generating Pass Image...',
     },
 } as const;
 
