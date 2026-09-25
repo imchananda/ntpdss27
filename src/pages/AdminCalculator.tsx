@@ -972,7 +972,19 @@ export default function AdminCalculator() {
                         </td>
                         <td className="py-2.5 px-3 font-medium text-gray-800">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-[#2a2121]">{t.media || 'ไม่มีชื่อสื่อ'}</span>
+                            {t.url ? (
+                              <a
+                                href={t.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-bold text-[#2a2121] hover:text-blue-600 hover:underline transition-colors"
+                                title={`คลิกเพื่อเปิดลิงก์: ${t.url}`}
+                              >
+                                {t.media || 'ไม่มีชื่อสื่อ'}
+                              </a>
+                            ) : (
+                              <span className="font-bold text-[#2a2121]">{t.media || 'ไม่มีชื่อสื่อ'}</span>
+                            )}
                             {t.boost && (
                               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] bg-amber-500/15 text-amber-700 border border-amber-500/30" title="Boost">
                                 🚀

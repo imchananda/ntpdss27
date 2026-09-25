@@ -2337,7 +2337,19 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             <div className="flex flex-col gap-1.5 py-0.5">
                               {/* Top Line: Media Name & Post Title */}
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-[13px] text-[#2a2121] tracking-tight">{task.media || 'ไม่มีชื่อสื่อ'}</span>
+                                {task.url ? (
+                                  <a
+                                    href={task.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="font-bold text-[13px] text-[#2a2121] hover:text-blue-600 hover:underline tracking-tight transition-colors"
+                                    title={`คลิกเพื่อเปิดลิงก์: ${task.url}`}
+                                  >
+                                    {task.media || 'ไม่มีชื่อสื่อ'}
+                                  </a>
+                                ) : (
+                                  <span className="font-bold text-[13px] text-[#2a2121] tracking-tight">{task.media || 'ไม่มีชื่อสื่อ'}</span>
+                                )}
                                 {task.title && task.title !== task.media && (
                                   <span className="text-[11px] text-gray-500 font-normal truncate max-w-[220px]">({task.title})</span>
                                 )}
