@@ -291,9 +291,9 @@ export default function DigitalPassCard({
                       {/* Stamp Slot Container (Border & circle bg only shown when locked) */}
                       <div
                         style={!isUnlocked ? { clipPath: 'circle(50% at 50% 50%)' } : undefined}
-                        className={`relative w-13.5 h-13.5 sm:w-16 sm:h-16 md:w-18 md:h-18 flex items-center justify-center transition-all duration-300 ${
+                        className={`relative w-13 h-13 sm:w-16 sm:h-16 md:w-18 md:h-18 flex items-center justify-center transition-all duration-300 ${
                           isUnlocked
-                            ? 'scale-110'
+                            ? 'scale-105'
                             : `rounded-full border-2 border-current/40 ${activeTheme.circleLockedBg} ${activeTheme.circleLockedText} overflow-hidden`
                         }`}
                       >
@@ -323,10 +323,9 @@ export default function DigitalPassCard({
                             )}
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center">
-                            <span className={`text-xs sm:text-sm font-black tracking-tight ${activeTheme.textColor}`}>{pct}%</span>
-                            <span className={`text-[6.5px] sm:text-[8px] font-bold opacity-90 ${activeTheme.subtextColor}`}>
-                              {phase.completedCount}/{phase.totalCount}
+                          <div className="flex items-center justify-center w-full h-full text-center p-1 select-none">
+                            <span className={`text-xs sm:text-sm font-black tracking-tight leading-none ${activeTheme.textColor}`}>
+                              {pct}%
                             </span>
                           </div>
                         )}
@@ -337,10 +336,10 @@ export default function DigitalPassCard({
                         {missionLabel}
                       </span>
 
-                      {/* Remaining Tasks Status (Only shown when not unlocked) */}
+                      {/* Remaining Tasks & Progress Status (Only shown when not unlocked) */}
                       {!isUnlocked && (
-                        <span className={`text-[6.5px] sm:text-[7.5px] font-bold opacity-85 ${activeTheme.subtextColor}`}>
-                          {remainingTasks > 0 ? `อีก ${remainingTasks} ภารกิจ` : `${phase.completedCount}/${phase.totalCount}`}
+                        <span className={`text-[6.5px] sm:text-[8px] font-bold opacity-85 leading-tight ${activeTheme.subtextColor}`}>
+                          {phase.completedCount}/{phase.totalCount} {remainingTasks > 0 ? `(อีก ${remainingTasks})` : ''}
                         </span>
                       )}
                     </div>
