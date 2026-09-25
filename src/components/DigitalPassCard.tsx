@@ -113,9 +113,6 @@ export default function DigitalPassCard({
     return 'none';
   });
 
-  // Toggle Stamp Preview mode (shows stamps even if progress is less than 100%)
-  const [previewStamps, setPreviewStamps] = useState<boolean>(false);
-
   // Toggle Card Customization Control Drawer (Default false: show card only)
   const [showControls, setShowControls] = useState<boolean>(false);
 
@@ -279,7 +276,7 @@ export default function DigitalPassCard({
               <div className="grid grid-cols-3 gap-1 sm:gap-2 max-w-[380px] sm:max-w-[460px] mx-auto">
                 {phaseInfos.map((phase, idx) => {
                   const pct = phase.totalCount > 0 ? Math.floor((phase.completedCount / phase.totalCount) * 100) : 0;
-                  const isUnlockedOrPreview = phase.isUnlocked || previewStamps;
+                  const isUnlocked = phase.isUnlocked;
                   const remainingTasks = Math.max(0, phase.totalCount - phase.completedCount);
 
                   const missionLabels = [
@@ -291,17 +288,17 @@ export default function DigitalPassCard({
 
                   return (
                     <div key={phase.phaseKey} className="flex flex-col items-center gap-0.5 text-center">
-                      {/* Circle Stamp Container */}
+                      {/* Stamp Slot Container (Border & circle bg only shown when locked) */}
                       <div
-                        style={{ clipPath: 'circle(50% at 50% 50%)' }}
-                        className={`relative w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-300 overflow-hidden ${
-                          isUnlockedOrPreview
-                            ? `${activeTheme.circleBorder} scale-105`
-                            : `border-2 border-current/40 ${activeTheme.circleLockedBg} ${activeTheme.circleLockedText}`
+                        style={!isUnlocked ? { clipPath: 'circle(50% at 50% 50%)' } : undefined}
+                        className={`relative w-13.5 h-13.5 sm:w-16 sm:h-16 md:w-18 md:h-18 flex items-center justify-center transition-all duration-300 ${
+                          isUnlocked
+                            ? 'scale-110'
+                            : `rounded-full border-2 border-current/40 ${activeTheme.circleLockedBg} ${activeTheme.circleLockedText} overflow-hidden`
                         }`}
                       >
-                        {isUnlockedOrPreview ? (
-                          <div className="w-full h-full p-0 flex items-center justify-center animate-bounce-short rounded-full overflow-hidden">
+                        {isUnlocked ? (
+                          <div className="w-full h-full p-0 flex items-center justify-center animate-bounce-short">
                             {activeTheme.isDarkTheme ? (
                               <div
                                 style={{
@@ -321,7 +318,7 @@ export default function DigitalPassCard({
                               <img
                                 src={`/Stamp-${idx + 1}.png`}
                                 alt={`Stamp ${idx + 1}`}
-                                className="w-full h-full object-cover rounded-full filter drop-shadow-md"
+                                className="w-full h-full object-contain filter drop-shadow-md"
                               />
                             )}
                           </div>
@@ -341,7 +338,7 @@ export default function DigitalPassCard({
                       </span>
 
                       {/* Remaining Tasks Status (Only shown when not unlocked) */}
-                      {!isUnlockedOrPreview && (
+                      {!isUnlocked && (
                         <span className={`text-[6.5px] sm:text-[7.5px] font-bold opacity-85 ${activeTheme.subtextColor}`}>
                           {remainingTasks > 0 ? `อีก ${remainingTasks} ภารกิจ` : `${phase.completedCount}/${phase.totalCount}`}
                         </span>
@@ -401,24 +398,6 @@ export default function DigitalPassCard({
                 บันทึก
               </button>
             </div>
-          </div>
-
-          {/* Stamp Preview Toggle Pill */}
-          <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200/80">
-            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-              <span>👁️</span>
-              <span>แสดงภาพตัวอย่างตราแสตมป์ (Stamp Preview)</span>
-            </span>
-            <button
-              onClick={() => setPreviewStamps(!previewStamps)}
-              className={`px-3 py-1 rounded-lg text-[10.5px] font-extrabold transition-all border ${
-                previewStamps
-                  ? 'bg-amber-500 text-black border-amber-600 shadow-sm scale-105'
-                  : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              {previewStamps ? 'แสดงตัวอย่าง อยู่ (ON)' : 'ตามภารกิจจริง (OFF)'}
-            </button>
           </div>
 
           {/* Theme Selector Pills (2 Themes: Pearl White & Prada Dark) */}
