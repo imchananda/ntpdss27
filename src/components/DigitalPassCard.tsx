@@ -291,7 +291,7 @@ export default function DigitalPassCard({
                       {/* Stamp Slot Container (Border & circle bg only shown when locked) */}
                       <div
                         style={!isUnlocked ? { clipPath: 'circle(50% at 50% 50%)' } : undefined}
-                        className={`relative w-13 h-13 sm:w-16 sm:h-16 md:w-18 md:h-18 flex items-center justify-center transition-all duration-300 ${
+                        className={`relative w-[56px] h-[56px] sm:w-[68px] sm:h-[68px] md:w-[76px] md:h-[76px] flex items-center justify-center transition-all duration-300 ${
                           isUnlocked
                             ? 'scale-105'
                             : `rounded-full border-2 border-current/40 ${activeTheme.circleLockedBg} ${activeTheme.circleLockedText} overflow-hidden`
@@ -324,7 +324,7 @@ export default function DigitalPassCard({
                           </div>
                         ) : (
                           <div className="flex items-center justify-center w-full h-full text-center p-1 select-none">
-                            <span className={`text-xs sm:text-sm font-black tracking-tight leading-none ${activeTheme.textColor}`}>
+                            <span className={`text-sm sm:text-base font-black tracking-tight leading-none ${activeTheme.textColor}`}>
                               {pct}%
                             </span>
                           </div>
