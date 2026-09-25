@@ -930,13 +930,13 @@ export default function AdminCalculator() {
                 <tr className="bg-slate-50 border-b border-slate-200 text-[#2a2121] font-bold text-[11px] uppercase tracking-wider">
                   <th className="py-3 px-3 w-10 text-center">ดาว</th>
                   <th className="py-3 px-3 w-14 text-center">Platform</th>
+                  <th className="py-3 px-3 text-center w-16">URL</th>
                   <th className="py-3 px-3">สื่อ</th>
                   <th className="py-3 px-3 text-right">Likes</th>
                   <th className="py-3 px-3 text-right">Comments</th>
                   <th className="py-3 px-3 text-right">Shares/Reposts</th>
                   <th className="py-3 px-3 text-right">Views</th>
                   <th className="py-3 px-3 text-right">Total Eng</th>
-                  <th className="py-3 px-3 text-center w-16">URL</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -959,6 +959,17 @@ export default function AdminCalculator() {
                             {getPlatformIcon(t.platform)}
                           </span>
                         </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <a
+                            href={t.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all inline-flex items-center justify-center"
+                            title={t.url}
+                          >
+                            <FaExternalLinkAlt className="text-xs" />
+                          </a>
+                        </td>
                         <td className="py-2.5 px-3 font-medium text-gray-800">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-bold text-[#2a2121]">{t.media || 'ไม่มีชื่อสื่อ'}</span>
@@ -974,17 +985,6 @@ export default function AdminCalculator() {
                         <td className="py-2.5 px-3 text-right tabular-nums text-gray-700">{t.shares || t.reposts ? fmt((t.shares || 0) + (t.reposts || 0)) : '-'}</td>
                         <td className="py-2.5 px-3 text-right tabular-nums text-gray-700">{t.views ? fmt(t.views) : '-'}</td>
                         <td className="py-2.5 px-3 text-right font-black text-[#2a2121] tabular-nums">{fmt(rowTotal)}</td>
-                        <td className="py-2.5 px-3 text-center">
-                          <a
-                            href={t.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all inline-flex items-center justify-center"
-                            title={t.url}
-                          >
-                            <FaExternalLinkAlt className="text-xs" />
-                          </a>
-                        </td>
                       </tr>
                     );
                   })

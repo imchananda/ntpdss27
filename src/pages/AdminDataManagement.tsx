@@ -2264,9 +2264,9 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                   <tr className="bg-[#F7F8F4] border-b border-gray-200 text-[#2a2121] font-bold text-[11px] uppercase tracking-wider">
                     <th className="py-3 px-3 w-12 text-center whitespace-nowrap">ดาว</th>
                     <th className="py-3 px-3 w-16 text-center whitespace-nowrap">Platform</th>
+                    <th className="py-3 px-3.5 w-24 text-center whitespace-nowrap">URL</th>
                     <th className="py-3 px-4 min-w-[340px]">สื่อ / รายละเอียดโพสต์</th>
                     <th className="py-3 px-3.5 w-28 whitespace-nowrap">หมวดหมู่</th>
-                    <th className="py-3 px-3.5 w-24 text-center whitespace-nowrap">URL</th>
                     <th className="py-3 px-4 text-right w-28 whitespace-nowrap">การจัดการ</th>
                   </tr>
                 </thead>
@@ -2307,6 +2307,29 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             >
                               {getPlatformIcon(task.platform)}
                             </span>
+                          </td>
+
+                          {/* URL + Copy */}
+                          <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <a
+                                href={task.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all inline-flex items-center justify-center"
+                                title={task.url}
+                              >
+                                <FaExternalLinkAlt className="text-xs" />
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyHashtags(task)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all inline-flex items-center justify-center"
+                                title="คัดลอกแฮชแท็ก"
+                              >
+                                {copiedId === task.id ? <FaCheck className="text-emerald-500 text-xs" /> : <FaCopy className="text-xs" />}
+                              </button>
+                            </div>
                           </td>
 
                           {/* Media / Title & Badges */}
@@ -2402,29 +2425,6 @@ export default function AdminDataManagement({ onBackToApp }: AdminDataManagement
                             <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${artistBadge.badgeColor}`}>
                               {artistBadge.label}
                             </span>
-                          </td>
-
-                          {/* URL + Copy */}
-                          <td className="py-3 px-3.5 text-center whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-1">
-                              <a
-                                href={task.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all inline-flex items-center justify-center"
-                                title={task.url}
-                              >
-                                <FaExternalLinkAlt className="text-xs" />
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => handleCopyHashtags(task)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all inline-flex items-center justify-center"
-                                title="คัดลอกแฮชแท็ก"
-                              >
-                                {copiedId === task.id ? <FaCheck className="text-emerald-500 text-xs" /> : <FaCopy className="text-xs" />}
-                              </button>
-                            </div>
                           </td>
 
                           {/* Actions (Edit + Delete) */}
