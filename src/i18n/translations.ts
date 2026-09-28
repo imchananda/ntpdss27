@@ -167,7 +167,7 @@ export const translations = {
         stampUnlocked: '✓ สำเร็จ 100%',
         stampLocked: 'ยังไม่ครบ 100%',
         masterBadge: '🏆 PRADA CAMPAIGN MASTER',
-        defaultCardName: 'Prada VIP Fan',
+        defaultCardName: 'Namtan VIP Fan',
         downloadCardBtn: '⬇️ ดาวน์โหลดการ์ดสะสม (PNG)',
         downloadingCard: '⏳ กำลังสร้างรูปการ์ด...',
 
@@ -357,7 +357,7 @@ export const translations = {
         stampUnlocked: '✓ 100% Completed',
         stampLocked: 'In Progress',
         masterBadge: '🏆 PRADA CAMPAIGN MASTER',
-        defaultCardName: 'Prada VIP Fan',
+        defaultCardName: 'Namtan VIP Fan',
         downloadCardBtn: '⬇️ Download Collectible Pass (PNG)',
         downloadingCard: '⏳ Generating Pass Image...',
     },
